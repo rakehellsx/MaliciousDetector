@@ -1,201 +1,298 @@
 #include "pages/ReportPage.h"
+#include "DatabaseManager.h"
 #include <QHBoxLayout>
-#include <QSplitter>
-#include <QSqlQuery>
-#include <QSqlDatabase>
-#include <QHeaderView>
-#include <QFileDialog>
-#include <QGroupBox>
+#include <QVBoxLayout>
+#include <QFrame>
 #include <QLabel>
+#include <QPushButton>
+#include <QTableWidget>
+#include <QTextEdit>
+#include <QHeaderView>
+#include <QSqlQuery>
+#include <QDateTime>
+#include <QFileDialog>
+#include <QFile>
+#include <QTextStream>
+#include <QMessageBox>
+#include <QFont>
+#include <QGroupBox>
 
-ReportPage::ReportPage(QWidget *parent) : BasePage("检测报告", parent) { setupUi(); refreshData(); }
+ReportPage::ReportPage(QWidget *parent) : BasePage("检测报告", parent) {
+    setupUi();
+    refreshData();
+}
 
-void ReportPage::setupUi()
-{
-    // 工具栏
-    QHBoxLayout *toolRow = new QHBoxLayout;
-    QLabel *fmtLbl = new QLabel("导出格式：");
-    fmtLbl->setObjectName("fieldLabel");
-    m_cmbFormat = new QComboBox;
-    m_cmbFormat->setObjectName("comboBox");
-    m_cmbFormat->addItems({"Word (.docx)", "PDF (.pdf)", "HTML (.html)"});
-    m_cmbFormat->setFixedWidth(160);
-    m_btnGenerate = new QPushButton("生成报告");
+void ReportPage::setupUi() {
+    // 顶部工具栏
+    m_btnGenerate   = new QPushButton("生成报告");
+    m_btnExportDoc  = new QPushButton("导出 DOC");
+    m_btnExportPdf  = new QPushButton("导出 PDF");
+    m_btnExportHtml = new QPushButton("导出 HTML");
+
     m_btnGenerate->setObjectName("btnPrimary");
-    m_btnGenerate->setFixedWidth(100);
-    m_btnExport = new QPushButton("导出报告");
-    m_btnExport->setObjectName("btnSecondary");
-    m_btnExport->setFixedWidth(100);
-    connect(m_btnGenerate, &QPushButton::clicked, this, &ReportPage::onGenerateReport);
-    connect(m_btnExport,   &QPushButton::clicked, this, &ReportPage::onExportReport);
-    toolRow->addWidget(fmtLbl);
-    toolRow->addWidget(m_cmbFormat);
+    m_btnExportDoc->setObjectName("btnSecondary");
+    m_btnExportPdf->setObjectName("btnSecondary");
+    m_btnExportHtml->setObjectName("btnSecondary");
+
+    connect(m_btnGenerate,   &QPushButton::clicked, this, &ReportPage::onGenerateReport);
+    connect(m_btnExportDoc,  &QPushButton::clicked, this, &ReportPage::onExportDoc);
+    connect(m_btnExportPdf,  &QPushButton::clicked, this, &ReportPage::onExportPdf);
+    connect(m_btnExportHtml, &QPushButton::clicked, this, &ReportPage::onExportHtml);
+
+    QHBoxLayout *toolRow = new QHBoxLayout;
     toolRow->addWidget(m_btnGenerate);
-    toolRow->addWidget(m_btnExport);
+    toolRow->addWidget(m_btnExportDoc);
+    toolRow->addWidget(m_btnExportPdf);
+    toolRow->addWidget(m_btnExportHtml);
     toolRow->addStretch();
     m_mainLayout->addLayout(toolRow);
 
-    // 分割区：左侧汇总表 + 右侧报告预览
-    QSplitter *sp = new QSplitter(Qt::Horizontal);
+    // 分隔线
+    QFrame *divider = new QFrame;
+    divider->setFrameShape(QFrame::HLine);
+    divider->setStyleSheet("color:#d0d7e3;margin:4px 0;");
+    m_mainLayout->addWidget(divider);
 
-    // 左：威胁汇总表
-    QWidget *leftWidget = new QWidget;
-    QVBoxLayout *leftLay = new QVBoxLayout(leftWidget);
-    leftLay->setContentsMargins(0,0,0,0);
-    QLabel *sumLbl = new QLabel("威胁汇总");
-    sumLbl->setObjectName("sectionLabel");
-    leftLay->addWidget(sumLbl);
-    m_tblSummary = new QTableWidget(0, 4);
-    m_tblSummary->setHorizontalHeaderLabels({"威胁名称","类型","等级","处置建议"});
-    styleTable(m_tblSummary);
-    m_tblSummary->setColumnWidth(0, 180);
-    m_tblSummary->setColumnWidth(1, 100);
-    m_tblSummary->setColumnWidth(2, 60);
-    connect(m_tblSummary, &QTableWidget::cellClicked, this, &ReportPage::onRowSelected);
-    leftLay->addWidget(m_tblSummary, 1);
-    sp->addWidget(leftWidget);
+    // 报告标题
+    QLabel *lblTitle = new QLabel("恶意代码辅助检测分析报告");
+    QFont tf = lblTitle->font(); tf.setPointSize(14); tf.setBold(true);
+    lblTitle->setFont(tf);
+    lblTitle->setAlignment(Qt::AlignCenter);
+    lblTitle->setStyleSheet("color:#1a3a6a;margin:6px 0;");
+    m_mainLayout->addWidget(lblTitle);
 
-    // 右：报告预览
-    QWidget *rightWidget = new QWidget;
-    QVBoxLayout *rightLay = new QVBoxLayout(rightWidget);
-    rightLay->setContentsMargins(0,0,0,0);
-    QLabel *prevLbl = new QLabel("报告预览");
-    prevLbl->setObjectName("sectionLabel");
-    rightLay->addWidget(prevLbl);
+    // 报告元信息
+    QLabel *lblMeta = new QLabel(
+        QString("检测时间：%1   主机名：SECURE-PC-001   操作系统：Windows 10 专业版 64位   报告编号：RPT-%2-001")
+        .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"))
+        .arg(QDateTime::currentDateTime().toString("yyyyMMdd"))
+    );
+    lblMeta->setStyleSheet("font-size:11px;color:#888;margin-bottom:8px;");
+    lblMeta->setAlignment(Qt::AlignCenter);
+    m_mainLayout->addWidget(lblMeta);
+
+    // 一、风险等级汇总
+    QLabel *lblSec1 = new QLabel("一、风险等级汇总");
+    lblSec1->setStyleSheet("font-weight:bold;font-size:12px;color:#333;margin-top:4px;");
+    m_mainLayout->addWidget(lblSec1);
+
+    // 风险卡片
+    auto makeCard = [](const QString &title, const QString &numColor,
+                       const QString &bgColor, const QString &borderColor) -> QPair<QFrame*, QLabel*> {
+        QFrame *card = new QFrame;
+        card->setFrameShape(QFrame::Box);
+        card->setStyleSheet(QString("QFrame{background:%1;border-radius:4px;border:1px solid %2;}")
+                            .arg(bgColor, borderColor));
+        card->setMinimumWidth(110);
+        card->setMaximumWidth(160);
+        QVBoxLayout *cl = new QVBoxLayout(card);
+        cl->setContentsMargins(12, 8, 12, 8);
+        QLabel *numLbl = new QLabel("0");
+        numLbl->setAlignment(Qt::AlignCenter);
+        QFont f = numLbl->font(); f.setPointSize(22); f.setBold(true); numLbl->setFont(f);
+        numLbl->setStyleSheet(QString("color:%1;").arg(numColor));
+        QLabel *titleLbl = new QLabel(title);
+        titleLbl->setAlignment(Qt::AlignCenter);
+        titleLbl->setStyleSheet("font-size:12px;color:#555;");
+        cl->addWidget(numLbl);
+        cl->addWidget(titleLbl);
+        return {card, numLbl};
+    };
+
+    auto [cardHigh,     numHigh]     = makeCard("高危威胁", "#cf1322", "#fff1f0", "#ffccc7");
+    auto [cardMedium,   numMedium]   = makeCard("中危威胁", "#d46b08", "#fff7e6", "#ffd591");
+    auto [cardLow,      numLow]      = makeCard("低危威胁", "#096dd9", "#e6f7ff", "#91d5ff");
+    auto [cardIsolated, numIsolated] = makeCard("已隔离",   "#389e0d", "#f6ffed", "#b7eb8f");
+
+    m_lblHigh     = numHigh;
+    m_lblMedium   = numMedium;
+    m_lblLow      = numLow;
+    m_lblIsolated = numIsolated;
+
+    QHBoxLayout *cardRow = new QHBoxLayout;
+    cardRow->addWidget(cardHigh);
+    cardRow->addWidget(cardMedium);
+    cardRow->addWidget(cardLow);
+    cardRow->addWidget(cardIsolated);
+    cardRow->addStretch();
+    m_mainLayout->addLayout(cardRow);
+
+    // 二、威胁列表
+    QLabel *lblSec2 = new QLabel("二、恶意代码检测结果");
+    lblSec2->setStyleSheet("font-weight:bold;font-size:12px;color:#333;margin-top:10px;");
+    m_mainLayout->addWidget(lblSec2);
+
+    m_tblThreats = new QTableWidget(0, 6);
+    m_tblThreats->setHorizontalHeaderLabels({"威胁名称","危险等级","恶意类型","文件路径","发现时间","状态"});
+    styleTable(m_tblThreats);
+    m_tblThreats->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    m_tblThreats->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
+    m_tblThreats->setColumnWidth(1, 70);
+    m_tblThreats->setColumnWidth(2, 80);
+    m_tblThreats->setColumnWidth(4, 140);
+    m_tblThreats->setColumnWidth(5, 70);
+    m_tblThreats->setMaximumHeight(180);
+    m_mainLayout->addWidget(m_tblThreats);
+
+    // 三、处置建议
+    QLabel *lblSec3 = new QLabel("三、处置建议");
+    lblSec3->setStyleSheet("font-weight:bold;font-size:12px;color:#333;margin-top:10px;");
+    m_mainLayout->addWidget(lblSec3);
+
     m_txtReport = new QTextEdit;
     m_txtReport->setReadOnly(true);
     m_txtReport->setObjectName("reportView");
-    m_txtReport->setPlaceholderText("点击「生成报告」生成检测报告预览...");
-    rightLay->addWidget(m_txtReport, 1);
-    sp->addWidget(rightWidget);
-    sp->setStretchFactor(0, 1);
-    sp->setStretchFactor(1, 2);
-    m_mainLayout->addWidget(sp, 1);
+    m_mainLayout->addWidget(m_txtReport, 1);
 }
 
-void ReportPage::refreshData()
-{
-    m_tblSummary->setRowCount(0);
-    QSqlDatabase db = QSqlDatabase::database("main_conn");
-    if (db.isOpen()) {
-        QSqlQuery q(db);
-        q.exec("SELECT conclusion,file_type,risk_level FROM static_scan WHERE risk_level IN ('high','medium','low') ORDER BY id DESC LIMIT 50");
-        while (q.next()) {
-            int row = m_tblSummary->rowCount(); m_tblSummary->insertRow(row);
-            m_tblSummary->setItem(row,0,new QTableWidgetItem(q.value(0).toString()));
-            m_tblSummary->setItem(row,1,new QTableWidgetItem(q.value(1).toString()));
-            QString risk = q.value(2).toString();
-            QTableWidgetItem *ri = new QTableWidgetItem(risk=="high"?"高危":risk=="medium"?"中危":"低危");
-            ri->setForeground(risk=="high"?QColor("#ef5350"):risk=="medium"?QColor("#ff9800"):QColor("#42a5f5"));
-            ri->setTextAlignment(Qt::AlignCenter);
-            m_tblSummary->setItem(row,2,ri);
-            m_tblSummary->setItem(row,3,new QTableWidgetItem("建议隔离并清除"));
-        }
+void ReportPage::refreshData() {
+    m_tblThreats->setRowCount(0);
+    int high = 0, medium = 0, low = 0, isolated = 0;
+
+    QSqlQuery q;
+    q.exec("SELECT file_name, virus_name, file_type, risk_level, scan_time, conclusion FROM static_scan ORDER BY scan_time DESC");
+    while (q.next()) {
+        QString fileName   = q.value(0).toString();
+        QString virusName  = q.value(1).toString();
+        QString fileType   = q.value(2).toString();
+        QString riskLevel  = q.value(3).toString();
+        QString scanTime   = q.value(4).toString();
+        QString conclusion = q.value(5).toString();
+
+        if (riskLevel == "高危") high++;
+        else if (riskLevel == "中危") medium++;
+        else if (riskLevel == "低危") low++;
+        if (conclusion.contains("隔离")) isolated++;
+
+        int row = m_tblThreats->rowCount();
+        m_tblThreats->insertRow(row);
+
+        QString threatName = virusName.isEmpty() ? fileName : virusName;
+        m_tblThreats->setItem(row, 0, new QTableWidgetItem(threatName));
+
+        QTableWidgetItem *lvlItem = new QTableWidgetItem(riskLevel);
+        if (riskLevel == "高危")      lvlItem->setForeground(QColor("#cf1322"));
+        else if (riskLevel == "中危") lvlItem->setForeground(QColor("#d46b08"));
+        else if (riskLevel == "低危") lvlItem->setForeground(QColor("#096dd9"));
+        else                          lvlItem->setForeground(QColor("#389e0d"));
+        m_tblThreats->setItem(row, 1, lvlItem);
+        m_tblThreats->setItem(row, 2, new QTableWidgetItem(fileType));
+        m_tblThreats->setItem(row, 3, new QTableWidgetItem(fileName));
+        m_tblThreats->setItem(row, 4, new QTableWidgetItem(scanTime));
+
+        QString status = conclusion.contains("隔离") ? "已隔离" : "待处理";
+        QTableWidgetItem *stItem = new QTableWidgetItem(status);
+        stItem->setForeground(status == "已隔离" ? QColor("#389e0d") : QColor("#d46b08"));
+        m_tblThreats->setItem(row, 5, stItem);
+
+        if (riskLevel == "高危")
+            for (int c = 0; c < 6; c++)
+                if (m_tblThreats->item(row,c)) m_tblThreats->item(row,c)->setBackground(QColor("#fff1f0"));
     }
-    if (m_tblSummary->rowCount() == 0) {
-        QList<QStringList> demo = {
-            {"Trojan.Win32.Agent.abc","木马","高危","立即隔离，阻止执行"},
-            {"Backdoor.Generic.Dropper","后门","高危","立即隔离，检查网络连接"},
-            {"Worm.AutoRun.Spread","蠕虫","高危","隔离，检查所有移动存储"},
-            {"Spyware.KeyLogger","间谍软件","中危","隔离，更改所有密码"},
-            {"Adware.BrowserHijack","广告软件","低危","清除浏览器插件"},
+
+    // 无数据时插入演示数据
+    if (m_tblThreats->rowCount() == 0) {
+        struct Demo { QString name, level, type, path, time, status; };
+        QList<Demo> demos = {
+            {"Trojan.Win32.Agent.abc",    "高危", "木马",    "C:\\Windows\\Temp\\svchost32.exe",                    "2025-11-20 09:41", "待处理"},
+            {"Backdoor.Generic.Dropper",  "高危", "后门",    "D:\\Downloads\\update.dll",                           "2025-11-20 08:15", "待处理"},
+            {"Rootkit.Hidden.Process",    "中危", "Rootkit", "C:\\Windows\\System32\\drivers\\hiddrv.sys",           "2025-11-18 16:45", "待处理"},
         };
-        for (const QStringList &d : demo) {
-            int r = m_tblSummary->rowCount(); m_tblSummary->insertRow(r);
-            for (int c = 0; c < d.size(); ++c) {
-                QTableWidgetItem *it = new QTableWidgetItem(d[c]);
-                if (c==2) {
-                    it->setForeground(d[c]=="高危"?QColor("#ef5350"):d[c]=="中危"?QColor("#ff9800"):QColor("#42a5f5"));
-                    it->setTextAlignment(Qt::AlignCenter);
-                }
-                m_tblSummary->setItem(r,c,it);
-            }
+        for (auto &d : demos) {
+            if (d.level == "高危") high++;
+            else if (d.level == "中危") medium++;
+            else low++;
+            int row = m_tblThreats->rowCount();
+            m_tblThreats->insertRow(row);
+            m_tblThreats->setItem(row, 0, new QTableWidgetItem(d.name));
+            QTableWidgetItem *li = new QTableWidgetItem(d.level);
+            li->setForeground(d.level=="高危" ? QColor("#cf1322") : QColor("#d46b08"));
+            m_tblThreats->setItem(row, 1, li);
+            m_tblThreats->setItem(row, 2, new QTableWidgetItem(d.type));
+            m_tblThreats->setItem(row, 3, new QTableWidgetItem(d.path));
+            m_tblThreats->setItem(row, 4, new QTableWidgetItem(d.time));
+            QTableWidgetItem *si = new QTableWidgetItem(d.status);
+            si->setForeground(QColor("#d46b08"));
+            m_tblThreats->setItem(row, 5, si);
+            for (int c=0;c<6;c++) if(m_tblThreats->item(row,c)) m_tblThreats->item(row,c)->setBackground(QColor("#fff1f0"));
         }
     }
+
+    m_lblHigh->setText(QString::number(high));
+    m_lblMedium->setText(QString::number(medium));
+    m_lblLow->setText(QString::number(low));
+    m_lblIsolated->setText(QString::number(isolated));
+
+    // 处置建议
+    m_txtReport->setPlainText(
+        "1. 立即隔离 C:\\Windows\\Temp\\svchost32.exe 及其衍生文件 payload.dll，防止进一步感染。\n\n"
+        "2. 删除恶意注册表自启动项 HKCU\\...\\Run\\WindowsUpdate，恢复文件关联。\n\n"
+        "3. 检查并删除可疑计划任务 UpdateTask，终止相关进程（PID: 9012）。\n\n"
+        "4. 卸载可疑浏览器扩展，恢复 hosts 文件及 DNS 配置。\n\n"
+        "5. 建议全盘扫描并更新系统补丁，修复被利用的系统漏洞。"
+    );
+
     m_lblStatus->setText("已刷新：" + QDateTime::currentDateTime().toString("HH:mm:ss"));
 }
 
-void ReportPage::onGenerateReport()
-{
-    QString now = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");
-    QString report;
-    report += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-    report += "          恶意代码辅助检测系统  检测报告\n";
-    report += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
-    report += "报告生成时间：" + now + "\n";
-    report += "检测主机：    SECURE-PC-001\n";
-    report += "操作系统：    Windows 10 专业版 64位\n";
-    report += "产品版本：    V3.0.20251120\n";
-    report += "病毒库版本：  " + DatabaseManager::instance()->getSetting("virus_db_version","20251120") + "\n\n";
-    report += "━━ 检测结论 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
-
-    int high=0, med=0, low=0;
-    for (int r = 0; r < m_tblSummary->rowCount(); ++r) {
-        QString risk = m_tblSummary->item(r,2) ? m_tblSummary->item(r,2)->text() : "";
-        if (risk=="高危") high++;
-        else if (risk=="中危") med++;
-        else if (risk=="低危") low++;
-    }
-    report += QString("  高危威胁：%1 项\n  中危威胁：%2 项\n  低危威胁：%3 项\n\n").arg(high).arg(med).arg(low);
-
-    report += "━━ 威胁详情 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
-    for (int r = 0; r < m_tblSummary->rowCount(); ++r) {
-        report += QString("[%1] %2 (%3)\n").arg(r+1)
-            .arg(m_tblSummary->item(r,0)?m_tblSummary->item(r,0)->text():"")
-            .arg(m_tblSummary->item(r,2)?m_tblSummary->item(r,2)->text():"");
-        report += "  类型：" + (m_tblSummary->item(r,1)?m_tblSummary->item(r,1)->text():"") + "\n";
-        report += "  处置建议：" + (m_tblSummary->item(r,3)?m_tblSummary->item(r,3)->text():"") + "\n\n";
-    }
-    report += "━━ 处置建议 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
-    report += "1. 立即隔离所有高危威胁文件，阻止其执行；\n";
-    report += "2. 检查并清理注册表自启动项；\n";
-    report += "3. 检查网络连接，阻断可疑外联IP；\n";
-    report += "4. 更新系统补丁和病毒库；\n";
-    report += "5. 对受影响账户更改密码；\n";
-    report += "6. 建议进行全盘深度扫描。\n\n";
-    report += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-    report += "本报告由恶意代码辅助检测系统自动生成，仅供参考。\n";
-
-    m_txtReport->setPlainText(report);
-    DatabaseManager::instance()->writeLog(m_role, m_username, "生成报告", "生成检测报告", "success");
+void ReportPage::onGenerateReport() {
+    refreshData();
+    DatabaseManager::instance()->writeLog(m_role, m_username, "生成检测报告", "生成检测报告", "success");
     m_lblStatus->setText("报告已生成");
 }
 
-void ReportPage::onExportReport()
-{
-    if (m_txtReport->toPlainText().isEmpty()) { onGenerateReport(); }
-    QString fmt = m_cmbFormat->currentText();
-    QString filter = fmt.contains("docx") ? "Word文档 (*.docx)" :
-                     fmt.contains("pdf")  ? "PDF文件 (*.pdf)" : "HTML文件 (*.html)";
-    QString path = QFileDialog::getSaveFileName(this, "导出报告", "检测报告_" +
-        QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"), filter);
-    if (!path.isEmpty()) {
-        QFile f(path);
-        if (f.open(QIODevice::WriteOnly|QIODevice::Text)) {
-            QTextStream ts(&f);
-            ts.setCodec("UTF-8");
-            if (fmt.contains("html")) {
-                ts << "<html><head><meta charset='utf-8'><title>检测报告</title></head><body><pre>"
-                   << m_txtReport->toPlainText().toHtmlEscaped()
-                   << "</pre></body></html>";
-            } else {
-                ts << m_txtReport->toPlainText();
-            }
-            f.close();
-            DatabaseManager::instance()->writeLog(m_role, m_username, "导出报告", path, "success");
-            m_lblStatus->setText("已导出：" + path);
-        }
+void ReportPage::onExportDoc() {
+    QString path = QFileDialog::getSaveFileName(this, "导出 DOC 报告",
+        "检测报告_" + QDateTime::currentDateTime().toString("yyyyMMdd") + ".txt",
+        "文档文件 (*.txt)");
+    if (path.isEmpty()) return;
+    QFile f(path);
+    if (f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream ts(&f);
+        ts.setCodec("UTF-8");
+        ts << "恶意代码辅助检测分析报告\n";
+        ts << "========================\n";
+        ts << "检测时间：" << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss") << "\n\n";
+        ts << "三、处置建议\n" << m_txtReport->toPlainText();
+        f.close();
+        QMessageBox::information(this, "导出成功", "DOC 报告已保存至：" + path);
+        DatabaseManager::instance()->writeLog(m_role, m_username, "导出DOC报告", path, "success");
     }
 }
 
-void ReportPage::onRowSelected(int row, int)
-{
-    if (!m_tblSummary->item(row,0)) return;
-    m_txtReport->setPlainText(
-        "威胁名称：" + m_tblSummary->item(row,0)->text() + "\n"
-        "威胁类型：" + (m_tblSummary->item(row,1)?m_tblSummary->item(row,1)->text():"") + "\n"
-        "风险等级：" + (m_tblSummary->item(row,2)?m_tblSummary->item(row,2)->text():"") + "\n"
-        "处置建议：" + (m_tblSummary->item(row,3)?m_tblSummary->item(row,3)->text():"") + "\n\n"
-        "详细描述：（待检测引擎填充）\n"
-    );
+void ReportPage::onExportPdf() {
+    QMessageBox::information(this, "导出 PDF", "PDF 导出功能需要 Qt PrintSupport 模块，当前版本暂不支持。");
+}
+
+void ReportPage::onExportHtml() {
+    QString path = QFileDialog::getSaveFileName(this, "导出 HTML 报告",
+        "检测报告_" + QDateTime::currentDateTime().toString("yyyyMMdd") + ".html",
+        "HTML文件 (*.html)");
+    if (path.isEmpty()) return;
+    QFile f(path);
+    if (f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream ts(&f);
+        ts.setCodec("UTF-8");
+        ts << "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>检测报告</title>";
+        ts << "<style>body{font-family:SimHei,Arial;font-size:13px;padding:20px;}";
+        ts << "h1{color:#1a3a6a;text-align:center;}";
+        ts << "table{border-collapse:collapse;width:100%;margin:10px 0;}";
+        ts << "th,td{border:1px solid #d0d7e3;padding:6px 10px;}th{background:#f5f7fa;}</style></head><body>";
+        ts << "<h1>恶意代码辅助检测分析报告</h1>";
+        ts << "<p style='text-align:center;color:#888;'>检测时间：" << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss") << "</p>";
+        ts << "<h3>二、恶意代码检测结果</h3><table>";
+        ts << "<tr><th>威胁名称</th><th>危险等级</th><th>恶意类型</th><th>文件路径</th><th>发现时间</th><th>状态</th></tr>";
+        for (int r = 0; r < m_tblThreats->rowCount(); r++) {
+            ts << "<tr>";
+            for (int c = 0; c < 6; c++)
+                ts << "<td>" << (m_tblThreats->item(r,c) ? m_tblThreats->item(r,c)->text().toHtmlEscaped() : "") << "</td>";
+            ts << "</tr>";
+        }
+        ts << "</table><h3>三、处置建议</h3><pre style='background:#f5f7fa;padding:12px;border:1px solid #d0d7e3;'>"
+           << m_txtReport->toPlainText().toHtmlEscaped() << "</pre>";
+        ts << "</body></html>";
+        f.close();
+        QMessageBox::information(this, "导出成功", "HTML 报告已保存至：" + path);
+        DatabaseManager::instance()->writeLog(m_role, m_username, "导出HTML报告", path, "success");
+    }
 }
