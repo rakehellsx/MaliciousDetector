@@ -154,12 +154,14 @@ void ReportPage::setupUi()
     QWidget *tabHost     = new QWidget; m_tabMain->addTab(tabHost,     "主机信息");
     QWidget *tabPreview  = new QWidget; m_tabMain->addTab(tabPreview,  "报告预览");
     QWidget *tabSchedule = new QWidget; m_tabMain->addTab(tabSchedule, "定时生成");
+    QWidget *tabHistory  = new QWidget; m_tabMain->addTab(tabHistory,  "报告历史");
 
     setupOverviewTab(tabOverview);
     setupThreatTab(tabThreat);
     setupHostTab(tabHost);
     setupPreviewTab(tabPreview);
     setupScheduleTab(tabSchedule);
+    setupHistoryTab(tabHistory);
 
     m_mainLayout->addWidget(m_tabMain, 1);
 }
@@ -381,12 +383,41 @@ void ReportPage::setupScheduleTab(QWidget *tab)
     m_cmbTimerMode->setEnabled(false);
     form->addRow("生成频率：", m_cmbTimerMode);
 
+    // 时/分 SpinBox
+    QHBoxLayout *timeLay = new QHBoxLayout;
     m_spnTimerHour = new QSpinBox;
     m_spnTimerHour->setRange(0, 23);
     m_spnTimerHour->setValue(8);
     m_spnTimerHour->setSuffix(" 时");
     m_spnTimerHour->setEnabled(false);
-    form->addRow("生成时刻：", m_spnTimerHour);
+    m_spnTimerMinute = new QSpinBox;
+    m_spnTimerMinute->setRange(0, 59);
+    m_spnTimerMinute->setValue(0);
+    m_spnTimerMinute->setSuffix(" 分");
+    m_spnTimerMinute->setEnabled(false);
+    timeLay->addWidget(m_spnTimerHour);
+    timeLay->addWidget(m_spnTimerMinute);
+    timeLay->addStretch();
+    form->addRow("生成时刻：", timeLay);
+
+    // 保存策略按钮
+    QPushButton *btnSave = new QPushButton("保存策略");
+    btnSave->setStyleSheet(
+        "QPushButton{background:#1a3a6a;color:#fff;border:none;border-radius:3px;"
+        "padding:5px 18px;font-size:12px;font-weight:600;}"
+        "QPushButton:hover{background:#0050b3;}");
+    connect(btnSave, &QPushButton::clicked, this, [this](){
+        QStringList modes = {"每天","每周一","每周五","每小时"};
+        QString mode = modes.value(m_cmbTimerMode->currentIndex(), "每天");
+        bool ok = DatabaseManager::instance()->saveReportSchedule(
+            m_chkTimerEnable->isChecked(), mode,
+            m_spnTimerHour->value(), m_spnTimerMinute->value(),
+            m_nextFireTime.isValid()
+                ? m_nextFireTime.toString("yyyy-MM-dd HH:mm:ss")
+                : QString());
+        m_lblTimerStatus->setText(ok ? "策略已保存到数据库" : "保存失败");
+    });
+    form->addRow(btnSave);
 
     m_lblNextTime = new QLabel("--");
     m_lblNextTime->setStyleSheet("font-size:12px;color:#1a3a6a;font-weight:600;");
@@ -397,18 +428,12 @@ void ReportPage::setupScheduleTab(QWidget *tab)
     form->addRow("状态：", m_lblTimerStatus);
 
     lay->addWidget(gb);
-
-    // 历史记录表
-    QGroupBox *gbHist = new QGroupBox("历史生成记录（最近 10 条）");
-    gbHist->setStyleSheet(gbStyle);
-    QVBoxLayout *histLay = new QVBoxLayout(gbHist);
-    QTableWidget *tblHist = makeTable({"生成时间","触发方式","报告编号","导出格式"});
-    tblHist->setObjectName("tblReportHistory");
-    tblHist->setMaximumHeight(200);
-    histLay->addWidget(tblHist);
-    lay->addWidget(gbHist);
     lay->addStretch();
+
+    // 启动时从 DB 恢复策略
+    restoreScheduleFromDb();
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 数据收集
@@ -1129,6 +1154,11 @@ void ReportPage::onGenerateReport()
     m_lblStatus->setText("报告已生成：" + m_lastData.reportTime);
     DatabaseManager::instance()->writeLog(m_role, m_username, "生成检测报告",
                                           m_lastData.reportId, "success");
+    // 写入历史库
+    saveToHistory(m_lastData,
+                  buildHtmlReport(m_lastData),
+                  buildRtfReport(m_lastData),
+                  "手动生成");
 }
 
 void ReportPage::onQueryThreats()
@@ -1200,36 +1230,43 @@ void ReportPage::onTimerToggle(bool checked)
 {
     m_cmbTimerMode->setEnabled(checked);
     m_spnTimerHour->setEnabled(checked);
+    if (m_spnTimerMinute) m_spnTimerMinute->setEnabled(checked);
     if (!checked) {
         m_timer->stop();
+        m_nextFireTime = QDateTime();
         m_lblNextTime->setText("--");
         m_lblTimerStatus->setText("定时生成未启用");
         return;
     }
-    QDateTime now  = QDateTime::currentDateTime();
-    QDateTime next = now;
-    int mode = m_cmbTimerMode->currentIndex();
-    int hour = m_spnTimerHour->value();
-    if (mode == 3) {
-        next = now.addSecs(3600 - now.time().second() - now.time().minute()*60);
-    } else {
-        next.setTime(QTime(hour, 0, 0));
-        if (next <= now) next = next.addDays(1);
-        if (mode == 1) { while (next.date().dayOfWeek() != 1) next = next.addDays(1); }
-        else if (mode == 2) { while (next.date().dayOfWeek() != 5) next = next.addDays(1); }
-    }
-    m_nextFireTime = next;
-    m_lblNextTime->setText(next.toString("yyyy-MM-dd HH:mm:ss"));
+    QStringList modes = {"每天","每周一","每周五","每小时"};
+    QString mode = modes.value(m_cmbTimerMode->currentIndex(), "每天");
+    int hour   = m_spnTimerHour->value();
+    int minute = m_spnTimerMinute ? m_spnTimerMinute->value() : 0;
+    m_nextFireTime = calcNextFire(mode, hour, minute);
+    m_lblNextTime->setText(m_nextFireTime.toString("yyyy-MM-dd HH:mm:ss"));
     m_lblTimerStatus->setText("定时生成已启用，等待触发...");
 
-    qint64 msecs = QDateTime::currentDateTime().msecsTo(next);
+    qint64 msecs = QDateTime::currentDateTime().msecsTo(m_nextFireTime);
     m_timer->setSingleShot(true);
     m_timer->start(static_cast<int>(qMin(msecs, (qint64)INT_MAX)));
 }
 
 void ReportPage::onTimerFired()
 {
-    onGenerateReport();
+    // 重新收集数据并生成报告
+    collectData(m_lastData);
+    m_dataReady = true;
+    fillOverview(m_lastData);
+    fillThreatTable(m_lastData);
+    fillHostTable(m_lastData);
+    buildPreview(m_lastData);
+
+    QString htmlContent = buildHtmlReport(m_lastData);
+    QString rtfContent  = buildRtfReport(m_lastData);
+
+    // 写入历史库（定时触发）
+    saveToHistory(m_lastData, htmlContent, rtfContent, "定时自动");
+
     // 自动导出 HTML 到用户目录
     QString path = QDir::homePath() + "/检测报告_" +
                    QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss") + ".html";
@@ -1237,10 +1274,303 @@ void ReportPage::onTimerFired()
     if (f.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QTextStream ts(&f);
         ts.setCodec("UTF-8");
-        ts << buildHtmlReport(m_lastData);
+        ts << htmlContent;
         f.close();
     }
+    m_lblStatus->setText("定时报告已生成：" + m_lastData.reportTime);
     m_lblTimerStatus->setText("已自动生成报告：" +
                               QDateTime::currentDateTime().toString("HH:mm:ss"));
+    DatabaseManager::instance()->writeLog(m_role, m_username, "定时生成检测报告",
+                                          m_lastData.reportId, "success");
+    // 重新设置下一次定时
     if (m_chkTimerEnable->isChecked()) onTimerToggle(true);
+}
+
+// ── 报告历史 Tab ──────────────────────────────────────────────────────────────
+void ReportPage::setupHistoryTab(QWidget *tab)
+{
+    QVBoxLayout *lay = new QVBoxLayout(tab);
+    lay->setContentsMargins(12,12,12,12);
+    lay->setSpacing(8);
+
+    QString gbStyle = "QGroupBox{font-weight:600;font-size:12px;border:1px solid #d0d7e3;"
+                      "border-radius:4px;margin-top:8px;padding-top:8px;}"
+                      "QGroupBox::title{subcontrol-origin:margin;left:8px;padding:0 4px;}";
+
+    // 工具栏
+    QHBoxLayout *bar = new QHBoxLayout;
+    bar->setSpacing(8);
+    auto makeBtn2 = [](const QString &text, const QString &bg) -> QPushButton* {
+        QPushButton *b = new QPushButton(text);
+        b->setFixedHeight(28);
+        b->setStyleSheet(QString(
+            "QPushButton{background:%1;color:#fff;border:none;border-radius:3px;"
+            "padding:4px 12px;font-size:12px;font-weight:600;}"
+            "QPushButton:hover{opacity:0.85;}").arg(bg));
+        return b;
+    };
+    m_btnExportHistHtml = makeBtn2("导出 HTML", "#0050b3");
+    m_btnExportHistDoc  = makeBtn2("导出 DOC",  "#434343");
+    m_btnExportHistPdf  = makeBtn2("导出 PDF",  "#003a8c");
+    m_btnDeleteHist     = makeBtn2("删除记录",  "#cf1322");
+    QPushButton *btnRefresh = makeBtn2("刷新列表", "#1a3a6a");
+
+    m_btnExportHistHtml->setEnabled(false);
+    m_btnExportHistDoc->setEnabled(false);
+    m_btnExportHistPdf->setEnabled(false);
+    m_btnDeleteHist->setEnabled(false);
+
+    connect(m_btnExportHistHtml, &QPushButton::clicked, this, &ReportPage::onExportHistoryHtml);
+    connect(m_btnExportHistDoc,  &QPushButton::clicked, this, &ReportPage::onExportHistoryDoc);
+    connect(m_btnExportHistPdf,  &QPushButton::clicked, this, &ReportPage::onExportHistoryPdf);
+    connect(m_btnDeleteHist,     &QPushButton::clicked, this, &ReportPage::onDeleteHistory);
+    connect(btnRefresh,          &QPushButton::clicked, this, &ReportPage::refreshHistory);
+
+    bar->addWidget(btnRefresh);
+    bar->addWidget(m_btnExportHistHtml);
+    bar->addWidget(m_btnExportHistDoc);
+    bar->addWidget(m_btnExportHistPdf);
+    bar->addWidget(m_btnDeleteHist);
+    bar->addStretch();
+    lay->addLayout(bar);
+
+    // 历史列表表格
+    m_tblHistory = makeTable({"ID","报告编号","生成时间","触发方式","主机名",
+                               "高危","中危","低危","安全"});
+    m_tblHistory->setSelectionMode(QAbstractItemView::SingleSelection);
+    connect(m_tblHistory, &QTableWidget::itemSelectionChanged,
+            this, &ReportPage::onHistorySelectionChanged);
+    lay->addWidget(m_tblHistory, 3);
+
+    // 选中记录详情
+    QGroupBox *gbDetail = new QGroupBox("选中报告摘要");
+    gbDetail->setStyleSheet(gbStyle);
+    QVBoxLayout *detLay = new QVBoxLayout(gbDetail);
+    m_lblHistDetail = new QLabel("请在列表中选择一条记录");
+    m_lblHistDetail->setStyleSheet("font-size:12px;color:#595959;padding:4px;");
+    m_lblHistDetail->setWordWrap(true);
+    detLay->addWidget(m_lblHistDetail);
+    lay->addWidget(gbDetail, 1);
+
+    // 初始加载
+    refreshHistory();
+}
+
+// ── 历史列表刷新 ──────────────────────────────────────────────────────────────
+void ReportPage::refreshHistory()
+{
+    if (!m_tblHistory) return;
+    auto rows = DatabaseManager::instance()->queryReportHistory(50);
+    m_tblHistory->setRowCount(0);
+    for (const QVariant &v : rows) {
+        QVariantMap m = v.toMap();
+        int row = m_tblHistory->rowCount();
+        m_tblHistory->insertRow(row);
+        auto setCell = [&](int col, const QString &text, Qt::Alignment align = Qt::AlignLeft | Qt::AlignVCenter) {
+            QTableWidgetItem *item = new QTableWidgetItem(text);
+            item->setTextAlignment(align);
+            m_tblHistory->setItem(row, col, item);
+        };
+        setCell(0, QString::number(m["id"].toInt()), Qt::AlignCenter | Qt::AlignVCenter);
+        setCell(1, m["report_id"].toString());
+        setCell(2, m["generate_time"].toString());
+        setCell(3, m["trigger_mode"].toString(), Qt::AlignCenter | Qt::AlignVCenter);
+        setCell(4, m["hostname"].toString());
+        // 风险数字带颜色
+        auto riskCell = [&](int col, const QString &key, const QString &color) {
+            QTableWidgetItem *item = new QTableWidgetItem(m[key].toString());
+            item->setTextAlignment(Qt::AlignCenter | Qt::AlignVCenter);
+            QFont f = item->font(); f.setBold(true); item->setFont(f);
+            item->setForeground(QColor(color));
+            m_tblHistory->setItem(row, col, item);
+        };
+        riskCell(5, "risk_high",   "#f5222d");
+        riskCell(6, "risk_medium", "#fa8c16");
+        riskCell(7, "risk_low",    "#1890ff");
+        riskCell(8, "risk_clean",  "#52c41a");
+    }
+    m_lblHistDetail->setText(rows.isEmpty()
+        ? "暂无历史报告记录，点击\"生成报告\"后将自动入库。"
+        : QString("共 %1 条历史报告，点击行可选中后导出或删除。").arg(rows.size()));
+}
+
+// ── 历史列表选中 ──────────────────────────────────────────────────────────────
+void ReportPage::onHistorySelectionChanged()
+{
+    int row = m_tblHistory->currentRow();
+    bool hasRow = (row >= 0);
+    m_btnExportHistHtml->setEnabled(hasRow);
+    m_btnExportHistDoc->setEnabled(hasRow);
+    m_btnExportHistPdf->setEnabled(hasRow);
+    m_btnDeleteHist->setEnabled(hasRow);
+    if (!hasRow) return;
+
+    int id = m_tblHistory->item(row, 0)->text().toInt();
+    QVariantMap rec = DatabaseManager::instance()->getReportHistoryById(id);
+    m_lblHistDetail->setText(
+        QString("报告编号：%1　生成时间：%2　触发方式：%3\n"
+                "主机：%4　高危：%5　中危：%6　低危：%7　安全：%8")
+        .arg(rec["report_id"].toString())
+        .arg(rec["generate_time"].toString())
+        .arg(rec["trigger_mode"].toString())
+        .arg(rec["hostname"].toString())
+        .arg(rec["risk_high"].toInt())
+        .arg(rec["risk_medium"].toInt())
+        .arg(rec["risk_low"].toInt())
+        .arg(rec["risk_clean"].toInt()));
+}
+
+// ── 历史导出 HTML ─────────────────────────────────────────────────────────────
+void ReportPage::onExportHistoryHtml()
+{
+    int row = m_tblHistory->currentRow();
+    if (row < 0) return;
+    int id = m_tblHistory->item(row, 0)->text().toInt();
+    QVariantMap rec = DatabaseManager::instance()->getReportHistoryById(id);
+    QString html = rec["html_content"].toString();
+    if (html.isEmpty()) { QMessageBox::warning(this,"提示","该记录无 HTML 内容"); return; }
+
+    QString path = QFileDialog::getSaveFileName(this, "导出历史 HTML 报告",
+        "历史报告_" + rec["report_id"].toString() + ".html",
+        "HTML 文件 (*.html)");
+    if (path.isEmpty()) return;
+    QFile f(path);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::critical(this,"错误","无法写入文件：" + path); return;
+    }
+    QTextStream ts(&f); ts.setCodec("UTF-8"); ts << html; f.close();
+    QMessageBox::information(this,"导出成功","HTML 报告已保存至：\n" + path);
+}
+
+// ── 历史导出 DOC ──────────────────────────────────────────────────────────────
+void ReportPage::onExportHistoryDoc()
+{
+    int row = m_tblHistory->currentRow();
+    if (row < 0) return;
+    int id = m_tblHistory->item(row, 0)->text().toInt();
+    QVariantMap rec = DatabaseManager::instance()->getReportHistoryById(id);
+    QString rtf = rec["rtf_content"].toString();
+    if (rtf.isEmpty()) { QMessageBox::warning(this,"提示","该记录无 RTF 内容"); return; }
+
+    QString path = QFileDialog::getSaveFileName(this, "导出历史 DOC 报告",
+        "历史报告_" + rec["report_id"].toString() + ".rtf",
+        "RTF 文档 (*.rtf);;Word 文档 (*.doc)");
+    if (path.isEmpty()) return;
+    QFile f(path);
+    if (!f.open(QIODevice::WriteOnly)) {
+        QMessageBox::critical(this,"错误","无法写入文件：" + path); return;
+    }
+    f.write(rtf.toLocal8Bit()); f.close();
+    QMessageBox::information(this,"导出成功","DOC/RTF 报告已保存至：\n" + path);
+}
+
+// ── 历史导出 PDF ──────────────────────────────────────────────────────────────
+void ReportPage::onExportHistoryPdf()
+{
+    int row = m_tblHistory->currentRow();
+    if (row < 0) return;
+    int id = m_tblHistory->item(row, 0)->text().toInt();
+    QVariantMap rec = DatabaseManager::instance()->getReportHistoryById(id);
+    QString html = rec["html_content"].toString();
+    if (html.isEmpty()) { QMessageBox::warning(this,"提示","该记录无 HTML 内容，无法导出 PDF"); return; }
+
+    QString path = QFileDialog::getSaveFileName(this, "导出历史 PDF 报告",
+        "历史报告_" + rec["report_id"].toString() + ".pdf",
+        "PDF 文件 (*.pdf)");
+    if (path.isEmpty()) return;
+
+    QPrinter printer(QPrinter::HighResolution);
+    printer.setOutputFormat(QPrinter::PdfFormat);
+    printer.setOutputFileName(path);
+    printer.setPageSize(QPrinter::A4);
+    printer.setPageMargins(15, 15, 15, 15, QPrinter::Millimeter);
+    QTextDocument doc;
+    doc.setDefaultFont(QFont("Microsoft YaHei", 10));
+    doc.setHtml(html);
+    doc.print(&printer);
+    QMessageBox::information(this,"导出成功","PDF 报告已保存至：\n" + path);
+}
+
+// ── 删除历史记录 ──────────────────────────────────────────────────────────────
+void ReportPage::onDeleteHistory()
+{
+    int row = m_tblHistory->currentRow();
+    if (row < 0) return;
+    int id = m_tblHistory->item(row, 0)->text().toInt();
+    QString reportId = m_tblHistory->item(row, 1)->text();
+    if (QMessageBox::question(this, "确认删除",
+            QString("确认删除报告 %1？\n此操作不可恢复。").arg(reportId),
+            QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) return;
+    DatabaseManager::instance()->deleteReportHistory(id);
+    refreshHistory();
+}
+
+// ── 保存报告到历史库 ──────────────────────────────────────────────────────────
+void ReportPage::saveToHistory(const ReportData &d,
+                                const QString &htmlContent,
+                                const QString &rtfContent,
+                                const QString &triggerMode)
+{
+    DatabaseManager::instance()->insertReportHistory(
+        d.reportId, d.reportTime, triggerMode,
+        d.hostname.isEmpty() ? "未知" : d.hostname,
+        d.totalHigh, d.totalMedium, d.totalLow, d.totalClean,
+        htmlContent, rtfContent);
+    // 刷新历史列表（如果已初始化）
+    if (m_tblHistory) refreshHistory();
+}
+
+// ── 从 DB 恢复定时策略 ────────────────────────────────────────────────────────
+void ReportPage::restoreScheduleFromDb()
+{
+    QVariantMap cfg = DatabaseManager::instance()->queryReportSchedule();
+    if (cfg.isEmpty()) return;
+
+    bool enabled = cfg["enabled"].toInt() == 1;
+    QString mode = cfg["mode"].toString();
+    int hour   = cfg["hour"].toInt();
+    int minute = cfg["minute"].toInt();
+
+    // 恢复 UI 状态（先 blockSignals 避免触发 onTimerToggle）
+    m_chkTimerEnable->blockSignals(true);
+    m_chkTimerEnable->setChecked(enabled);
+    m_chkTimerEnable->blockSignals(false);
+
+    QStringList modes = {"每天","每周一","每周五","每小时"};
+    int modeIdx = modes.indexOf(mode);
+    if (modeIdx < 0) modeIdx = 0;
+    m_cmbTimerMode->setCurrentIndex(modeIdx);
+    m_spnTimerHour->setValue(hour);
+    m_spnTimerMinute->setValue(minute);
+
+    if (enabled) {
+        m_cmbTimerMode->setEnabled(true);
+        m_spnTimerHour->setEnabled(true);
+        m_spnTimerMinute->setEnabled(true);
+        // 重新计算下次触发时间
+        m_nextFireTime = calcNextFire(mode, hour, minute);
+        m_lblNextTime->setText(m_nextFireTime.toString("yyyy-MM-dd HH:mm:ss"));
+        m_lblTimerStatus->setText("定时生成已启用（从数据库恢复）");
+        qint64 msecs = QDateTime::currentDateTime().msecsTo(m_nextFireTime);
+        if (msecs > 0) {
+            m_timer->setSingleShot(true);
+            m_timer->start(static_cast<int>(qMin(msecs, (qint64)INT_MAX)));
+        }
+    }
+}
+
+// ── 计算下次触发时间 ──────────────────────────────────────────────────────────
+QDateTime ReportPage::calcNextFire(const QString &mode, int hour, int minute)
+{
+    QDateTime now  = QDateTime::currentDateTime();
+    QDateTime next = now;
+    if (mode == "每小时") {
+        next = now.addSecs(3600 - now.time().second() - now.time().minute()*60);
+    } else {
+        next.setTime(QTime(hour, minute, 0));
+        if (next <= now) next = next.addDays(1);
+        if (mode == "每周一") { while (next.date().dayOfWeek() != 1) next = next.addDays(1); }
+        else if (mode == "每周五") { while (next.date().dayOfWeek() != 5) next = next.addDays(1); }
+    }
+    return next;
 }

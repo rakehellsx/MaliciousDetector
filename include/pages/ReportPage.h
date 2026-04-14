@@ -32,6 +32,13 @@ private slots:
     void onQueryThreats();
     void onTimerToggle(bool checked);
     void onTimerFired();
+    // 历史列表
+    void onHistorySelectionChanged();
+    void onExportHistoryHtml();
+    void onExportHistoryDoc();
+    void onExportHistoryPdf();
+    void onDeleteHistory();
+    void refreshHistory();
 
 private:
     void setupUi();
@@ -40,6 +47,7 @@ private:
     void setupHostTab(QWidget *tab);
     void setupPreviewTab(QWidget *tab);
     void setupScheduleTab(QWidget *tab);
+    void setupHistoryTab(QWidget *tab);   // 新增：报告历史 Tab
 
     // ── 报告数据结构 ──────────────────────────────────────────────────────
     struct ThreatItem {
@@ -67,6 +75,15 @@ private:
     void buildPreview(const ReportData &d);
     QString buildHtmlReport(const ReportData &d);
     QString buildRtfReport(const ReportData &d);
+    // 将生成的报告写入历史库
+    void saveToHistory(const ReportData &d,
+                       const QString &htmlContent,
+                       const QString &rtfContent,
+                       const QString &triggerMode);
+    // 从 DB 恢复定时器
+    void restoreScheduleFromDb();
+    // 计算下次触发时间
+    QDateTime calcNextFire(const QString &mode, int hour, int minute);
     // escHtml 在 cpp 中定义为 static 自由函数，无需成员声明
 
     // ── 概览 Tab ──────────────────────────────────────────────────────────
@@ -103,10 +120,19 @@ private:
     QCheckBox    *m_chkTimerEnable{nullptr};
     QComboBox    *m_cmbTimerMode{nullptr};
     QSpinBox     *m_spnTimerHour{nullptr};
+    QSpinBox     *m_spnTimerMinute{nullptr};
     QLabel       *m_lblNextTime{nullptr};
     QLabel       *m_lblTimerStatus{nullptr};
     QTimer       *m_timer{nullptr};
     QDateTime     m_nextFireTime;
+
+    // ── 报告历史 Tab ──────────────────────────────────────────────────────
+    QTableWidget *m_tblHistory{nullptr};
+    QPushButton  *m_btnExportHistHtml{nullptr};
+    QPushButton  *m_btnExportHistDoc{nullptr};
+    QPushButton  *m_btnExportHistPdf{nullptr};
+    QPushButton  *m_btnDeleteHist{nullptr};
+    QLabel       *m_lblHistDetail{nullptr};
 
     // ── 操作按钮 ──────────────────────────────────────────────────────────
     QPushButton  *m_btnGenerate{nullptr};

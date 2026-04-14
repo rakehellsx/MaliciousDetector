@@ -376,6 +376,35 @@ bool DatabaseManager::createTables()
         created_at  TEXT DEFAULT (datetime('now','localtime'))
     ))");
 
+    // 报告定时策略表
+    q.exec(R"(CREATE TABLE IF NOT EXISTS report_schedule (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        enabled     INTEGER NOT NULL DEFAULT 0,
+        mode        TEXT    NOT NULL DEFAULT 'daily',
+        hour        INTEGER NOT NULL DEFAULT 8,
+        minute      INTEGER NOT NULL DEFAULT 0,
+        next_fire   TEXT,
+        updated_at  TEXT DEFAULT (datetime('now','localtime'))
+    ))");
+    // 确保至少有一条默认策略记录
+    q.exec("INSERT OR IGNORE INTO report_schedule(id,enabled,mode,hour,minute) VALUES(1,0,'daily',8,0)");
+
+    // 报告历史列表表
+    q.exec(R"(CREATE TABLE IF NOT EXISTS report_history (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        report_id     TEXT NOT NULL,
+        generate_time TEXT NOT NULL,
+        trigger_mode  TEXT NOT NULL DEFAULT 'manual',
+        hostname      TEXT,
+        risk_high     INTEGER DEFAULT 0,
+        risk_medium   INTEGER DEFAULT 0,
+        risk_low      INTEGER DEFAULT 0,
+        risk_clean    INTEGER DEFAULT 0,
+        html_content  TEXT,
+        rtf_content   TEXT,
+        created_at    TEXT DEFAULT (datetime('now','localtime'))
+    ))");
+
     // 默认设置
     QSqlQuery sq(m_db);
     sq.prepare("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)");
@@ -1124,4 +1153,90 @@ QVariantList DatabaseManager::queryRecentAlerts(int limit)
         "SELECT file_name as name, risk_level, scan_time as time, '待处置' as status "
         "FROM static_scan WHERE risk_level IN ('high','medium') "
         "ORDER BY scan_time DESC LIMIT ?", {limit});
+}
+
+// ── 报告定时策略 ──────────────────────────────────────────────────────────────
+
+QVariantMap DatabaseManager::queryReportSchedule()
+{
+    return execSelectOne("SELECT id,enabled,mode,hour,minute,next_fire,updated_at FROM report_schedule WHERE id=1");
+}
+
+bool DatabaseManager::saveReportSchedule(bool enabled, const QString &mode,
+                                          int hour, int minute,
+                                          const QString &nextFire)
+{
+    QSqlQuery q(m_db);
+    q.prepare("UPDATE report_schedule SET enabled=?,mode=?,hour=?,minute=?,next_fire=?,"
+              "updated_at=datetime('now','localtime') WHERE id=1");
+    q.addBindValue(enabled ? 1 : 0);
+    q.addBindValue(mode);
+    q.addBindValue(hour);
+    q.addBindValue(minute);
+    q.addBindValue(nextFire.isEmpty() ? QVariant(QVariant::String) : QVariant(nextFire));
+    if (!q.exec()) {
+        m_lastError = q.lastError().text();
+        return false;
+    }
+    return true;
+}
+
+// ── 报告历史列表 ──────────────────────────────────────────────────────────────
+
+QVariantList DatabaseManager::queryReportHistory(int limit)
+{
+    return execSelect(
+        "SELECT id,report_id,generate_time,trigger_mode,hostname,"
+        "risk_high,risk_medium,risk_low,risk_clean,created_at "
+        "FROM report_history ORDER BY id DESC LIMIT ?", {limit});
+}
+
+bool DatabaseManager::insertReportHistory(const QString &reportId,
+                                           const QString &generateTime,
+                                           const QString &triggerMode,
+                                           const QString &hostname,
+                                           int riskHigh, int riskMedium,
+                                           int riskLow, int riskClean,
+                                           const QString &htmlContent,
+                                           const QString &rtfContent)
+{
+    QSqlQuery q(m_db);
+    q.prepare("INSERT INTO report_history(report_id,generate_time,trigger_mode,hostname,"
+              "risk_high,risk_medium,risk_low,risk_clean,html_content,rtf_content) "
+              "VALUES(?,?,?,?,?,?,?,?,?,?)");
+    q.addBindValue(reportId);
+    q.addBindValue(generateTime);
+    q.addBindValue(triggerMode);
+    q.addBindValue(hostname);
+    q.addBindValue(riskHigh);
+    q.addBindValue(riskMedium);
+    q.addBindValue(riskLow);
+    q.addBindValue(riskClean);
+    q.addBindValue(htmlContent);
+    q.addBindValue(rtfContent);
+    if (!q.exec()) {
+        m_lastError = q.lastError().text();
+        return false;
+    }
+    return true;
+}
+
+bool DatabaseManager::deleteReportHistory(int id)
+{
+    QSqlQuery q(m_db);
+    q.prepare("DELETE FROM report_history WHERE id=?");
+    q.addBindValue(id);
+    if (!q.exec()) {
+        m_lastError = q.lastError().text();
+        return false;
+    }
+    return true;
+}
+
+QVariantMap DatabaseManager::getReportHistoryById(int id)
+{
+    return execSelectOne(
+        "SELECT id,report_id,generate_time,trigger_mode,hostname,"
+        "risk_high,risk_medium,risk_low,risk_clean,html_content,rtf_content,created_at "
+        "FROM report_history WHERE id=?", {id});
 }

@@ -113,7 +113,27 @@ public:
     QVariantMap  queryReportSummary();         // 高危/中危/低危/已隔离 统计
     QVariantList queryReportThreats();         // 威胁列表（用于报告展示）
 
-    // ── Dashboard ───────────────────────────────────────────────────────────
+    // ── 报告定时策略 (report_schedule) ──────────────────────────────────────────────
+    QVariantMap  queryReportSchedule();                  // 读取策略配置
+    bool         saveReportSchedule(bool enabled,
+                                    const QString &mode,
+                                    int hour, int minute,
+                                    const QString &nextFire = QString()); // 保存策略
+
+    // ── 报告历史 (report_history) ─────────────────────────────────────────────────────
+    QVariantList queryReportHistory(int limit = 50);     // 查询历史列表
+    bool         insertReportHistory(const QString &reportId,
+                                     const QString &generateTime,
+                                     const QString &triggerMode,
+                                     const QString &hostname,
+                                     int riskHigh, int riskMedium,
+                                     int riskLow, int riskClean,
+                                     const QString &htmlContent,
+                                     const QString &rtfContent);  // 写入历史
+    bool         deleteReportHistory(int id);            // 删除单条历史
+    QVariantMap  getReportHistoryById(int id);           // 按 id 获取完整内容
+
+    // ── Dashboard ───────────────────────────────────────────────────────────────────
     QVariantMap  queryDashboardStats();        // 统计数字（高危/中危/低危/保护天数/病毒库版本）
     QVariantList queryRecentAlerts(int limit = 5); // 最近告警
 
