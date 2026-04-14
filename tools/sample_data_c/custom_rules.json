@@ -1,0 +1,31 @@
+[{
+		"name":	"YARA_RULE_001",
+		"rule_type":	"YARA",
+		"pattern":	"rule TrojanGeneric { strings: $a = \"CreateRemoteThread\" condition: $a }",
+		"description":	"疑似远控木马特征",
+		"enabled":	1
+	}, {
+		"name":	"YARA_RULE_002",
+		"rule_type":	"YARA",
+		"pattern":	"rule ProcessInjection { strings: $a = \"VirtualAllocEx\" $b = \"WriteProcessMemory\" condition: $a and $b }",
+		"description":	"进程注入特征",
+		"enabled":	1
+	}, {
+		"name":	"YARA_RULE_003",
+		"rule_type":	"YARA",
+		"pattern":	"rule Adware { strings: $a = \"WinInet\" $b = \"HttpSendRequest\" condition: $a and $b }",
+		"description":	"广告软件特征",
+		"enabled":	1
+	}, {
+		"name":	"YARA_RULE_004",
+		"rule_type":	"YARA",
+		"pattern":	"rule Ransomware { strings: $a = \"CryptEncrypt\" $b = \"FindFirstFile\" condition: $a and $b }",
+		"description":	"勒索软件特征",
+		"enabled":	1
+	}, {
+		"name":	"MD5_BLACKLIST_001",
+		"rule_type":	"MD5黑名单",
+		"pattern":	"e3b0c44298fc1c149afbf4c8996fb924",
+		"description":	"已知恶意文件MD5",
+		"enabled":	1
+	}]

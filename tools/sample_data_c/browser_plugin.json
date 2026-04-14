@@ -1,0 +1,57 @@
+[{
+		"browser":	"Chrome",
+		"name":	"Google Docs Offline",
+		"version":	"1.65.0",
+		"publisher":	"Google LLC",
+		"status":	"已启用",
+		"risk":	"正常"
+	}, {
+		"browser":	"Chrome",
+		"name":	"AdBlock",
+		"version":	"5.18.0",
+		"publisher":	"AdBlock",
+		"status":	"已启用",
+		"risk":	"正常"
+	}, {
+		"browser":	"Chrome",
+		"name":	"Unknown Extension",
+		"version":	"0.1.0",
+		"publisher":	"Unknown",
+		"status":	"已启用",
+		"risk":	"高危"
+	}, {
+		"browser":	"Edge",
+		"name":	"Microsoft Editor",
+		"version":	"3.0.14",
+		"publisher":	"Microsoft Corporation",
+		"status":	"已启用",
+		"risk":	"正常"
+	}, {
+		"browser":	"Edge",
+		"name":	"Shopping Helper",
+		"version":	"2.3.1",
+		"publisher":	"Unknown",
+		"status":	"已禁用",
+		"risk":	"中危"
+	}, {
+		"browser":	"Firefox",
+		"name":	"uBlock Origin",
+		"version":	"1.56.0",
+		"publisher":	"Raymond Hill",
+		"status":	"已启用",
+		"risk":	"正常"
+	}, {
+		"browser":	"Firefox",
+		"name":	"Tampermonkey",
+		"version":	"5.0.0",
+		"publisher":	"Jan Biniok",
+		"status":	"已启用",
+		"risk":	"正常"
+	}, {
+		"browser":	"IE",
+		"name":	"Adobe Flash Player",
+		"version":	"32.0.0",
+		"publisher":	"Adobe Inc.",
+		"status":	"已禁用",
+		"risk":	"中危"
+	}]

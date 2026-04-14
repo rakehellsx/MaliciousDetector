@@ -1,0 +1,49 @@
+[{
+		"name":	"MicrosoftEdgeUpdateTaskMachineCore",
+		"path":	"\\Microsoft\\EdgeUpdate\\",
+		"trigger":	"每天 09:00",
+		"action":	"C:\\Program Files (x86)\\Microsoft\\EdgeUpdate\\MicrosoftEdgeUpdate.exe /c",
+		"status":	"就绪",
+		"last_run":	"2026-04-10 05:31:05",
+		"risk":	"正常"
+	}, {
+		"name":	"WindowsDefenderScheduledScan",
+		"path":	"\\Microsoft\\Windows Defender\\",
+		"trigger":	"每周日 02:00",
+		"action":	"C:\\Program Files\\Windows Defender\\MpCmdRun.exe -Scan -ScanType 2",
+		"status":	"就绪",
+		"last_run":	"2026-04-11 15:25:43",
+		"risk":	"正常"
+	}, {
+		"name":	"GoogleUpdateTaskMachineCore",
+		"path":	"\\GoogleUpdate\\",
+		"trigger":	"每天 08:00",
+		"action":	"C:\\Program Files (x86)\\Google\\Update\\GoogleUpdate.exe /c",
+		"status":	"就绪",
+		"last_run":	"2026-04-11 14:20:10",
+		"risk":	"正常"
+	}, {
+		"name":	"SysMonitor",
+		"path":	"\\Custom\\",
+		"trigger":	"系统启动时",
+		"action":	"C:\\Windows\\Temp\\svchost32.exe --monitor",
+		"status":	"运行中",
+		"last_run":	"2026-04-13 04:46:47",
+		"risk":	"高危"
+	}, {
+		"name":	"BackupTask",
+		"path":	"\\Custom\\",
+		"trigger":	"每天 23:00",
+		"action":	"C:\\Users\\Admin\\AppData\\Roaming\\backup.bat",
+		"status":	"就绪",
+		"last_run":	"2026-04-13 16:35:51",
+		"risk":	"中危"
+	}, {
+		"name":	"WindowsUpdateCheck",
+		"path":	"\\Microsoft\\Windows\\UpdateOrchestrator\\",
+		"trigger":	"每天 03:00",
+		"action":	"C:\\Windows\\System32\\UsoClient.exe StartScan",
+		"status":	"就绪",
+		"last_run":	"2026-04-11 16:36:44",
+		"risk":	"正常"
+	}]

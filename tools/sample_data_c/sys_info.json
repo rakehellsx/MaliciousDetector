@@ -1,0 +1,58 @@
+[{
+		"key":	"操作系统",
+		"value":	"Windows 10 专业版 64位 (10.0.19045)"
+	}, {
+		"key":	"计算机名称",
+		"value":	"WORKSTATION-01"
+	}, {
+		"key":	"用户名",
+		"value":	"Administrator"
+	}, {
+		"key":	"CPU型号",
+		"value":	"Intel(R) Core(TM) i7-10700 CPU @ 2.90GHz"
+	}, {
+		"key":	"CPU核心数",
+		"value":	"8核16线程"
+	}, {
+		"key":	"内存大小",
+		"value":	"16 GB"
+	}, {
+		"key":	"系统盘",
+		"value":	"C:\\ (SSD 512GB)"
+	}, {
+		"key":	"系统目录",
+		"value":	"C:\\Windows\\System32"
+	}, {
+		"key":	"BIOS版本",
+		"value":	"American Megatrends Inc. F.20, 2023-06-15"
+	}, {
+		"key":	"主板型号",
+		"value":	"ASUS PRIME Z490-A"
+	}, {
+		"key":	"防火墙状态",
+		"value":	"已启用"
+	}, {
+		"key":	"UAC状态",
+		"value":	"已启用"
+	}, {
+		"key":	"自动更新",
+		"value":	"已启用"
+	}, {
+		"key":	"时区",
+		"value":	"UTC+8 (中国标准时间)"
+	}, {
+		"key":	".NET版本",
+		"value":	"4.8.04084"
+	}, {
+		"key":	"PowerShell版本",
+		"value":	"5.1.19041.4648"
+	}, {
+		"key":	"启动时间",
+		"value":	"2026-04-13 15:28:03"
+	}, {
+		"key":	"系统安装日期",
+		"value":	"2025-05-22"
+	}, {
+		"key":	"序列号",
+		"value":	"SN161884"
+	}]

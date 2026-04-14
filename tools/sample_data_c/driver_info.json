@@ -1,0 +1,65 @@
+[{
+		"name":	"ntfs.sys",
+		"type":	"内核驱动",
+		"publisher":	"Microsoft Corporation",
+		"modified_time":	"2025-10-18",
+		"path":	"C:\\Windows\\System32\\drivers\\ntfs.sys",
+		"is_signed":	1,
+		"risk":	"正常"
+	}, {
+		"name":	"tcpip.sys",
+		"type":	"内核驱动",
+		"publisher":	"Microsoft Corporation",
+		"modified_time":	"2026-02-14",
+		"path":	"C:\\Windows\\System32\\drivers\\tcpip.sys",
+		"is_signed":	1,
+		"risk":	"正常"
+	}, {
+		"name":	"ndis.sys",
+		"type":	"内核驱动",
+		"publisher":	"Microsoft Corporation",
+		"modified_time":	"2026-03-28",
+		"path":	"C:\\Windows\\System32\\drivers\\ndis.sys",
+		"is_signed":	1,
+		"risk":	"正常"
+	}, {
+		"name":	"nvlddmkm.sys",
+		"type":	"设备驱动",
+		"publisher":	"NVIDIA Corporation",
+		"modified_time":	"2026-01-17",
+		"path":	"C:\\Windows\\System32\\drivers\\nvlddmkm.sys",
+		"is_signed":	1,
+		"risk":	"正常"
+	}, {
+		"name":	"360AntiHacker64.sys",
+		"type":	"第三方",
+		"publisher":	"360 Software",
+		"modified_time":	"2026-03-22",
+		"path":	"C:\\Program Files\\360\\360Safe\\deepscan\\360AntiHacker64.sys",
+		"is_signed":	1,
+		"risk":	"正常"
+	}, {
+		"name":	"rootkit.sys",
+		"type":	"内核驱动",
+		"publisher":	"",
+		"modified_time":	"2026-04-12",
+		"path":	"C:\\Windows\\Temp\\rootkit.sys",
+		"is_signed":	0,
+		"risk":	"高危"
+	}, {
+		"name":	"hookdrv.sys",
+		"type":	"第三方",
+		"publisher":	"Unknown",
+		"modified_time":	"2026-03-31",
+		"path":	"C:\\Windows\\System32\\drivers\\hookdrv.sys",
+		"is_signed":	0,
+		"risk":	"中危"
+	}, {
+		"name":	"WdFilter.sys",
+		"type":	"内核驱动",
+		"publisher":	"Microsoft Corporation",
+		"modified_time":	"2026-02-19",
+		"path":	"C:\\Windows\\System32\\drivers\\wd\\WdFilter.sys",
+		"is_signed":	1,
+		"risk":	"正常"
+	}]

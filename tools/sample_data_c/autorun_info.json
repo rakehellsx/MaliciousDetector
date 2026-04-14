@@ -1,0 +1,73 @@
+[{
+		"type":	"reg",
+		"name":	"SecurityHealth",
+		"reg_path":	"HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
+		"value":	"SecurityHealth",
+		"cmd":	"C:\\Windows\\System32\\SecurityHealthSystray.exe",
+		"publisher":	"Microsoft Corporation",
+		"risk":	"正常"
+	}, {
+		"type":	"reg",
+		"name":	"OneDrive",
+		"reg_path":	"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
+		"value":	"OneDrive",
+		"cmd":	"C:\\Users\\Admin\\AppData\\Local\\Microsoft\\OneDrive\\OneDrive.exe /background",
+		"publisher":	"Microsoft Corporation",
+		"risk":	"正常"
+	}, {
+		"type":	"reg",
+		"name":	"Updater",
+		"reg_path":	"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
+		"value":	"Updater",
+		"cmd":	"C:\\Users\\Admin\\AppData\\Roaming\\update.exe --silent",
+		"publisher":	"Unknown",
+		"risk":	"高危"
+	}, {
+		"type":	"reg",
+		"name":	"SvcHelper",
+		"reg_path":	"HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
+		"value":	"SvcHelper",
+		"cmd":	"C:\\Windows\\Temp\\svchost32.exe -k netsvcs",
+		"publisher":	"",
+		"risk":	"高危"
+	}, {
+		"type":	"folder",
+		"name":	"TeamViewer.lnk",
+		"reg_path":	"C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Startup",
+		"value":	"",
+		"cmd":	"C:\\Program Files\\TeamViewer\\TeamViewer.exe",
+		"publisher":	"TeamViewer GmbH",
+		"risk":	"正常"
+	}, {
+		"type":	"folder",
+		"name":	"malware.lnk",
+		"reg_path":	"C:\\Users\\Admin\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup",
+		"value":	"",
+		"cmd":	"C:\\Users\\Admin\\AppData\\Local\\Temp\\malware.exe",
+		"publisher":	"",
+		"risk":	"高危"
+	}, {
+		"type":	"menu",
+		"name":	"7-Zip",
+		"reg_path":	"HKCR\\*\\shellex\\ContextMenuHandlers\\7-Zip",
+		"value":	"",
+		"cmd":	"C:\\Program Files\\7-Zip\\7-zip.dll",
+		"publisher":	"Igor Pavlov",
+		"risk":	"正常"
+	}, {
+		"type":	"menu",
+		"name":	"ShellExt",
+		"reg_path":	"HKCR\\*\\shellex\\ContextMenuHandlers\\ShellExt",
+		"value":	"",
+		"cmd":	"C:\\Windows\\Temp\\shellext.dll",
+		"publisher":	"",
+		"risk":	"中危"
+	}, {
+		"type":	"debugger",
+		"name":	"notepad.exe",
+		"reg_path":	"HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\notepad.exe",
+		"value":	"Debugger",
+		"cmd":	"C:\\Windows\\Temp\\svchost32.exe",
+		"publisher":	"",
+		"risk":	"高危"
+	}]
