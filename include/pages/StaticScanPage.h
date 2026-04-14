@@ -6,23 +6,32 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QTableWidget>
+#include <QTreeWidget>
 #include <QTextEdit>
 #include <QTabWidget>
 #include <QLabel>
 #include <QPushButton>
 #include <QGroupBox>
 #include <QSplitter>
+#include <QFrame>
+#include <QScrollArea>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QGridLayout>
 
 /**
- * StaticScanPage - 静态检测模块
+ * StaticScanPage - 静态检测模块（图形化版本）
  *
  * 布局（水平 Splitter）：
- *   左侧：文件列表（QListWidget）+ 添加/删除按钮
+ *   左侧：文件列表（QListWidget）+ 操作按钮
  *   右侧：垂直 Splitter
- *     上方：基本属性面板（文件名/大小/类型/MD5/SHA256/风险等级/病毒检测）
- *     下方：详情 Tab（PE结构 | 字符串提取 | 规则命中 | 数字证书 | 综合结论）
- *
- * 数字证书检测已合并为本模块的一个 Tab，不再独立显示。
+ *     上方：基本属性面板
+ *     下方：详情 Tab（图形化）
+ *       Tab1 PE 结构    → QTreeWidget 树形展示（节头/导入表/导出表/节区）
+ *       Tab2 字符串提取 → QTableWidget 表格（偏移/类型/内容）
+ *       Tab3 规则命中   → QTableWidget 表格（规则名/类型/命中内容/风险）
+ *       Tab4 数字证书   → 卡片式表单 + 状态徽章
+ *       Tab5 综合结论   → 风险评级卡片 + 结论文本
  */
 class StaticScanPage : public BasePage {
     Q_OBJECT
@@ -40,10 +49,29 @@ private slots:
 private:
     void setupUi();
     void setupAttrPanel(QWidget *parent);
+
+    // Tab 构建函数
+    QWidget *buildPeTab();
+    QWidget *buildStringsTab();
+    QWidget *buildRulesTab();
+    QWidget *buildCertTab();
+    QWidget *buildConclusionTab();
+
+    // 数据填充函数
     void loadFileDetail(int staticId, const QString &filePath);
+    void fillPeTab(const QString &peInfoJson);
+    void fillStringsTab(const QString &stringsJson);
+    void fillRulesTab(const QString &rulesJson);
+    void fillCertTab(const QString &filePath);
+    void fillConclusionTab(const QString &risk, const QString &virusName,
+                           const QString &conclusion);
     void clearDetail();
     void addFileToList(const QString &path);
     void populateFileList();
+
+    // 辅助：创建带颜色的徽章标签
+    static QLabel *makeBadge(const QString &text, const QString &bg,
+                              const QString &fg = "#fff", QWidget *parent = nullptr);
 
     // ── 左侧文件列表区 ──────────────────────────────────────
     QListWidget  *m_fileList;
@@ -67,12 +95,37 @@ private:
     QLabel *m_attrVirusName;    // 病毒名称（威胁时显示）
 
     // ── 右侧下方：详情 Tab ──────────────────────────────────
-    QTabWidget *m_tabDetail;
-    QTextEdit  *m_txtPeInfo;
-    QTextEdit  *m_txtStrings;
-    QTextEdit  *m_txtRules;
-    QTextEdit  *m_txtCert;      // 数字证书 Tab
-    QTextEdit  *m_txtConclusion;
+    QTabWidget   *m_tabDetail;
+
+    // Tab1: PE 结构 - QTreeWidget
+    QTreeWidget  *m_treePe;
+
+    // Tab2: 字符串提取 - QTableWidget
+    QTableWidget *m_tblStrings;
+
+    // Tab3: 规则命中 - QTableWidget
+    QTableWidget *m_tblRules;
+
+    // Tab4: 数字证书 - 卡片控件
+    QLabel *m_certStatusBadge;
+    QLabel *m_certSignedBadge;
+    QLabel *m_certExpiredBadge;
+    QLabel *m_certTamperedBadge;
+    QLabel *m_certSubject;
+    QLabel *m_certIssuer;
+    QLabel *m_certSerial;
+    QLabel *m_certNotBefore;
+    QLabel *m_certNotAfter;
+    QLabel *m_certHashAlg;
+    QLabel *m_certThumbprint;
+    QLabel *m_certVerifyResult;
+
+    // Tab5: 综合结论 - 卡片 + 文本
+    QLabel    *m_concRiskCard;
+    QLabel    *m_concRiskIcon;
+    QLabel    *m_concRiskText;
+    QLabel    *m_concVirusName;
+    QTextEdit *m_concText;
 };
 
 #endif // STATICSCANPAGE_H

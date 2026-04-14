@@ -1,26 +1,24 @@
 #include "pages/StaticScanPage.h"
 #include "DatabaseManager.h"
-#include <QHBoxLayout>
-#include <QVBoxLayout>
-#include <QSplitter>
-#include <QFileDialog>
-#include <QSqlQuery>
 #include <QSqlDatabase>
-#include <QGroupBox>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QHeaderView>
 #include <QFormLayout>
-#include <QFrame>
-#include <QFileInfo>
-#include <QDateTime>
-#include <QMessageBox>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QJsonValue>
+#include <QFont>
+#include <QScrollArea>
+#include <QSizePolicy>
+#include <QGroupBox>
+#include <QFrame>
+#include <QDateTime>
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 辅助：创建属性行标签（左侧 key，右侧 value）
-// ─────────────────────────────────────────────────────────────────────────────
-static QLabel* makeAttrValue(const QString &placeholder = "--")
+static QLabel *makeAttrValue(const QString &placeholder = "--")
 {
     QLabel *lbl = new QLabel(placeholder);
     lbl->setTextInteractionFlags(Qt::TextSelectableByMouse);
@@ -28,7 +26,18 @@ static QLabel* makeAttrValue(const QString &placeholder = "--")
     return lbl;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+QLabel *StaticScanPage::makeBadge(const QString &text, const QString &bg,
+                                   const QString &fg, QWidget *parent)
+{
+    QLabel *lbl = new QLabel(text, parent);
+    lbl->setAlignment(Qt::AlignCenter);
+    lbl->setStyleSheet(QString(
+        "QLabel { background:%1; color:%2; border-radius:4px; padding:2px 10px;"
+        " font-weight:bold; font-size:12px; }").arg(bg, fg));
+    lbl->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    return lbl;
+}
+
 StaticScanPage::StaticScanPage(QWidget *parent)
     : BasePage("静态检测", parent)
 {
@@ -36,56 +45,43 @@ StaticScanPage::StaticScanPage(QWidget *parent)
     populateFileList();
 }
 
-void StaticScanPage::refreshData()
-{
-    populateFileList();
-}
+void StaticScanPage::refreshData() { populateFileList(); }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// setupUi：整体为水平 Splitter（左侧文件列表 | 右侧详情区）
-// ─────────────────────────────────────────────────────────────────────────────
 void StaticScanPage::setupUi()
 {
     QSplitter *hSplitter = new QSplitter(Qt::Horizontal);
     hSplitter->setChildrenCollapsible(false);
 
-    // ══════════════════════════════════════════════════════
-    // 左侧：文件列表面板
-    // ══════════════════════════════════════════════════════
+    // 左侧文件列表
     QWidget *leftPanel = new QWidget;
     QVBoxLayout *leftLayout = new QVBoxLayout(leftPanel);
     leftLayout->setContentsMargins(0, 0, 4, 0);
     leftLayout->setSpacing(4);
 
-    QLabel *listTitle = new QLabel("待检测文件列表");
-    listTitle->setObjectName("sectionTitle");
-    listTitle->setStyleSheet("font-weight:bold; font-size:13px; padding:4px 0;");
-    leftLayout->addWidget(listTitle);
+    QLabel *lblList = new QLabel("检测文件列表");
+    lblList->setStyleSheet("font-weight:bold; font-size:13px; padding:4px 0;");
+    leftLayout->addWidget(lblList);
 
     m_fileList = new QListWidget;
-    m_fileList->setObjectName("fileListWidget");
     m_fileList->setAlternatingRowColors(true);
-    m_fileList->setSelectionMode(QAbstractItemView::SingleSelection);
     m_fileList->setStyleSheet(
-        "QListWidget { border:1px solid #c0c0c0; background:#fff; font-size:12px; }"
-        "QListWidget::item { padding:5px 6px; border-bottom:1px solid #ececec; }"
+        "QListWidget { border:1px solid #ddd; border-radius:4px; font-size:12px; }"
+        "QListWidget::item { padding:5px 8px; border-bottom:1px solid #ececec; }"
         "QListWidget::item:selected { background:#1565c0; color:#fff; }"
-        "QListWidget::item:hover { background:#e3f2fd; }"
-    );
+        "QListWidget::item:hover { background:#e3f2fd; }");
     connect(m_fileList, &QListWidget::itemClicked,
             this, &StaticScanPage::onFileItemClicked);
     leftLayout->addWidget(m_fileList, 1);
 
-    // 文件列表操作按钮行
     QHBoxLayout *listBtnRow = new QHBoxLayout;
     listBtnRow->setSpacing(4);
-    m_btnAddFile = new QPushButton("添加文件");
+    m_btnAddFile      = new QPushButton("添加文件");
     m_btnAddFile->setObjectName("btnPrimary");
-    m_btnRemoveFile = new QPushButton("移除");
+    m_btnRemoveFile   = new QPushButton("移除");
     m_btnRemoveFile->setObjectName("btnSecondary");
     m_btnScanSelected = new QPushButton("检测选中");
     m_btnScanSelected->setObjectName("btnPrimary");
-    m_btnScanAll = new QPushButton("全部检测");
+    m_btnScanAll      = new QPushButton("全部检测");
     m_btnScanAll->setObjectName("btnSecondary");
     listBtnRow->addWidget(m_btnAddFile);
     listBtnRow->addWidget(m_btnRemoveFile);
@@ -98,74 +94,34 @@ void StaticScanPage::setupUi()
     connect(m_btnRemoveFile,   &QPushButton::clicked, this, &StaticScanPage::onRemoveFile);
     connect(m_btnScanSelected, &QPushButton::clicked, this, &StaticScanPage::onScanSelected);
     connect(m_btnScanAll,      &QPushButton::clicked, this, &StaticScanPage::onScanAll);
-
     hSplitter->addWidget(leftPanel);
 
-    // ══════════════════════════════════════════════════════
-    // 右侧：垂直 Splitter（上：基本属性 | 下：详情Tab）
-    // ══════════════════════════════════════════════════════
+    // 右侧垂直 Splitter
     QSplitter *vSplitter = new QSplitter(Qt::Vertical);
     vSplitter->setChildrenCollapsible(false);
 
-    // ── 上方：基本属性面板 ──────────────────────────────
     QGroupBox *attrBox = new QGroupBox("基本属性");
     attrBox->setStyleSheet("QGroupBox { font-weight:bold; font-size:13px; }");
     setupAttrPanel(attrBox);
     vSplitter->addWidget(attrBox);
 
-    // ── 下方：详情 Tab ──────────────────────────────────
     m_tabDetail = new QTabWidget;
     m_tabDetail->setObjectName("detailTab");
-
-    // Tab 1: PE 结构
-    m_txtPeInfo = new QTextEdit;
-    m_txtPeInfo->setReadOnly(true);
-    m_txtPeInfo->setObjectName("codeView");
-    m_txtPeInfo->setPlaceholderText("点击左侧文件列表中的文件，查看 PE 结构信息...");
-    m_tabDetail->addTab(m_txtPeInfo, "PE 结构");
-
-    // Tab 2: 字符串提取
-    m_txtStrings = new QTextEdit;
-    m_txtStrings->setReadOnly(true);
-    m_txtStrings->setObjectName("codeView");
-    m_txtStrings->setPlaceholderText("点击左侧文件列表中的文件，查看提取的可疑字符串...");
-    m_tabDetail->addTab(m_txtStrings, "字符串提取");
-
-    // Tab 3: 规则命中
-    m_txtRules = new QTextEdit;
-    m_txtRules->setReadOnly(true);
-    m_txtRules->setObjectName("codeView");
-    m_txtRules->setPlaceholderText("点击左侧文件列表中的文件，查看规则命中详情...");
-    m_tabDetail->addTab(m_txtRules, "规则命中");
-
-    // Tab 4: 数字证书（从 CertScanPage 迁移）
-    m_txtCert = new QTextEdit;
-    m_txtCert->setReadOnly(true);
-    m_txtCert->setObjectName("codeView");
-    m_txtCert->setPlaceholderText("点击左侧文件列表中的文件，查看数字证书信息...");
-    m_tabDetail->addTab(m_txtCert, "数字证书");
-
-    // Tab 5: 综合结论
-    m_txtConclusion = new QTextEdit;
-    m_txtConclusion->setReadOnly(true);
-    m_txtConclusion->setObjectName("codeView");
-    m_txtConclusion->setPlaceholderText("点击左侧文件列表中的文件，查看综合检测结论...");
-    m_tabDetail->addTab(m_txtConclusion, "综合结论");
-
+    m_tabDetail->addTab(buildPeTab(),         "PE 结构");
+    m_tabDetail->addTab(buildStringsTab(),    "字符串提取");
+    m_tabDetail->addTab(buildRulesTab(),      "规则命中");
+    m_tabDetail->addTab(buildCertTab(),       "数字证书");
+    m_tabDetail->addTab(buildConclusionTab(), "综合结论");
     vSplitter->addWidget(m_tabDetail);
     vSplitter->setStretchFactor(0, 2);
     vSplitter->setStretchFactor(1, 3);
 
     hSplitter->addWidget(vSplitter);
-    hSplitter->setStretchFactor(0, 1);  // 左侧文件列表
-    hSplitter->setStretchFactor(1, 3);  // 右侧详情区
-
+    hSplitter->setStretchFactor(0, 1);
+    hSplitter->setStretchFactor(1, 3);
     m_mainLayout->addWidget(hSplitter, 1);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// setupAttrPanel：基本属性面板，使用 QFormLayout 排列
-// ─────────────────────────────────────────────────────────────────────────────
 void StaticScanPage::setupAttrPanel(QWidget *parent)
 {
     QFormLayout *form = new QFormLayout(parent);
@@ -174,113 +130,275 @@ void StaticScanPage::setupAttrPanel(QWidget *parent)
     form->setVerticalSpacing(6);
     form->setContentsMargins(12, 16, 12, 8);
 
-    m_attrFileName  = makeAttrValue("--");
-    m_attrFilePath  = makeAttrValue("--");
-    m_attrFileSize  = makeAttrValue("--");
-    m_attrFileType  = makeAttrValue("--");
-    m_attrMd5       = makeAttrValue("--");
-    m_attrSha256    = makeAttrValue("--");
-    m_attrScanTime  = makeAttrValue("--");
-
-    // 风险等级标签
-    m_attrRiskLevel = makeAttrValue("--");
+    m_attrFileName    = makeAttrValue("--");
+    m_attrFilePath    = makeAttrValue("--");
+    m_attrFileSize    = makeAttrValue("--");
+    m_attrFileType    = makeAttrValue("--");
+    m_attrMd5         = makeAttrValue("--");
+    m_attrSha256      = makeAttrValue("--");
+    m_attrScanTime    = makeAttrValue("--");
+    m_attrRiskLevel   = makeAttrValue("--");
     m_attrRiskLevel->setStyleSheet("font-weight:bold;");
-
-    // 病毒检测状态标签
     m_attrVirusStatus = makeAttrValue("--");
     m_attrVirusStatus->setStyleSheet("font-weight:bold; font-size:13px;");
-
-    // 病毒名称（威胁时显示）
-    m_attrVirusName = makeAttrValue("--");
+    m_attrVirusName   = makeAttrValue("--");
     m_attrVirusName->setStyleSheet("color:#c62828;");
 
-    form->addRow("文件名：",    m_attrFileName);
-    form->addRow("文件路径：",  m_attrFilePath);
-    form->addRow("文件大小：",  m_attrFileSize);
-    form->addRow("文件类型：",  m_attrFileType);
-    form->addRow("MD5：",       m_attrMd5);
-    form->addRow("SHA256：",    m_attrSha256);
-    form->addRow("扫描时间：",  m_attrScanTime);
-
-    // 分隔线
+    form->addRow("文件名：",   m_attrFileName);
+    form->addRow("文件路径：", m_attrFilePath);
+    form->addRow("文件大小：", m_attrFileSize);
+    form->addRow("文件类型：", m_attrFileType);
+    form->addRow("MD5：",      m_attrMd5);
+    form->addRow("SHA256：",   m_attrSha256);
+    form->addRow("扫描时间：", m_attrScanTime);
     QFrame *line = new QFrame;
     line->setFrameShape(QFrame::HLine);
     line->setFrameShadow(QFrame::Sunken);
     form->addRow(line);
-
-    form->addRow("风险等级：",  m_attrRiskLevel);
-    form->addRow("病毒检测：",  m_attrVirusStatus);
-    form->addRow("病毒名称：",  m_attrVirusName);
+    form->addRow("风险等级：", m_attrRiskLevel);
+    form->addRow("病毒检测：", m_attrVirusStatus);
+    form->addRow("病毒名称：", m_attrVirusName);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// populateFileList：从 static_scan 表加载已检测文件列表
-// ─────────────────────────────────────────────────────────────────────────────
+QWidget *StaticScanPage::buildPeTab()
+{
+    QWidget *w = new QWidget;
+    QVBoxLayout *lay = new QVBoxLayout(w);
+    lay->setContentsMargins(4, 4, 4, 4);
+    lay->setSpacing(4);
+    QLabel *hint = new QLabel("PE 文件结构树形视图（节头 / 导入表 / 导出表 / 节区列表）");
+    hint->setStyleSheet("color:#666; font-size:11px; padding:2px 4px;");
+    lay->addWidget(hint);
+    m_treePe = new QTreeWidget;
+    m_treePe->setColumnCount(2);
+    m_treePe->setHeaderLabels({"字段", "值"});
+    m_treePe->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    m_treePe->header()->setSectionResizeMode(1, QHeaderView::Stretch);
+    m_treePe->setAlternatingRowColors(true);
+    m_treePe->setRootIsDecorated(true);
+    m_treePe->setExpandsOnDoubleClick(true);
+    m_treePe->setStyleSheet(
+        "QTreeWidget { border:1px solid #ddd; border-radius:4px; font-size:12px; }"
+        "QTreeWidget::item { padding:3px 4px; }"
+        "QTreeWidget::item:selected { background:#1565c0; color:#fff; }");
+    lay->addWidget(m_treePe, 1);
+    return w;
+}
+
+QWidget *StaticScanPage::buildStringsTab()
+{
+    QWidget *w = new QWidget;
+    QVBoxLayout *lay = new QVBoxLayout(w);
+    lay->setContentsMargins(4, 4, 4, 4);
+    lay->setSpacing(4);
+    QLabel *hint = new QLabel("从 PE 文件中提取的可疑字符串（URL / IP / API / 路径 / 其他）");
+    hint->setStyleSheet("color:#666; font-size:11px; padding:2px 4px;");
+    lay->addWidget(hint);
+    m_tblStrings = new QTableWidget(0, 3);
+    m_tblStrings->setHorizontalHeaderLabels({"偏移量", "类型", "字符串内容"});
+    m_tblStrings->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    m_tblStrings->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    m_tblStrings->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
+    m_tblStrings->verticalHeader()->setVisible(false);
+    m_tblStrings->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_tblStrings->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_tblStrings->setAlternatingRowColors(true);
+    m_tblStrings->setStyleSheet(
+        "QTableWidget { border:1px solid #ddd; border-radius:4px; font-size:12px; }"
+        "QTableWidget::item { padding:4px 6px; }"
+        "QTableWidget::item:selected { background:#1565c0; color:#fff; }");
+    lay->addWidget(m_tblStrings, 1);
+    return w;
+}
+
+QWidget *StaticScanPage::buildRulesTab()
+{
+    QWidget *w = new QWidget;
+    QVBoxLayout *lay = new QVBoxLayout(w);
+    lay->setContentsMargins(4, 4, 4, 4);
+    lay->setSpacing(4);
+    QLabel *hint = new QLabel("YARA 规则 / MD5 黑名单命中详情（高危行红色高亮）");
+    hint->setStyleSheet("color:#666; font-size:11px; padding:2px 4px;");
+    lay->addWidget(hint);
+    m_tblRules = new QTableWidget(0, 4);
+    m_tblRules->setHorizontalHeaderLabels({"规则名称", "类型", "命中内容", "风险等级"});
+    m_tblRules->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    m_tblRules->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    m_tblRules->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
+    m_tblRules->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+    m_tblRules->verticalHeader()->setVisible(false);
+    m_tblRules->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_tblRules->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_tblRules->setAlternatingRowColors(true);
+    m_tblRules->setStyleSheet(
+        "QTableWidget { border:1px solid #ddd; border-radius:4px; font-size:12px; }"
+        "QTableWidget::item { padding:4px 6px; }"
+        "QTableWidget::item:selected { background:#1565c0; color:#fff; }");
+    lay->addWidget(m_tblRules, 1);
+    return w;
+}
+
+QWidget *StaticScanPage::buildCertTab()
+{
+    QScrollArea *scroll = new QScrollArea;
+    scroll->setWidgetResizable(true);
+    scroll->setFrameShape(QFrame::NoFrame);
+    QWidget *inner = new QWidget;
+    QVBoxLayout *lay = new QVBoxLayout(inner);
+    lay->setContentsMargins(12, 12, 12, 12);
+    lay->setSpacing(12);
+
+    QString gbStyle =
+        "QGroupBox { font-weight:bold; font-size:12px; "
+        "border:1px solid #ddd; border-radius:6px; margin-top:6px; }"
+        "QGroupBox::title { subcontrol-origin:margin; left:10px; padding:0 4px; }";
+
+    QGroupBox *statusBox = new QGroupBox("证书状态");
+    statusBox->setStyleSheet(gbStyle);
+    QHBoxLayout *statusRow = new QHBoxLayout(statusBox);
+    statusRow->setSpacing(10);
+    statusRow->setContentsMargins(12, 14, 12, 10);
+    m_certStatusBadge   = makeBadge("-- 验证结论 --", "#9e9e9e");
+    m_certSignedBadge   = makeBadge("签名状态", "#9e9e9e");
+    m_certExpiredBadge  = makeBadge("有效期", "#9e9e9e");
+    m_certTamperedBadge = makeBadge("文件完整性", "#9e9e9e");
+    m_certStatusBadge->setStyleSheet(m_certStatusBadge->styleSheet()
+        + "font-size:13px; padding:4px 16px;");
+    statusRow->addWidget(m_certStatusBadge);
+    statusRow->addSpacing(16);
+    statusRow->addWidget(m_certSignedBadge);
+    statusRow->addWidget(m_certExpiredBadge);
+    statusRow->addWidget(m_certTamperedBadge);
+    statusRow->addStretch();
+    lay->addWidget(statusBox);
+
+    QGroupBox *detailBox = new QGroupBox("证书详细信息");
+    detailBox->setStyleSheet(gbStyle);
+    QFormLayout *form = new QFormLayout(detailBox);
+    form->setLabelAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    form->setHorizontalSpacing(16);
+    form->setVerticalSpacing(8);
+    form->setContentsMargins(12, 16, 12, 12);
+    auto mkf = [](const QString &v) {
+        QLabel *l = new QLabel(v);
+        l->setTextInteractionFlags(Qt::TextSelectableByMouse);
+        l->setStyleSheet("font-size:12px; color:#333;");
+        l->setWordWrap(true);
+        return l;
+    };
+    m_certSubject      = mkf("--");
+    m_certIssuer       = mkf("--");
+    m_certSerial       = mkf("--");
+    m_certNotBefore    = mkf("--");
+    m_certNotAfter     = mkf("--");
+    m_certHashAlg      = mkf("--");
+    m_certThumbprint   = mkf("--");
+    m_certVerifyResult = mkf("--");
+    form->addRow("签名者（Subject）：", m_certSubject);
+    form->addRow("颁发机构（Issuer）：", m_certIssuer);
+    form->addRow("证书序列号：",         m_certSerial);
+    form->addRow("有效期起：",           m_certNotBefore);
+    form->addRow("有效期止：",           m_certNotAfter);
+    form->addRow("哈希算法：",           m_certHashAlg);
+    form->addRow("指纹（SHA1）：",       m_certThumbprint);
+    QFrame *sep = new QFrame;
+    sep->setFrameShape(QFrame::HLine);
+    sep->setFrameShadow(QFrame::Sunken);
+    form->addRow(sep);
+    form->addRow("验证结论：", m_certVerifyResult);
+    lay->addWidget(detailBox);
+    lay->addStretch();
+    scroll->setWidget(inner);
+    return scroll;
+}
+
+QWidget *StaticScanPage::buildConclusionTab()
+{
+    QWidget *w = new QWidget;
+    QVBoxLayout *lay = new QVBoxLayout(w);
+    lay->setContentsMargins(12, 12, 12, 12);
+    lay->setSpacing(12);
+
+    m_concRiskCard = new QLabel;
+    m_concRiskCard->setFixedHeight(80);
+    m_concRiskCard->setStyleSheet("QLabel { background:#9e9e9e; border-radius:8px; }");
+    QHBoxLayout *cardRow = new QHBoxLayout(m_concRiskCard);
+    cardRow->setContentsMargins(20, 0, 20, 0);
+    cardRow->setSpacing(16);
+    m_concRiskIcon = new QLabel("●");
+    m_concRiskIcon->setStyleSheet("color:#fff; font-size:28px;");
+    m_concRiskIcon->setAlignment(Qt::AlignVCenter);
+    QVBoxLayout *cardText = new QVBoxLayout;
+    m_concRiskText = new QLabel("等待检测");
+    m_concRiskText->setStyleSheet("color:#fff; font-size:18px; font-weight:bold;");
+    m_concVirusName = new QLabel("");
+    m_concVirusName->setStyleSheet("color:rgba(255,255,255,0.85); font-size:12px;");
+    cardText->addWidget(m_concRiskText);
+    cardText->addWidget(m_concVirusName);
+    cardRow->addWidget(m_concRiskIcon);
+    cardRow->addLayout(cardText);
+    cardRow->addStretch();
+    lay->addWidget(m_concRiskCard);
+
+    QLabel *detailHint = new QLabel("综合检测结论");
+    detailHint->setStyleSheet("font-weight:bold; font-size:12px; color:#555;");
+    lay->addWidget(detailHint);
+
+    m_concText = new QTextEdit;
+    m_concText->setReadOnly(true);
+    m_concText->setStyleSheet(
+        "QTextEdit { border:1px solid #ddd; border-radius:4px; "
+        "font-size:13px; padding:8px; color:#333; background:#fafafa; }");
+    m_concText->setPlaceholderText("点击左侧文件列表中的文件，查看综合检测结论...");
+    lay->addWidget(m_concText, 1);
+    return w;
+}
+
 void StaticScanPage::populateFileList()
 {
     m_fileList->clear();
-
     QSqlDatabase db = QSqlDatabase::database("main_conn");
     if (db.isOpen()) {
         QSqlQuery q(db);
         q.exec("SELECT id, file_name, file_path, risk_level, scan_time "
                "FROM static_scan ORDER BY id DESC LIMIT 200");
         while (q.next()) {
-            int    id        = q.value(0).toInt();
+            int     id       = q.value(0).toInt();
             QString name     = q.value(1).toString();
             QString path     = q.value(2).toString();
             QString risk     = q.value(3).toString();
             QString scanTime = q.value(4).toString();
-
-            // 显示文本：文件名 + 风险等级标记
             QString riskTag;
             if      (risk == "high")   riskTag = " [高危]";
             else if (risk == "medium") riskTag = " [中危]";
             else if (risk == "low")    riskTag = " [低危]";
             else if (risk == "clean")  riskTag = " [安全]";
-
             QListWidgetItem *item = new QListWidgetItem(name + riskTag);
             item->setData(Qt::UserRole,     id);
             item->setData(Qt::UserRole + 1, path);
             item->setData(Qt::UserRole + 2, risk);
             item->setToolTip(path + "\n扫描时间：" + scanTime);
-
-            // 颜色标记
             if      (risk == "high")   item->setForeground(QColor("#c62828"));
             else if (risk == "medium") item->setForeground(QColor("#e65100"));
             else if (risk == "low")    item->setForeground(QColor("#1565c0"));
             else if (risk == "clean")  item->setForeground(QColor("#2e7d32"));
-
             m_fileList->addItem(item);
         }
     }
-
-    // 无数据时显示空表，等待外部入库
-
     m_lblStatus->setText(QString("文件列表：共 %1 个文件").arg(m_fileList->count()));
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// onFileItemClicked：点击文件列表项，加载该文件的详情
-// ─────────────────────────────────────────────────────────────────────────────
 void StaticScanPage::onFileItemClicked(QListWidgetItem *item)
 {
     if (!item) return;
-    int     id   = item->data(Qt::UserRole).toInt();
-    QString path = item->data(Qt::UserRole + 1).toString();
-    loadFileDetail(id, path);
+    loadFileDetail(item->data(Qt::UserRole).toInt(),
+                   item->data(Qt::UserRole + 1).toString());
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// loadFileDetail：从数据库加载并展示文件详情
-// ─────────────────────────────────────────────────────────────────────────────
 void StaticScanPage::loadFileDetail(int staticId, const QString &filePath)
 {
     clearDetail();
-
     QSqlDatabase db = QSqlDatabase::database("main_conn");
-
-    // ── 从 static_scan 加载基本属性 + 检测结果 ──────────────
     if (staticId > 0 && db.isOpen()) {
         QSqlQuery q(db);
         q.prepare("SELECT file_name, file_path, file_size, file_type, md5, sha256, "
@@ -289,7 +407,6 @@ void StaticScanPage::loadFileDetail(int staticId, const QString &filePath)
                   "FROM static_scan WHERE id = ?");
         q.addBindValue(staticId);
         if (q.exec() && q.next()) {
-            // 基本属性
             m_attrFileName->setText(q.value(0).toString());
             m_attrFilePath->setText(q.value(1).toString());
             qint64 sz = q.value(2).toLongLong();
@@ -299,170 +416,313 @@ void StaticScanPage::loadFileDetail(int staticId, const QString &filePath)
             m_attrMd5->setText(q.value(4).toString().isEmpty() ? "--" : q.value(4).toString());
             m_attrSha256->setText(q.value(5).toString().isEmpty() ? "--" : q.value(5).toString());
             m_attrScanTime->setText(q.value(11).toString().isEmpty() ? "--" : q.value(11).toString());
-
-            // 风险等级
             QString risk = q.value(9).toString();
-            QString riskText;
-            QString riskColor;
+            QString riskText, riskColor;
             if      (risk == "high")   { riskText = "高危"; riskColor = "#c62828"; }
             else if (risk == "medium") { riskText = "中危"; riskColor = "#e65100"; }
             else if (risk == "low")    { riskText = "低危"; riskColor = "#1565c0"; }
             else if (risk == "clean")  { riskText = "正常"; riskColor = "#2e7d32"; }
-            else                       { riskText = "--";   riskColor = "#555555"; }
+            else                       { riskText = risk;   riskColor = "#555";    }
             m_attrRiskLevel->setText(riskText);
             m_attrRiskLevel->setStyleSheet(
                 QString("font-weight:bold; font-size:13px; color:%1;").arg(riskColor));
-
-            // 病毒检测项
             QString virusName = q.value(12).toString();
-            if (!virusName.isEmpty() && virusName != "安全" && risk != "clean") {
-                m_attrVirusStatus->setText("威胁");
-                m_attrVirusStatus->setStyleSheet(
-                    "font-weight:bold; font-size:13px; color:#c62828; "
-                    "background:#ffebee; padding:2px 8px; border-radius:3px;");
-                m_attrVirusName->setText(virusName);
-                m_attrVirusName->setStyleSheet("color:#c62828; font-weight:bold;");
-            } else if (risk == "clean") {
-                m_attrVirusStatus->setText("安全");
-                m_attrVirusStatus->setStyleSheet(
-                    "font-weight:bold; font-size:13px; color:#2e7d32; "
-                    "background:#e8f5e9; padding:2px 8px; border-radius:3px;");
-                m_attrVirusName->setText("--");
-                m_attrVirusName->setStyleSheet("color:#888;");
-            } else {
-                // 有风险但无具体病毒名，从结论推断
-                m_attrVirusStatus->setText("威胁");
-                m_attrVirusStatus->setStyleSheet(
-                    "font-weight:bold; font-size:13px; color:#c62828; "
-                    "background:#ffebee; padding:2px 8px; border-radius:3px;");
-                m_attrVirusName->setText("未知威胁（待引擎识别）");
-                m_attrVirusName->setStyleSheet("color:#c62828;");
-            }
-
-            // 详情 Tab 内容
-            QString peInfo = q.value(6).toString();
-            m_txtPeInfo->setPlainText(peInfo.isEmpty() ? "（PE结构数据待检测引擎填充）" : peInfo);
-
-            QString strings = q.value(7).toString();
-            m_txtStrings->setPlainText(strings.isEmpty() ? "（字符串数据待检测引擎填充）" : strings);
-
-            QString rules = q.value(8).toString();
-            // 尝试解析 JSON 格式的规则命中
-            if (!rules.isEmpty()) {
-                QJsonDocument doc = QJsonDocument::fromJson(rules.toUtf8());
-                if (doc.isArray()) {
-                    QJsonArray arr = doc.array();
-                    QString formatted = "[规则命中列表]\n";
-                    for (const QJsonValue &v : arr) {
-                        QJsonObject obj = v.toObject();
-                        formatted += QString("  [%1] %2: %3\n")
-                            .arg(obj["severity"].toString().toUpper())
-                            .arg(obj["rule"].toString())
-                            .arg(obj["match"].toString());
-                    }
-                    m_txtRules->setPlainText(formatted);
-                } else {
-                    m_txtRules->setPlainText(rules);
-                }
-            } else {
-                m_txtRules->setPlainText("（规则命中数据待检测引擎填充）");
-            }
-
-            m_txtConclusion->setPlainText(
-                q.value(10).toString().isEmpty() ?
-                "（综合结论待检测引擎填充）" : q.value(10).toString());
+            bool isThreat = (risk == "high" || risk == "medium");
+            m_attrVirusStatus->setText(isThreat ? "威胁" : "安全");
+            m_attrVirusStatus->setStyleSheet(
+                isThreat ? "font-weight:bold; font-size:13px; color:#c62828;"
+                         : "font-weight:bold; font-size:13px; color:#2e7d32;");
+            m_attrVirusName->setText(virusName.isEmpty() ? "--" : virusName);
+            m_attrVirusName->setStyleSheet(
+                virusName.isEmpty() ? "color:#888;" : "color:#c62828; font-weight:bold;");
+            fillPeTab(q.value(6).toString());
+            fillStringsTab(q.value(7).toString());
+            fillRulesTab(q.value(8).toString());
+            fillConclusionTab(risk, virusName, q.value(10).toString());
         }
     } else {
-        // 演示数据：根据文件名填充示例内容
         QFileInfo fi(filePath);
         m_attrFileName->setText(fi.fileName());
         m_attrFilePath->setText(filePath);
-        m_attrFileSize->setText("--（未检测）");
-        m_attrFileType->setText("--");
-        m_attrMd5->setText("--（未检测）");
-        m_attrSha256->setText("--（未检测）");
-        m_attrScanTime->setText("--");
-        m_attrRiskLevel->setText("--");
-        m_attrRiskLevel->setStyleSheet("font-weight:bold; font-size:13px; color:#555;");
-        m_attrVirusStatus->setText("--");
-        m_attrVirusStatus->setStyleSheet("font-weight:bold; font-size:13px; color:#555;");
-        m_attrVirusName->setText("--");
+    }
+    fillCertTab(filePath);
+}
 
-        m_txtPeInfo->setPlainText("请点击[\u68c0\u6d4b\u9009\u4e2d]对该文件执行静态检测...");
-        m_txtStrings->setPlainText("请点击[\u68c0\u6d4b\u9009\u4e2d]对该文件执行静态检测...");
-        m_txtRules->setPlainText("请点击[\u68c0\u6d4b\u9009\u4e2d]对该文件执行静态检测...");
-        m_txtCert->setPlainText("请点击[\u68c0\u6d4b\u9009\u4e2d]对该文件执行静态检测...");
-        m_txtConclusion->setPlainText("请点击[\u68c0\u6d4b\u9009\u4e2d]对该文件执行静态检测...");
+void StaticScanPage::fillPeTab(const QString &peInfoJson)
+{
+    m_treePe->clear();
+    if (peInfoJson.isEmpty()) {
+        new QTreeWidgetItem(m_treePe, QStringList{"提示", "PE 结构数据待检测引擎填充"});
         return;
     }
-
-    // ── 从 cert_scan 加载数字证书信息 ────────────────────────
-    if (db.isOpen()) {
-        QSqlQuery cq(db);
-        cq.prepare("SELECT has_signature, signature_valid, file_tampered, "
-                   "       subject, issuer, serial_number, not_before, not_after, "
-                   "       not_expired, hash_algorithm, thumbprint_sha1, verify_result "
-                   "FROM cert_scan WHERE file_path = ? ORDER BY id DESC LIMIT 1");
-        cq.addBindValue(filePath);
-        if (cq.exec() && cq.next()) {
-            bool hasSig    = cq.value(0).toInt() == 1;
-            bool sigValid  = cq.value(1).toInt() == 1;
-            bool tampered  = cq.value(2).toInt() == 1;
-            bool notExpired= cq.value(8).toInt() == 1;
-            QString subject    = cq.value(3).toString();
-            QString issuer     = cq.value(4).toString();
-            QString serial     = cq.value(5).toString();
-            QString notBefore  = cq.value(6).toString();
-            QString notAfter   = cq.value(7).toString();
-            QString hashAlg    = cq.value(9).toString();
-            QString thumbSha1  = cq.value(10).toString();
-            QString verifyResult = cq.value(11).toString();
-
-            QString certText;
-            certText += "═══════════════════════════════════════\n";
-            certText += "  数字证书检测结果\n";
-            certText += "═══════════════════════════════════════\n\n";
-            certText += QString("  是否有签名：  %1\n").arg(hasSig ? "是" : "否");
-            if (hasSig) {
-                certText += QString("  签名有效性：  %1\n").arg(sigValid ? "✓ 有效" : "✗ 无效");
-                certText += QString("  证书有效期：  %1\n").arg(notExpired ? "✓ 未过期" : "✗ 已过期");
-                certText += QString("  文件完整性：  %1\n").arg(!tampered ? "✓ 未被篡改" : "✗ 文件已被篡改");
-                certText += "\n";
-                certText += QString("  签名者：      %1\n").arg(subject.isEmpty() ? "--" : subject);
-                certText += QString("  颁发机构：    %1\n").arg(issuer.isEmpty()  ? "--" : issuer);
-                certText += QString("  序列号：      %1\n").arg(serial.isEmpty()  ? "--" : serial);
-                certText += QString("  有效期起：    %1\n").arg(notBefore.isEmpty()? "--" : notBefore);
-                certText += QString("  有效期止：    %1\n").arg(notAfter.isEmpty() ? "--" : notAfter);
-                certText += QString("  哈希算法：    %1\n").arg(hashAlg.isEmpty() ? "--" : hashAlg);
-                certText += QString("  指纹(SHA1)：  %1\n").arg(thumbSha1.isEmpty()? "--" : thumbSha1);
+    QJsonDocument doc = QJsonDocument::fromJson(peInfoJson.toUtf8());
+    if (!doc.isObject()) {
+        QTreeWidgetItem *root = new QTreeWidgetItem(m_treePe, QStringList{"PE 信息", ""});
+        root->setFont(0, QFont("", -1, QFont::Bold));
+        for (const QString &ln : peInfoJson.split('\n', Qt::SkipEmptyParts))
+            new QTreeWidgetItem(root, QStringList{"", ln.trimmed()});
+        root->setExpanded(true);
+        return;
+    }
+    QJsonObject obj = doc.object();
+    if (obj.contains("header") && obj["header"].isObject()) {
+        QTreeWidgetItem *hdr = new QTreeWidgetItem(m_treePe, QStringList{"PE 文件头", ""});
+        hdr->setFont(0, QFont("", -1, QFont::Bold));
+        hdr->setForeground(0, QColor("#1565c0"));
+        QJsonObject h = obj["header"].toObject();
+        for (auto it = h.begin(); it != h.end(); ++it)
+            new QTreeWidgetItem(hdr, QStringList{it.key(), it.value().toVariant().toString()});
+        hdr->setExpanded(true);
+    }
+    if (obj.contains("sections") && obj["sections"].isArray()) {
+        QJsonArray secs = obj["sections"].toArray();
+        QTreeWidgetItem *sn = new QTreeWidgetItem(m_treePe,
+            QStringList{"节区列表", QString("共 %1 个节区").arg(secs.size())});
+        sn->setFont(0, QFont("", -1, QFont::Bold));
+        sn->setForeground(0, QColor("#2e7d32"));
+        for (const QJsonValue &v : secs) {
+            QJsonObject s = v.toObject();
+            QTreeWidgetItem *si = new QTreeWidgetItem(sn, QStringList{s.value("name").toString(), ""});
+            for (auto it = s.begin(); it != s.end(); ++it) {
+                if (it.key() == "name") continue;
+                new QTreeWidgetItem(si, QStringList{it.key(), it.value().toVariant().toString()});
             }
-            certText += "\n";
-            certText += QString("  验证结论：    %1\n").arg(verifyResult.isEmpty() ? "--" : verifyResult);
-            m_txtCert->setPlainText(certText);
-        } else {
-            // 无证书记录
-            m_txtCert->setPlainText(
-                "═══════════════════════════════════════\n"
-                "  数字证书检测结果\n"
-                "═══════════════════════════════════════\n\n"
-                "  该文件暂无数字证书检测记录。\n"
-                "  请执行静态检测后查看证书信息。\n"
-            );
         }
+        sn->setExpanded(true);
+    }
+    if (obj.contains("imports") && obj["imports"].isArray()) {
+        QJsonArray imports = obj["imports"].toArray();
+        QTreeWidgetItem *imp = new QTreeWidgetItem(m_treePe,
+            QStringList{"导入表", QString("共 %1 个 DLL").arg(imports.size())});
+        imp->setFont(0, QFont("", -1, QFont::Bold));
+        imp->setForeground(0, QColor("#e65100"));
+        for (const QJsonValue &v : imports) {
+            QJsonObject d = v.toObject();
+            QJsonArray funcs = d.value("funcs").toArray();
+            QTreeWidgetItem *dn = new QTreeWidgetItem(imp,
+                QStringList{d.value("dll").toString(), QString("%1 个函数").arg(funcs.size())});
+            for (const QJsonValue &f : funcs)
+                new QTreeWidgetItem(dn, QStringList{"", f.toString()});
+        }
+        imp->setExpanded(true);
+    }
+    if (obj.contains("exports") && obj["exports"].isArray()) {
+        QJsonArray exports = obj["exports"].toArray();
+        QTreeWidgetItem *exp = new QTreeWidgetItem(m_treePe,
+            QStringList{"导出表", QString("共 %1 个导出").arg(exports.size())});
+        exp->setFont(0, QFont("", -1, QFont::Bold));
+        exp->setForeground(0, QColor("#6a1b9a"));
+        for (const QJsonValue &v : exports) {
+            QJsonObject e = v.toObject();
+            new QTreeWidgetItem(exp, QStringList{e.value("name").toString(),
+                QString("序号 %1").arg(e.value("ordinal").toInt())});
+        }
+        exp->setExpanded(true);
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// clearDetail：清空右侧所有详情区
-// ─────────────────────────────────────────────────────────────────────────────
+void StaticScanPage::fillStringsTab(const QString &stringsJson)
+{
+    m_tblStrings->setRowCount(0);
+    if (stringsJson.isEmpty()) {
+        m_tblStrings->setRowCount(1);
+        m_tblStrings->setItem(0, 2, new QTableWidgetItem("PE 字符串数据待检测引擎填充"));
+        return;
+    }
+    QJsonDocument doc = QJsonDocument::fromJson(stringsJson.toUtf8());
+    if (!doc.isArray()) {
+        QStringList lines = stringsJson.split('\n', Qt::SkipEmptyParts);
+        m_tblStrings->setRowCount(lines.size());
+        for (int i = 0; i < lines.size(); i++) {
+            m_tblStrings->setItem(i, 0, new QTableWidgetItem("--"));
+            m_tblStrings->setItem(i, 1, new QTableWidgetItem("字符串"));
+            m_tblStrings->setItem(i, 2, new QTableWidgetItem(lines[i].trimmed()));
+        }
+        return;
+    }
+    QJsonArray arr = doc.array();
+    m_tblStrings->setRowCount(arr.size());
+    QMap<QString,QString> tc = {
+        {"URL","#c62828"},{"IP","#c62828"},{"API","#e65100"},
+        {"路径","#1565c0"},{"命令","#c62828"},{"域名","#c62828"}};
+    for (int i = 0; i < arr.size(); i++) {
+        QJsonObject o = arr[i].toObject();
+        QString offset = o.value("offset").toString();
+        QString type   = o.value("type").toString();
+        QString value  = o.value("value").toString();
+        auto *iOff  = new QTableWidgetItem(offset);
+        auto *iType = new QTableWidgetItem(type);
+        auto *iVal  = new QTableWidgetItem(value);
+        if (tc.contains(type)) {
+            QColor c(tc[type]);
+            iType->setForeground(c);
+            iType->setFont(QFont("", -1, QFont::Bold));
+            iVal->setForeground(c);
+        }
+        iOff->setFont(QFont("Monospace", -1));
+        iVal->setFont(QFont("Monospace", -1));
+        m_tblStrings->setItem(i, 0, iOff);
+        m_tblStrings->setItem(i, 1, iType);
+        m_tblStrings->setItem(i, 2, iVal);
+    }
+    m_tblStrings->resizeRowsToContents();
+}
+
+void StaticScanPage::fillRulesTab(const QString &rulesJson)
+{
+    m_tblRules->setRowCount(0);
+    if (rulesJson.isEmpty()) {
+        m_tblRules->setRowCount(1);
+        m_tblRules->setItem(0, 2, new QTableWidgetItem("规则命中数据待检测引擎填充"));
+        return;
+    }
+    QJsonDocument doc = QJsonDocument::fromJson(rulesJson.toUtf8());
+    if (!doc.isArray()) {
+        QStringList lines = rulesJson.split('\n', Qt::SkipEmptyParts);
+        m_tblRules->setRowCount(lines.size());
+        for (int i = 0; i < lines.size(); i++) {
+            m_tblRules->setItem(i, 0, new QTableWidgetItem("规则"));
+            m_tblRules->setItem(i, 1, new QTableWidgetItem("--"));
+            m_tblRules->setItem(i, 2, new QTableWidgetItem(lines[i].trimmed()));
+            m_tblRules->setItem(i, 3, new QTableWidgetItem("--"));
+        }
+        return;
+    }
+    QJsonArray arr = doc.array();
+    m_tblRules->setRowCount(arr.size());
+    for (int i = 0; i < arr.size(); i++) {
+        QJsonObject o = arr[i].toObject();
+        QString rule = o.value("rule").toString();
+        QString type = o.value("type").toString();
+        QString hit  = o.value("hit").toString();
+        QString risk = o.value("risk").toString();
+        QString riskText, riskColor;
+        if      (risk == "high")   { riskText = "高危"; riskColor = "#c62828"; }
+        else if (risk == "medium") { riskText = "中危"; riskColor = "#e65100"; }
+        else if (risk == "low")    { riskText = "低危"; riskColor = "#1565c0"; }
+        else                       { riskText = risk;   riskColor = "#555";    }
+        auto *iRule = new QTableWidgetItem(rule);
+        auto *iType = new QTableWidgetItem(type);
+        auto *iHit  = new QTableWidgetItem(hit);
+        auto *iRisk = new QTableWidgetItem(riskText);
+        iRule->setFont(QFont("", -1, QFont::Bold));
+        iRisk->setForeground(QColor(riskColor));
+        iRisk->setFont(QFont("", -1, QFont::Bold));
+        iRisk->setTextAlignment(Qt::AlignCenter);
+        if (risk == "high") {
+            QColor rowBg(255, 235, 238);
+            iRule->setBackground(rowBg);
+            iType->setBackground(rowBg);
+            iHit->setBackground(rowBg);
+            iRisk->setBackground(rowBg);
+        }
+        m_tblRules->setItem(i, 0, iRule);
+        m_tblRules->setItem(i, 1, iType);
+        m_tblRules->setItem(i, 2, iHit);
+        m_tblRules->setItem(i, 3, iRisk);
+    }
+    m_tblRules->resizeRowsToContents();
+}
+
+void StaticScanPage::fillCertTab(const QString &filePath)
+{
+    auto resetBadge = [](QLabel *lbl, const QString &text) {
+        lbl->setText(text);
+        lbl->setStyleSheet("QLabel { background:#9e9e9e; color:#fff; "
+                           "border-radius:4px; padding:2px 10px; "
+                           "font-weight:bold; font-size:12px; }");
+    };
+    resetBadge(m_certStatusBadge,   "-- 验证结论 --");
+    resetBadge(m_certSignedBadge,   "签名状态");
+    resetBadge(m_certExpiredBadge,  "有效期");
+    resetBadge(m_certTamperedBadge, "文件完整性");
+    m_certSubject->setText("--");      m_certIssuer->setText("--");
+    m_certSerial->setText("--");       m_certNotBefore->setText("--");
+    m_certNotAfter->setText("--");     m_certHashAlg->setText("--");
+    m_certThumbprint->setText("--");   m_certVerifyResult->setText("--");
+    if (filePath.isEmpty()) return;
+
+    QSqlDatabase db = QSqlDatabase::database("main_conn");
+    if (!db.isOpen()) return;
+    QSqlQuery q(db);
+    q.prepare("SELECT has_signature, signature_valid, file_tampered, "
+              "       subject, issuer, serial_number, not_before, not_after, "
+              "       not_expired, hash_algorithm, thumbprint_sha1, verify_result "
+              "FROM cert_scan WHERE file_path = ? ORDER BY id DESC LIMIT 1");
+    q.addBindValue(filePath);
+    if (!q.exec() || !q.next()) return;
+
+    bool hasSig     = q.value(0).toInt() == 1;
+    bool sigValid   = q.value(1).toInt() == 1;
+    bool tampered   = q.value(2).toInt() == 1;
+    bool notExpired = q.value(8).toInt() == 1;
+
+    auto setBadge = [](QLabel *lbl, const QString &text,
+                        const QString &bg, const QString &fg = "#fff") {
+        lbl->setText(text);
+        lbl->setStyleSheet(QString(
+            "QLabel { background:%1; color:%2; border-radius:4px; "
+            "padding:2px 10px; font-weight:bold; font-size:12px; }").arg(bg, fg));
+    };
+    if (!hasSig)
+        setBadge(m_certStatusBadge, "无数字签名", "#c62828");
+    else if (!sigValid || tampered || !notExpired)
+        setBadge(m_certStatusBadge, "证书无效", "#e65100");
+    else
+        setBadge(m_certStatusBadge, "证书有效", "#2e7d32");
+    m_certStatusBadge->setStyleSheet(m_certStatusBadge->styleSheet()
+        + "font-size:13px; padding:4px 16px;");
+    setBadge(m_certSignedBadge,
+             hasSig ? "已签名" : "未签名", hasSig ? "#2e7d32" : "#c62828");
+    if (!hasSig) setBadge(m_certExpiredBadge, "N/A", "#9e9e9e");
+    else setBadge(m_certExpiredBadge,
+                  notExpired ? "未过期" : "已过期", notExpired ? "#2e7d32" : "#c62828");
+    setBadge(m_certTamperedBadge,
+             tampered ? "文件已篡改" : "完整性正常", tampered ? "#c62828" : "#2e7d32");
+
+    m_certSubject->setText(q.value(3).toString().isEmpty()   ? "--" : q.value(3).toString());
+    m_certIssuer->setText(q.value(4).toString().isEmpty()    ? "--" : q.value(4).toString());
+    m_certSerial->setText(q.value(5).toString().isEmpty()    ? "--" : q.value(5).toString());
+    m_certNotBefore->setText(q.value(6).toString().isEmpty() ? "--" : q.value(6).toString());
+    m_certNotAfter->setText(q.value(7).toString().isEmpty()  ? "--" : q.value(7).toString());
+    m_certHashAlg->setText(q.value(9).toString().isEmpty()   ? "--" : q.value(9).toString());
+    m_certThumbprint->setText(q.value(10).toString().isEmpty()? "--" : q.value(10).toString());
+    QString vr = q.value(11).toString();
+    m_certVerifyResult->setText(vr.isEmpty() ? "--" : vr);
+    if (vr == "有效")
+        m_certVerifyResult->setStyleSheet("font-size:13px; font-weight:bold; color:#2e7d32;");
+    else if (!vr.isEmpty() && vr != "--")
+        m_certVerifyResult->setStyleSheet("font-size:13px; font-weight:bold; color:#c62828;");
+}
+
+void StaticScanPage::fillConclusionTab(const QString &risk,
+                                        const QString &virusName,
+                                        const QString &conclusion)
+{
+    struct CfgItem { const char *bg; const char *icon; const char *text; };
+    static const CfgItem cfg[] = {
+        {"#c62828","⚠","高危威胁"},{"#e65100","!","中危威胁"},
+        {"#1565c0","i","低危"},{"#2e7d32","✓","安全"},{"#9e9e9e","?","未知"}
+    };
+    int idx = 4;
+    if      (risk == "high")   idx = 0;
+    else if (risk == "medium") idx = 1;
+    else if (risk == "low")    idx = 2;
+    else if (risk == "clean")  idx = 3;
+    m_concRiskCard->setStyleSheet(
+        QString("QLabel { background:%1; border-radius:8px; }").arg(cfg[idx].bg));
+    m_concRiskIcon->setText(cfg[idx].icon);
+    m_concRiskText->setText(cfg[idx].text);
+    m_concVirusName->setText(virusName.isEmpty() ? "" : "威胁名称：" + virusName);
+    m_concText->setPlainText(conclusion.isEmpty()
+        ? "暂无综合结论，请执行静态检测后查看。" : conclusion);
+}
+
 void StaticScanPage::clearDetail()
 {
-    m_attrFileName->setText("--");
-    m_attrFilePath->setText("--");
-    m_attrFileSize->setText("--");
-    m_attrFileType->setText("--");
-    m_attrMd5->setText("--");
-    m_attrSha256->setText("--");
+    m_attrFileName->setText("--");    m_attrFilePath->setText("--");
+    m_attrFileSize->setText("--");    m_attrFileType->setText("--");
+    m_attrMd5->setText("--");         m_attrSha256->setText("--");
     m_attrScanTime->setText("--");
     m_attrRiskLevel->setText("--");
     m_attrRiskLevel->setStyleSheet("font-weight:bold; font-size:13px; color:#555;");
@@ -470,24 +730,34 @@ void StaticScanPage::clearDetail()
     m_attrVirusStatus->setStyleSheet("font-weight:bold; font-size:13px; color:#555;");
     m_attrVirusName->setText("--");
     m_attrVirusName->setStyleSheet("color:#888;");
-    m_txtPeInfo->clear();
-    m_txtStrings->clear();
-    m_txtRules->clear();
-    m_txtCert->clear();
-    m_txtConclusion->clear();
+    m_treePe->clear();
+    m_tblStrings->setRowCount(0);
+    m_tblRules->setRowCount(0);
+    auto rb = [](QLabel *lbl, const QString &text) {
+        lbl->setText(text);
+        lbl->setStyleSheet("QLabel { background:#9e9e9e; color:#fff; "
+                           "border-radius:4px; padding:2px 10px; "
+                           "font-weight:bold; font-size:12px; }");
+    };
+    rb(m_certStatusBadge,"-- 验证结论 --"); rb(m_certSignedBadge,"签名状态");
+    rb(m_certExpiredBadge,"有效期");        rb(m_certTamperedBadge,"文件完整性");
+    m_certSubject->setText("--");      m_certIssuer->setText("--");
+    m_certSerial->setText("--");       m_certNotBefore->setText("--");
+    m_certNotAfter->setText("--");     m_certHashAlg->setText("--");
+    m_certThumbprint->setText("--");   m_certVerifyResult->setText("--");
+    m_certVerifyResult->setStyleSheet("font-size:12px; color:#333;");
+    m_concRiskCard->setStyleSheet("QLabel { background:#9e9e9e; border-radius:8px; }");
+    m_concRiskIcon->setText("●");
+    m_concRiskText->setText("等待检测");
+    m_concVirusName->setText("");
+    m_concText->clear();
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// addFileToList：将文件路径添加到列表（去重）
-// ─────────────────────────────────────────────────────────────────────────────
 void StaticScanPage::addFileToList(const QString &path)
 {
     if (path.isEmpty()) return;
-    // 检查是否已存在
-    for (int i = 0; i < m_fileList->count(); ++i) {
-        if (m_fileList->item(i)->data(Qt::UserRole + 1).toString() == path)
-            return;
-    }
+    for (int i = 0; i < m_fileList->count(); ++i)
+        if (m_fileList->item(i)->data(Qt::UserRole + 1).toString() == path) return;
     QFileInfo fi(path);
     QListWidgetItem *item = new QListWidgetItem(fi.fileName() + " [待检测]");
     item->setData(Qt::UserRole,     -1);
@@ -500,15 +770,11 @@ void StaticScanPage::addFileToList(const QString &path)
     m_lblStatus->setText("已添加：" + fi.fileName());
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Slots
-// ─────────────────────────────────────────────────────────────────────────────
 void StaticScanPage::onAddFile()
 {
     QStringList paths = QFileDialog::getOpenFileNames(
         this, "选择文件", "", "所有文件 (*.*);;可执行文件 (*.exe *.dll *.sys)");
-    for (const QString &p : paths)
-        addFileToList(p);
+    for (const QString &p : paths) addFileToList(p);
 }
 
 void StaticScanPage::onRemoveFile()
@@ -525,12 +791,9 @@ void StaticScanPage::onScanSelected()
 {
     QListWidgetItem *cur = m_fileList->currentItem();
     if (!cur) { m_lblStatus->setText("请先在左侧列表中选择文件"); return; }
-
     QString path = cur->data(Qt::UserRole + 1).toString();
     QFileInfo fi(path);
     m_lblStatus->setText("正在检测：" + fi.fileName() + " ...");
-
-    // 写入占位检测记录（实际由检测引擎填充）
     QSqlDatabase db = QSqlDatabase::database("main_conn");
     if (db.isOpen()) {
         QSqlQuery q(db);
@@ -546,8 +809,7 @@ void StaticScanPage::onScanSelected()
         q.addBindValue("已提交检测，等待引擎结果");
         q.exec();
         DatabaseManager::instance()->writeLog(
-            m_role, m_username, "静态检测",
-            "提交文件：" + fi.fileName(), "success");
+            m_role, m_username, "静态检测", "提交文件：" + fi.fileName(), "success");
     }
     populateFileList();
     m_lblStatus->setText("已提交检测：" + fi.fileName());
@@ -559,7 +821,8 @@ void StaticScanPage::onScanAll()
         m_lblStatus->setText("文件列表为空，请先添加文件");
         return;
     }
-    m_lblStatus->setText(QString("已提交全部 %1 个文件进行检测...").arg(m_fileList->count()));
+    m_lblStatus->setText(
+        QString("已提交全部 %1 个文件进行检测...").arg(m_fileList->count()));
     DatabaseManager::instance()->writeLog(
         m_role, m_username, "静态检测",
         QString("批量提交 %1 个文件").arg(m_fileList->count()), "success");
