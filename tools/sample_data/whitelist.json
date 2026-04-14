@@ -1,0 +1,20 @@
+[
+  {
+    "path": "C:\\Windows\\System32\\notepad.exe",
+    "md5": "7900f7231ef2825682e2a514aee50eba",
+    "note": "系统文件",
+    "added_by": "admin"
+  },
+  {
+    "path": "C:\\Program Files\\7-Zip\\7z.exe",
+    "md5": "ea3053bd12981eb77ff01ecd70e1f692",
+    "note": "已知安全软件",
+    "added_by": "secadmin"
+  },
+  {
+    "path": "",
+    "md5": "c69ff16e3e98b594626362668b2bf788",
+    "note": "MD5白名单",
+    "added_by": "admin"
+  }
+]

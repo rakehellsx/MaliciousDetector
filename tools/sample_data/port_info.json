@@ -1,0 +1,134 @@
+[
+  {
+    "protocol": "TCP",
+    "local_ip": "0.0.0.0",
+    "local_port": 80,
+    "remote_ip": "",
+    "remote_port": 0,
+    "state": "LISTEN",
+    "process_name": "nginx.exe",
+    "pid": 1234,
+    "risk": "clean"
+  },
+  {
+    "protocol": "TCP",
+    "local_ip": "0.0.0.0",
+    "local_port": 443,
+    "remote_ip": "",
+    "remote_port": 0,
+    "state": "LISTEN",
+    "process_name": "nginx.exe",
+    "pid": 1234,
+    "risk": "clean"
+  },
+  {
+    "protocol": "TCP",
+    "local_ip": "0.0.0.0",
+    "local_port": 3389,
+    "remote_ip": "",
+    "remote_port": 0,
+    "state": "LISTEN",
+    "process_name": "svchost.exe",
+    "pid": 888,
+    "risk": "中危"
+  },
+  {
+    "protocol": "TCP",
+    "local_ip": "192.168.1.100",
+    "local_port": 49152,
+    "remote_ip": "192.168.1.200",
+    "remote_port": 445,
+    "state": "ESTABLISHED",
+    "process_name": "System",
+    "pid": 4,
+    "risk": "clean"
+  },
+  {
+    "protocol": "TCP",
+    "local_ip": "192.168.1.100",
+    "local_port": 49200,
+    "remote_ip": "8.8.8.8",
+    "remote_port": 53,
+    "state": "ESTABLISHED",
+    "process_name": "chrome.exe",
+    "pid": 5678,
+    "risk": "clean"
+  },
+  {
+    "protocol": "TCP",
+    "local_ip": "0.0.0.0",
+    "local_port": 4444,
+    "remote_ip": "",
+    "remote_port": 0,
+    "state": "LISTEN",
+    "process_name": "svchost32.exe",
+    "pid": 9012,
+    "risk": "高危"
+  },
+  {
+    "protocol": "UDP",
+    "local_ip": "0.0.0.0",
+    "local_port": 5353,
+    "remote_ip": "",
+    "remote_port": 0,
+    "state": "LISTEN",
+    "process_name": "svchost.exe",
+    "pid": 1234,
+    "risk": "clean"
+  },
+  {
+    "protocol": "TCP",
+    "local_ip": "127.0.0.1",
+    "local_port": 8080,
+    "remote_ip": "",
+    "remote_port": 0,
+    "state": "LISTEN",
+    "process_name": "python3.exe",
+    "pid": 7890,
+    "risk": "clean"
+  },
+  {
+    "protocol": "TCP",
+    "local_ip": "192.168.1.100",
+    "local_port": 49300,
+    "remote_ip": "10.10.0.1",
+    "remote_port": 22,
+    "state": "ESTABLISHED",
+    "process_name": "putty.exe",
+    "pid": 3456,
+    "risk": "clean"
+  },
+  {
+    "protocol": "UDP",
+    "local_ip": "0.0.0.0",
+    "local_port": 137,
+    "remote_ip": "",
+    "remote_port": 0,
+    "state": "LISTEN",
+    "process_name": "System",
+    "pid": 4,
+    "risk": "clean"
+  },
+  {
+    "protocol": "TCP",
+    "local_ip": "0.0.0.0",
+    "local_port": 1433,
+    "remote_ip": "",
+    "remote_port": 0,
+    "state": "LISTEN",
+    "process_name": "sqlservr.exe",
+    "pid": 2345,
+    "risk": "中危"
+  },
+  {
+    "protocol": "TCP",
+    "local_ip": "192.168.1.100",
+    "local_port": 49400,
+    "remote_ip": "185.220.101.1",
+    "remote_port": 1080,
+    "state": "ESTABLISHED",
+    "process_name": "update.exe",
+    "pid": 1111,
+    "risk": "高危"
+  }
+]

@@ -1,0 +1,29 @@
+[
+  {
+    "drive": "C:\\",
+    "type": "固定磁盘",
+    "filesystem": "NTFS",
+    "total_gb": 512.0,
+    "free_gb": 187.3,
+    "used_pct": 63.4,
+    "serial": "SSD24946"
+  },
+  {
+    "drive": "D:\\",
+    "type": "固定磁盘",
+    "filesystem": "NTFS",
+    "total_gb": 2048.0,
+    "free_gb": 1204.7,
+    "used_pct": 41.2,
+    "serial": "HDD42177"
+  },
+  {
+    "drive": "E:\\",
+    "type": "可移动磁盘",
+    "filesystem": "FAT32",
+    "total_gb": 64.0,
+    "free_gb": 32.1,
+    "used_pct": 49.8,
+    "serial": "USB97641"
+  }
+]

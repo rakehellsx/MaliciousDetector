@@ -58,7 +58,20 @@ void CertScanPage::refreshData()
     QSqlDatabase db = QSqlDatabase::database("main_conn");
     if (db.isOpen()) {
         QSqlQuery q(db);
-        q.exec("SELECT file_name,signer,issuer,timestamp,sign_status,tamper_status FROM cert_scan ORDER BY id DESC LIMIT 100");
+        // 使用表实际字段，通过 CASE 转换为显示值
+        q.exec("SELECT "
+               "COALESCE(NULLIF(subject,''), file_path) AS file_name, "
+               "COALESCE(NULLIF(subject,''), '--') AS signer, "
+               "COALESCE(NULLIF(issuer,''), '--') AS issuer, "
+               "COALESCE(NULLIF(not_before,''), '--') AS ts, "
+               "CASE WHEN has_signature=0 THEN '\u65e0\u7b7e\u540d' "
+                    "WHEN signature_valid=1 AND not_expired=1 THEN '\u6709\u6548' "
+                    "WHEN not_expired=0 THEN '\u8bc1\u4e66\u8fc7\u671f' "
+                    "ELSE '\u65e0\u6548' END AS sign_status, "
+               "CASE WHEN file_tampered=1 THEN '\u7bf9\u6539' "
+                    "WHEN has_signature=0 THEN '--' "
+                    "ELSE '\u672a\u7bf9\u6539' END AS tamper_status "
+               "FROM cert_scan ORDER BY id DESC LIMIT 100");
         while (q.next()) {
             int row = m_tblResults->rowCount();
             m_tblResults->insertRow(row);

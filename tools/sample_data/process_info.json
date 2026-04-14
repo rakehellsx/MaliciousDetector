@@ -1,0 +1,152 @@
+[
+  {
+    "pid": 4,
+    "name": "System",
+    "path": "C:\\Windows\\System32\\ntoskrnl.exe",
+    "user": "NT AUTHORITY\\SYSTEM",
+    "cpu_pct": 0.1,
+    "mem_mb": 2.4,
+    "status": "运行中",
+    "risk": "clean"
+  },
+  {
+    "pid": 1234,
+    "name": "svchost.exe",
+    "path": "C:\\Windows\\System32\\svchost.exe",
+    "user": "NT AUTHORITY\\SYSTEM",
+    "cpu_pct": 0.3,
+    "mem_mb": 18.2,
+    "status": "运行中",
+    "risk": "clean"
+  },
+  {
+    "pid": 3456,
+    "name": "explorer.exe",
+    "path": "C:\\Windows\\explorer.exe",
+    "user": "WORKSTATION-01\\Admin",
+    "cpu_pct": 1.2,
+    "mem_mb": 52.6,
+    "status": "运行中",
+    "risk": "clean"
+  },
+  {
+    "pid": 5678,
+    "name": "chrome.exe",
+    "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "user": "WORKSTATION-01\\Admin",
+    "cpu_pct": 3.5,
+    "mem_mb": 312.4,
+    "status": "运行中",
+    "risk": "clean"
+  },
+  {
+    "pid": 7890,
+    "name": "python3.exe",
+    "path": "C:\\Python39\\python3.exe",
+    "user": "WORKSTATION-01\\Admin",
+    "cpu_pct": 0.8,
+    "mem_mb": 24.1,
+    "status": "运行中",
+    "risk": "clean"
+  },
+  {
+    "pid": 9012,
+    "name": "svchost32.exe",
+    "path": "C:\\Windows\\Temp\\svchost32.exe",
+    "user": "NT AUTHORITY\\SYSTEM",
+    "cpu_pct": 8.7,
+    "mem_mb": 64.3,
+    "status": "运行中",
+    "risk": "高危"
+  },
+  {
+    "pid": 1111,
+    "name": "update.exe",
+    "path": "C:\\Users\\Admin\\AppData\\Roaming\\update.exe",
+    "user": "WORKSTATION-01\\Admin",
+    "cpu_pct": 2.1,
+    "mem_mb": 12.8,
+    "status": "运行中",
+    "risk": "中危"
+  },
+  {
+    "pid": 888,
+    "name": "lsass.exe",
+    "path": "C:\\Windows\\System32\\lsass.exe",
+    "user": "NT AUTHORITY\\SYSTEM",
+    "cpu_pct": 0.2,
+    "mem_mb": 8.6,
+    "status": "运行中",
+    "risk": "clean"
+  },
+  {
+    "pid": 600,
+    "name": "winlogon.exe",
+    "path": "C:\\Windows\\System32\\winlogon.exe",
+    "user": "NT AUTHORITY\\SYSTEM",
+    "cpu_pct": 0.1,
+    "mem_mb": 4.2,
+    "status": "运行中",
+    "risk": "clean"
+  },
+  {
+    "pid": 4321,
+    "name": "taskmgr.exe",
+    "path": "C:\\Windows\\System32\\taskmgr.exe",
+    "user": "WORKSTATION-01\\Admin",
+    "cpu_pct": 0.5,
+    "mem_mb": 16.3,
+    "status": "运行中",
+    "risk": "clean"
+  },
+  {
+    "pid": 6543,
+    "name": "notepad.exe",
+    "path": "C:\\Windows\\System32\\notepad.exe",
+    "user": "WORKSTATION-01\\Admin",
+    "cpu_pct": 0.0,
+    "mem_mb": 4.1,
+    "status": "运行中",
+    "risk": "clean"
+  },
+  {
+    "pid": 7654,
+    "name": "cmd.exe",
+    "path": "C:\\Windows\\System32\\cmd.exe",
+    "user": "WORKSTATION-01\\Admin",
+    "cpu_pct": 0.0,
+    "mem_mb": 2.3,
+    "status": "运行中",
+    "risk": "clean"
+  },
+  {
+    "pid": 8765,
+    "name": "powershell.exe",
+    "path": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    "user": "WORKSTATION-01\\Admin",
+    "cpu_pct": 1.1,
+    "mem_mb": 38.2,
+    "status": "运行中",
+    "risk": "中危"
+  },
+  {
+    "pid": 2233,
+    "name": "wscript.exe",
+    "path": "C:\\Windows\\System32\\wscript.exe",
+    "user": "WORKSTATION-01\\Admin",
+    "cpu_pct": 0.3,
+    "mem_mb": 6.7,
+    "status": "运行中",
+    "risk": "中危"
+  },
+  {
+    "pid": 1560,
+    "name": "spoolsv.exe",
+    "path": "C:\\Windows\\System32\\spoolsv.exe",
+    "user": "NT AUTHORITY\\SYSTEM",
+    "cpu_pct": 0.1,
+    "mem_mb": 10.2,
+    "status": "运行中",
+    "risk": "clean"
+  }
+]

@@ -1,0 +1,65 @@
+[
+  {
+    "name": "ntoskrnl.exe",
+    "base_address": "0xFFFFF80000000000",
+    "image_size": "0x00A00000",
+    "flags": "LDRP_ENTRY_PROCESSED",
+    "idx": 1,
+    "path": "C:\\Windows\\System32\\ntoskrnl.exe",
+    "is_trusted": 1
+  },
+  {
+    "name": "hal.dll",
+    "base_address": "0xFFFFF80000B00000",
+    "image_size": "0x00080000",
+    "flags": "LDRP_ENTRY_PROCESSED",
+    "idx": 2,
+    "path": "C:\\Windows\\System32\\hal.dll",
+    "is_trusted": 1
+  },
+  {
+    "name": "ntfs.sys",
+    "base_address": "0xFFFFF88000100000",
+    "image_size": "0x00200000",
+    "flags": "LDRP_ENTRY_PROCESSED",
+    "idx": 3,
+    "path": "C:\\Windows\\System32\\drivers\\ntfs.sys",
+    "is_trusted": 1
+  },
+  {
+    "name": "tcpip.sys",
+    "base_address": "0xFFFFF88001000000",
+    "image_size": "0x00300000",
+    "flags": "LDRP_ENTRY_PROCESSED",
+    "idx": 4,
+    "path": "C:\\Windows\\System32\\drivers\\tcpip.sys",
+    "is_trusted": 1
+  },
+  {
+    "name": "ndis.sys",
+    "base_address": "0xFFFFF88001400000",
+    "image_size": "0x00180000",
+    "flags": "LDRP_ENTRY_PROCESSED",
+    "idx": 5,
+    "path": "C:\\Windows\\System32\\drivers\\ndis.sys",
+    "is_trusted": 1
+  },
+  {
+    "name": "rootkit.sys",
+    "base_address": "0xFFFFF88002000000",
+    "image_size": "0x00010000",
+    "flags": "LDRP_ENTRY_PROCESSED",
+    "idx": 6,
+    "path": "C:\\Windows\\Temp\\rootkit.sys",
+    "is_trusted": 0
+  },
+  {
+    "name": "WdFilter.sys",
+    "base_address": "0xFFFFF88003000000",
+    "image_size": "0x00100000",
+    "flags": "LDRP_ENTRY_PROCESSED",
+    "idx": 7,
+    "path": "C:\\Windows\\System32\\drivers\\wd\\WdFilter.sys",
+    "is_trusted": 1
+  }
+]

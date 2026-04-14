@@ -1,0 +1,44 @@
+[
+  {
+    "ext": ".exe",
+    "assoc_type": "正常",
+    "original_cmd": "\"C:\\Windows\\System32\\cmd.exe\" \"%1\" %*",
+    "current_cmd": "\"C:\\Windows\\System32\\cmd.exe\" \"%1\" %*",
+    "risk_level": "clean"
+  },
+  {
+    "ext": ".bat",
+    "assoc_type": "正常",
+    "original_cmd": "C:\\Windows\\System32\\cmd.exe /c \"%1\" %*",
+    "current_cmd": "C:\\Windows\\System32\\cmd.exe /c \"%1\" %*",
+    "risk_level": "clean"
+  },
+  {
+    "ext": ".txt",
+    "assoc_type": "篡改",
+    "original_cmd": "C:\\Windows\\System32\\notepad.exe %1",
+    "current_cmd": "C:\\Windows\\Temp\\svchost32.exe --open %1",
+    "risk_level": "high"
+  },
+  {
+    "ext": ".pdf",
+    "assoc_type": "篡改",
+    "original_cmd": "\"C:\\Program Files\\Adobe\\Acrobat DC\\Acrobat\\Acrobat.exe\" \"%1\"",
+    "current_cmd": "C:\\Users\\Admin\\AppData\\Roaming\\update.exe --pdf \"%1\"",
+    "risk_level": "high"
+  },
+  {
+    "ext": ".html",
+    "assoc_type": "正常",
+    "original_cmd": "\"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\" -- \"%1\"",
+    "current_cmd": "\"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\" -- \"%1\"",
+    "risk_level": "clean"
+  },
+  {
+    "ext": ".docx",
+    "assoc_type": "正常",
+    "original_cmd": "\"C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE\" /n \"%1\"",
+    "current_cmd": "\"C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE\" /n \"%1\"",
+    "risk_level": "clean"
+  }
+]

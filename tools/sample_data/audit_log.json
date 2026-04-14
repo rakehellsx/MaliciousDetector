@@ -1,0 +1,182 @@
+[
+  {
+    "role": "system_admin",
+    "username": "admin",
+    "action": "登录",
+    "detail": "用户登录失败",
+    "result": "fail",
+    "ip_address": "192.168.5.163",
+    "timestamp": "2026-04-13 07:40:40"
+  },
+  {
+    "role": "auditor",
+    "username": "auditor",
+    "action": "登录",
+    "detail": "用户登录失败",
+    "result": "fail",
+    "ip_address": "192.168.9.179",
+    "timestamp": "2026-04-13 01:22:40"
+  },
+  {
+    "role": "sec_admin",
+    "username": "secadmin",
+    "action": "登录",
+    "detail": "用户登录系统",
+    "result": "success",
+    "ip_address": "192.168.2.30",
+    "timestamp": "2026-04-12 22:25:40"
+  },
+  {
+    "role": "sec_admin",
+    "username": "secadmin",
+    "action": "登出",
+    "detail": "用户登出系统",
+    "result": "success",
+    "ip_address": "192.168.2.203",
+    "timestamp": "2026-04-12 17:42:40"
+  },
+  {
+    "role": "sec_admin",
+    "username": "secadmin",
+    "action": "规则",
+    "detail": "新增自定义规则",
+    "result": "success",
+    "ip_address": "192.168.4.30",
+    "timestamp": "2026-04-12 00:00:40"
+  },
+  {
+    "role": "sec_admin",
+    "username": "secadmin",
+    "action": "登出",
+    "detail": "用户登出系统",
+    "result": "success",
+    "ip_address": "192.168.5.123",
+    "timestamp": "2026-04-10 02:14:40"
+  },
+  {
+    "role": "system_admin",
+    "username": "admin",
+    "action": "白名单",
+    "detail": "添加白名单条目",
+    "result": "success",
+    "ip_address": "192.168.9.233",
+    "timestamp": "2026-04-09 04:18:40"
+  },
+  {
+    "role": "system_admin",
+    "username": "admin",
+    "action": "白名单",
+    "detail": "添加白名单条目",
+    "result": "success",
+    "ip_address": "192.168.9.87",
+    "timestamp": "2026-04-08 21:10:40"
+  },
+  {
+    "role": "auditor",
+    "username": "auditor",
+    "action": "规则",
+    "detail": "新增自定义规则",
+    "result": "success",
+    "ip_address": "192.168.8.118",
+    "timestamp": "2026-04-07 22:50:40"
+  },
+  {
+    "role": "sec_admin",
+    "username": "secadmin",
+    "action": "登出",
+    "detail": "用户登出系统",
+    "result": "success",
+    "ip_address": "192.168.4.237",
+    "timestamp": "2026-04-05 22:50:40"
+  },
+  {
+    "role": "system_admin",
+    "username": "admin",
+    "action": "登出",
+    "detail": "用户登出系统",
+    "result": "success",
+    "ip_address": "192.168.1.223",
+    "timestamp": "2026-04-03 21:44:40"
+  },
+  {
+    "role": "system_admin",
+    "username": "admin",
+    "action": "导出",
+    "detail": "导出检测报告",
+    "result": "success",
+    "ip_address": "192.168.1.116",
+    "timestamp": "2026-04-01 10:44:40"
+  },
+  {
+    "role": "auditor",
+    "username": "auditor",
+    "action": "导出",
+    "detail": "导出检测报告",
+    "result": "success",
+    "ip_address": "192.168.2.228",
+    "timestamp": "2026-03-30 14:47:40"
+  },
+  {
+    "role": "sec_admin",
+    "username": "secadmin",
+    "action": "规则",
+    "detail": "新增自定义规则",
+    "result": "success",
+    "ip_address": "192.168.1.199",
+    "timestamp": "2026-03-30 11:45:40"
+  },
+  {
+    "role": "auditor",
+    "username": "auditor",
+    "action": "设置",
+    "detail": "修改扫描策略配置",
+    "result": "success",
+    "ip_address": "192.168.3.127",
+    "timestamp": "2026-03-25 15:57:40"
+  },
+  {
+    "role": "system_admin",
+    "username": "admin",
+    "action": "规则",
+    "detail": "新增自定义规则",
+    "result": "success",
+    "ip_address": "192.168.7.228",
+    "timestamp": "2026-03-23 02:21:40"
+  },
+  {
+    "role": "sec_admin",
+    "username": "secadmin",
+    "action": "登出",
+    "detail": "用户登出系统",
+    "result": "success",
+    "ip_address": "192.168.2.185",
+    "timestamp": "2026-03-22 20:23:40"
+  },
+  {
+    "role": "sec_admin",
+    "username": "secadmin",
+    "action": "白名单",
+    "detail": "添加白名单条目",
+    "result": "success",
+    "ip_address": "192.168.7.233",
+    "timestamp": "2026-03-20 18:36:40"
+  },
+  {
+    "role": "auditor",
+    "username": "auditor",
+    "action": "规则",
+    "detail": "新增自定义规则",
+    "result": "success",
+    "ip_address": "192.168.5.170",
+    "timestamp": "2026-03-20 06:02:40"
+  },
+  {
+    "role": "sec_admin",
+    "username": "secadmin",
+    "action": "规则",
+    "detail": "新增自定义规则",
+    "result": "success",
+    "ip_address": "192.168.4.19",
+    "timestamp": "2026-03-19 21:20:40"
+  }
+]

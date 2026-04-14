@@ -1,0 +1,66 @@
+[
+  {
+    "name": "System",
+    "pid": 4,
+    "private_mb": 2,
+    "working_set_mb": 8,
+    "virtual_mb": 16,
+    "suspicious_inject": 0
+  },
+  {
+    "name": "svchost.exe",
+    "pid": 1234,
+    "private_mb": 18,
+    "working_set_mb": 42,
+    "virtual_mb": 128,
+    "suspicious_inject": 0
+  },
+  {
+    "name": "explorer.exe",
+    "pid": 3456,
+    "private_mb": 52,
+    "working_set_mb": 120,
+    "virtual_mb": 512,
+    "suspicious_inject": 0
+  },
+  {
+    "name": "chrome.exe",
+    "pid": 5678,
+    "private_mb": 312,
+    "working_set_mb": 480,
+    "virtual_mb": 2048,
+    "suspicious_inject": 0
+  },
+  {
+    "name": "svchost32.exe",
+    "pid": 9012,
+    "private_mb": 64,
+    "working_set_mb": 128,
+    "virtual_mb": 256,
+    "suspicious_inject": 1
+  },
+  {
+    "name": "lsass.exe",
+    "pid": 888,
+    "private_mb": 8,
+    "working_set_mb": 24,
+    "virtual_mb": 64,
+    "suspicious_inject": 0
+  },
+  {
+    "name": "update.exe",
+    "pid": 1111,
+    "private_mb": 12,
+    "working_set_mb": 28,
+    "virtual_mb": 96,
+    "suspicious_inject": 1
+  },
+  {
+    "name": "powershell.exe",
+    "pid": 8765,
+    "private_mb": 38,
+    "working_set_mb": 64,
+    "virtual_mb": 256,
+    "suspicious_inject": 0
+  }
+]
