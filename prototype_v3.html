@@ -1,0 +1,1739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>恶意代码辅助检测系统 V3.0</title>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   全局 Reset & 变量
+═══════════════════════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f0f2f5;
+  --sidebar-bg:#1a2332;
+  --sidebar-hover:#253447;
+  --sidebar-active:#2d6cdf;
+  --sidebar-text:#b8c5d6;
+  --sidebar-text-active:#fff;
+  --header-bg:#fff;
+  --card-bg:#fff;
+  --border:#dde1e7;
+  --primary:#2d6cdf;
+  --primary-dark:#1a4fa0;
+  --danger:#d32f2f;
+  --warning:#e65100;
+  --success:#2e7d32;
+  --info:#1565c0;
+  --text:#1a2332;
+  --text-sub:#6b7a8d;
+  --font:'Microsoft YaHei','PingFang SC',sans-serif;
+  --radius:6px;
+  --shadow:0 2px 8px rgba(0,0,0,.10);
+}
+body{font-family:var(--font);font-size:13px;color:var(--text);background:var(--bg);height:100vh;overflow:hidden;}
+
+/* ═══════════════════════════════════════════════════════════
+   登录页
+═══════════════════════════════════════════════════════════ */
+#loginPage{
+  display:flex;align-items:center;justify-content:center;
+  height:100vh;background:linear-gradient(135deg,#0d1b2a 0%,#1a3a5c 60%,#0d2137 100%);
+}
+.login-box{
+  background:#fff;border-radius:10px;padding:40px 44px;width:400px;
+  box-shadow:0 8px 40px rgba(0,0,0,.35);
+}
+.login-logo{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:8px;}
+.login-logo-icon{
+  width:44px;height:44px;background:var(--primary);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;color:#fff;font-weight:bold;
+}
+.login-title{font-size:18px;font-weight:700;color:var(--text);}
+.login-subtitle{text-align:center;color:var(--text-sub);font-size:12px;margin-bottom:24px;}
+.login-role-tabs{display:flex;gap:6px;margin-bottom:20px;}
+.role-tab{
+  flex:1;padding:8px 4px;border:1.5px solid var(--border);border-radius:var(--radius);
+  background:#f8f9fb;cursor:pointer;text-align:center;font-size:12px;color:var(--text-sub);
+  transition:all .2s;
+}
+.role-tab.active{border-color:var(--primary);background:#e8f0fd;color:var(--primary);font-weight:600;}
+.login-form label{display:block;font-size:12px;color:var(--text-sub);margin-bottom:4px;margin-top:14px;}
+.login-form input{
+  width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);
+  font-size:13px;outline:none;transition:border .2s;
+}
+.login-form input:focus{border-color:var(--primary);}
+.login-usbkey{
+  display:flex;align-items:center;gap:8px;margin-top:14px;
+  padding:8px 12px;background:#f8f9fb;border-radius:var(--radius);border:1px solid var(--border);
+  font-size:12px;color:var(--text-sub);
+}
+.usbkey-dot{width:8px;height:8px;border-radius:50%;background:#aaa;}
+.usbkey-dot.connected{background:#4caf50;}
+.btn-login{
+  width:100%;margin-top:22px;padding:11px;background:var(--primary);color:#fff;
+  border:none;border-radius:var(--radius);font-size:14px;font-weight:600;cursor:pointer;
+  transition:background .2s;
+}
+.btn-login:hover{background:var(--primary-dark);}
+
+/* ═══════════════════════════════════════════════════════════
+   主界面布局
+═══════════════════════════════════════════════════════════ */
+#mainPage{display:none;height:100vh;flex-direction:row;}
+#mainPage.show{display:flex;}
+
+/* 侧边栏 */
+.sidebar{
+  width:220px;min-width:220px;background:var(--sidebar-bg);
+  display:flex;flex-direction:column;height:100vh;overflow:hidden;
+}
+.sidebar-logo{
+  padding:14px 14px 10px;border-bottom:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;gap:10px;
+}
+.sidebar-logo-icon{
+  width:36px;height:36px;background:var(--primary);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:bold;flex-shrink:0;
+}
+.sidebar-logo-text .title{font-size:13px;font-weight:700;color:#fff;}
+.sidebar-logo-text .sub{font-size:10px;color:rgba(255,255,255,.45);margin-top:1px;}
+.sidebar-user{
+  padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;gap:8px;
+}
+.user-avatar{
+  width:28px;height:28px;border-radius:50%;background:var(--primary);
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:bold;flex-shrink:0;
+}
+.user-info{flex:1;min-width:0;}
+.user-name{font-size:12px;color:#fff;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.user-role{font-size:10px;color:rgba(255,255,255,.5);}
+.btn-logout{
+  background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;
+  font-size:16px;padding:4px;border-radius:4px;transition:color .2s;
+}
+.btn-logout:hover{color:#fff;}
+
+/* 导航树 */
+.nav-tree{flex:1;overflow-y:auto;padding:8px 0;}
+.nav-tree::-webkit-scrollbar{width:4px;}
+.nav-tree::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px;}
+.nav-group{
+  display:flex;align-items:center;gap:8px;padding:8px 14px 4px;
+  font-size:11px;color:rgba(255,255,255,.35);font-weight:600;letter-spacing:.5px;
+  cursor:pointer;user-select:none;
+}
+.nav-group-icon{font-size:13px;}
+.nav-group-arrow{margin-left:auto;transition:transform .2s;font-size:10px;}
+.nav-group.collapsed .nav-group-arrow{transform:rotate(-90deg);}
+.nav-children{}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:7px 14px 7px 28px;
+  color:var(--sidebar-text);cursor:pointer;transition:all .15s;font-size:12.5px;
+  border-left:3px solid transparent;
+}
+.nav-item:hover{background:var(--sidebar-hover);color:#fff;}
+.nav-item.active{
+  background:rgba(45,108,223,.25);color:var(--sidebar-text-active);
+  border-left-color:var(--primary);font-weight:600;
+}
+.nav-item-icon{font-size:14px;flex-shrink:0;}
+.nav-virus-db{
+  padding:8px 14px;font-size:11px;color:rgba(255,255,255,.3);
+  border-top:1px solid rgba(255,255,255,.08);text-align:center;
+}
+
+/* 右侧内容区 */
+.content-area{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.page{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.page.active{display:flex;}
+
+/* 页面头部 */
+.page-header{
+  background:var(--header-bg);padding:12px 20px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.page-title{font-size:15px;font-weight:700;color:var(--text);}
+.page-breadcrumb{font-size:11px;color:var(--text-sub);margin-top:2px;}
+.page-actions{display:flex;gap:8px;align-items:center;}
+
+/* 页面内容 */
+.page-body{flex:1;overflow-y:auto;padding:16px 20px;}
+.page-body::-webkit-scrollbar{width:6px;}
+.page-body::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px;}
+
+/* ═══════════════════════════════════════════════════════════
+   通用组件
+═══════════════════════════════════════════════════════════ */
+.btn{
+  padding:6px 14px;border:1px solid var(--border);border-radius:var(--radius);
+  background:#fff;color:var(--text);font-size:12px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;
+}
+.btn:hover{border-color:#aaa;background:#f5f5f5;}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary);}
+.btn-primary:hover{background:var(--primary-dark);border-color:var(--primary-dark);}
+.btn-danger{background:var(--danger);color:#fff;border-color:var(--danger);}
+.btn-success{background:var(--success);color:#fff;border-color:var(--success);}
+.btn-sm{padding:4px 10px;font-size:11px;}
+
+.card{background:var(--card-bg);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);}
+.card-header{
+  padding:10px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:13px;font-weight:600;color:var(--text);
+}
+.card-body{padding:14px 16px;}
+
+/* 统计卡片 */
+.stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;}
+.stat-card{
+  background:var(--card-bg);border-radius:var(--radius);border:1px solid var(--border);
+  padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);
+}
+.stat-icon{
+  width:44px;height:44px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;
+}
+.stat-icon.blue{background:#e3f0ff;color:var(--primary);}
+.stat-icon.red{background:#fde8e8;color:var(--danger);}
+.stat-icon.orange{background:#fff3e0;color:var(--warning);}
+.stat-icon.green{background:#e8f5e9;color:var(--success);}
+.stat-num{font-size:22px;font-weight:700;color:var(--text);line-height:1;}
+.stat-label{font-size:11px;color:var(--text-sub);margin-top:3px;}
+
+/* 表格 */
+.data-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.data-table th{
+  background:#f5f7fa;padding:8px 12px;text-align:left;
+  font-weight:600;color:var(--text-sub);border-bottom:1.5px solid var(--border);white-space:nowrap;
+}
+.data-table td{
+  padding:8px 12px;border-bottom:1px solid #f0f2f5;
+  color:var(--text);vertical-align:middle;
+}
+.data-table tr:hover td{background:#f8f9fb;}
+.data-table tr:last-child td{border-bottom:none;}
+
+/* 标签 */
+.tag{
+  display:inline-flex;align-items:center;padding:2px 8px;border-radius:3px;
+  font-size:11px;font-weight:600;white-space:nowrap;
+}
+.tag-danger{background:#fde8e8;color:var(--danger);}
+.tag-warning{background:#fff3e0;color:var(--warning);}
+.tag-info{background:#e3f0ff;color:var(--info);}
+.tag-success{background:#e8f5e9;color:var(--success);}
+.tag-default{background:#f0f2f5;color:var(--text-sub);}
+
+/* KV 信息行 */
+.kv-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:0;}
+.kv-row{display:flex;padding:7px 0;border-bottom:1px solid #f0f2f5;}
+.kv-row:last-child{border-bottom:none;}
+.kv-label{width:130px;flex-shrink:0;color:var(--text-sub);font-size:12px;}
+.kv-value{flex:1;color:var(--text);font-size:12px;word-break:break-all;}
+
+/* Tab */
+.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:14px;}
+.tab-item{
+  padding:8px 16px;cursor:pointer;font-size:12.5px;color:var(--text-sub);
+  border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;white-space:nowrap;
+}
+.tab-item:hover{color:var(--primary);}
+.tab-item.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600;}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* 搜索栏 */
+.search-bar{
+  display:flex;align-items:center;gap:8px;padding:10px 14px;
+  background:#f8f9fb;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.search-input{
+  flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);
+  font-size:12px;outline:none;
+}
+.search-input:focus{border-color:var(--primary);}
+
+/* 状态栏 */
+.status-bar{
+  padding:5px 16px;background:#f5f7fa;border-top:1px solid var(--border);
+  font-size:11px;color:var(--text-sub);flex-shrink:0;
+}
+
+/* 文本区 */
+.code-area{
+  width:100%;background:#1e2a3a;color:#c8d8e8;border:none;border-radius:var(--radius);
+  padding:12px;font-family:'Consolas','Courier New',monospace;font-size:12px;
+  resize:none;outline:none;line-height:1.6;
+}
+
+/* 弹窗 */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;
+  align-items:center;justify-content:center;
+}
+.modal-overlay.show{display:flex;}
+.modal{
+  background:#fff;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.25);
+  width:680px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column;
+}
+.modal-header{
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.modal-title{font-size:14px;font-weight:700;}
+.modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-sub);}
+.modal-body{padding:20px;overflow-y:auto;flex:1;}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+
+/* 进度条 */
+.progress-bar{height:6px;background:#e8ecf0;border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;background:var(--primary);transition:width .3s;}
+.progress-fill.danger{background:var(--danger);}
+.progress-fill.warning{background:var(--warning);}
+
+/* 分隔线 */
+.divider{border:none;border-top:1px solid var(--border);margin:14px 0;}
+
+/* 空状态 */
+.empty-state{text-align:center;padding:40px;color:var(--text-sub);}
+.empty-state .empty-icon{font-size:40px;margin-bottom:12px;}
+.empty-state p{font-size:13px;}
+
+/* 双栏布局 */
+.split-layout{display:flex;gap:0;height:100%;overflow:hidden;}
+.split-left{width:260px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.split-right{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+
+/* 文件列表 */
+.file-list{flex:1;overflow-y:auto;}
+.file-list::-webkit-scrollbar{width:4px;}
+.file-list::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px;}
+.file-list-item{
+  padding:8px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;
+  transition:background .15s;display:flex;align-items:center;gap:8px;
+}
+.file-list-item:hover{background:#f5f7fa;}
+.file-list-item.active{background:#e8f0fd;}
+.file-list-item .file-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.file-list-item .file-risk{font-size:10px;margin-top:2px;}
+.file-list-item .file-icon{font-size:16px;flex-shrink:0;}
+
+/* 属性面板 */
+.attr-panel{padding:14px 16px;border-bottom:1px solid var(--border);}
+.attr-panel-title{font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;}
+.attr-row{display:flex;align-items:baseline;padding:4px 0;border-bottom:1px solid #f5f7fa;}
+.attr-row:last-child{border-bottom:none;}
+.attr-key{width:90px;flex-shrink:0;font-size:11.5px;color:var(--text-sub);}
+.attr-val{flex:1;font-size:12px;color:var(--text);word-break:break-all;}
+
+/* 告警列表 */
+.alert-list{display:flex;flex-direction:column;gap:8px;}
+.alert-item{
+  display:flex;align-items:flex-start;gap:10px;padding:10px 12px;
+  border-radius:var(--radius);border:1px solid var(--border);background:#fff;
+}
+.alert-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.alert-dot.high{background:var(--danger);}
+.alert-dot.medium{background:var(--warning);}
+.alert-dot.low{background:var(--info);}
+.alert-dot.info{background:#78909c;}
+.alert-content .alert-title{font-size:12.5px;font-weight:600;color:var(--text);}
+.alert-content .alert-desc{font-size:11.5px;color:var(--text-sub);margin-top:2px;}
+.alert-time{font-size:11px;color:var(--text-sub);white-space:nowrap;margin-left:auto;}
+
+/* 设置页 */
+.settings-layout{display:flex;gap:0;height:100%;overflow:hidden;}
+.settings-nav{width:180px;flex-shrink:0;border-right:1px solid var(--border);padding:8px 0;}
+.settings-nav-item{
+  padding:9px 16px;cursor:pointer;font-size:12.5px;color:var(--text);
+  transition:all .15s;border-left:3px solid transparent;
+}
+.settings-nav-item:hover{background:#f5f7fa;}
+.settings-nav-item.active{background:#e8f0fd;color:var(--primary);border-left-color:var(--primary);font-weight:600;}
+.settings-content{flex:1;overflow-y:auto;padding:20px;}
+.settings-section{margin-bottom:24px;}
+.settings-section-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f7fa;}
+.settings-row:last-child{border-bottom:none;}
+.settings-label{font-size:12.5px;color:var(--text);}
+.settings-desc{font-size:11px;color:var(--text-sub);margin-top:2px;}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{
+  position:absolute;inset:0;background:#ccc;border-radius:10px;cursor:pointer;transition:.2s;
+}
+.toggle-slider:before{
+  content:'';position:absolute;width:16px;height:16px;left:2px;top:2px;
+  background:#fff;border-radius:50%;transition:.2s;
+}
+.toggle input:checked + .toggle-slider{background:var(--primary);}
+.toggle input:checked + .toggle-slider:before{transform:translateX(16px);}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     登录页
+═══════════════════════════════════════════════════════ -->
+<div id="loginPage">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">检</div>
+      <div>
+        <div class="login-title">恶意代码辅助检测系统</div>
+      </div>
+    </div>
+    <div class="login-subtitle">V3.0 &nbsp;|&nbsp; 国家保密局认证产品</div>
+    <div class="login-role-tabs">
+      <div class="role-tab active" onclick="selectRole(this,'system_admin')">⚙ 系统管理员</div>
+      <div class="role-tab" onclick="selectRole(this,'sec_admin')">🛡 安全管理员</div>
+      <div class="role-tab" onclick="selectRole(this,'auditor')">📋 安全审计员</div>
+    </div>
+    <div class="login-form">
+      <label>用户名</label>
+      <input type="text" id="loginUser" value="admin" placeholder="请输入用户名">
+      <label>密码</label>
+      <input type="password" id="loginPass" value="Admin@123" placeholder="请输入密码">
+    </div>
+    <div class="login-usbkey">
+      <div class="usbkey-dot connected"></div>
+      <span>USB Key 已就绪 &nbsp;|&nbsp; SN: BM-2025-00A3F1</span>
+    </div>
+    <button class="btn-login" onclick="doLogin()">安全登录</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     主界面
+═══════════════════════════════════════════════════════ -->
+<div id="mainPage">
+  <!-- 侧边栏 -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">检</div>
+      <div class="sidebar-logo-text">
+        <div class="title">恶意代码检测</div>
+        <div class="sub">辅助检测系统 V3.0</div>
+      </div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="userAvatar">管</div>
+      <div class="user-info">
+        <div class="user-name" id="userNameLabel">admin</div>
+        <div class="user-role" id="userRoleLabel">系统管理员</div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()" title="退出登录">⏻</button>
+    </div>
+    <div class="nav-tree">
+      <!-- 系统概览 -->
+      <div class="nav-item active" data-page="0" onclick="switchPage(0,this)">
+        <span class="nav-item-icon">🖥</span>系统概览
+      </div>
+      <!-- 系统信息采集 -->
+      <div class="nav-group" onclick="toggleGroup(this)">
+        <span class="nav-group-icon">📦</span>系统信息采集
+        <span class="nav-group-arrow">▾</span>
+      </div>
+      <div class="nav-children">
+        <div class="nav-item" data-page="1" onclick="switchPage(1,this)"><span class="nav-item-icon">💻</span>系统基本信息</div>
+        <div class="nav-item" data-page="2" onclick="switchPage(2,this)"><span class="nav-item-icon">🌐</span>网络信息</div>
+        <div class="nav-item" data-page="3" onclick="switchPage(3,this)"><span class="nav-item-icon">💾</span>硬盘信息</div>
+        <div class="nav-item" data-page="4" onclick="switchPage(4,this)"><span class="nav-item-icon">⚙</span>进程信息</div>
+        <div class="nav-item" data-page="5" onclick="switchPage(5,this)"><span class="nav-item-icon">🔌</span>端口信息</div>
+        <div class="nav-item" data-page="6" onclick="switchPage(6,this)"><span class="nav-item-icon">🚀</span>自启动项</div>
+        <div class="nav-item" data-page="7" onclick="switchPage(7,this)"><span class="nav-item-icon">🕐</span>计划任务</div>
+        <div class="nav-item" data-page="8" onclick="switchPage(8,this)"><span class="nav-item-icon">🔧</span>驱动信息</div>
+        <div class="nav-item" data-page="9" onclick="switchPage(9,this)"><span class="nav-item-icon">📂</span>共享资源</div>
+        <div class="nav-item" data-page="10" onclick="switchPage(10,this)"><span class="nav-item-icon">🧩</span>浏览器插件</div>
+        <div class="nav-item" data-page="11" onclick="switchPage(11,this)"><span class="nav-item-icon">🧠</span>内存映像</div>
+      </div>
+      <!-- 检测分析 -->
+      <div class="nav-group" onclick="toggleGroup(this)">
+        <span class="nav-group-icon">🔍</span>检测分析
+        <span class="nav-group-arrow">▾</span>
+      </div>
+      <div class="nav-children">
+        <div class="nav-item" data-page="12" onclick="switchPage(12,this)"><span class="nav-item-icon">📄</span>静态检测</div>
+        <div class="nav-item" data-page="13" onclick="switchPage(13,this)"><span class="nav-item-icon">🔬</span>动态行为检测</div>
+        <div class="nav-item" data-page="14" onclick="switchPage(14,this)"><span class="nav-item-icon">🔗</span>文件关联检测</div>
+        <div class="nav-item" data-page="15" onclick="switchPage(15,this)"><span class="nav-item-icon">🧪</span>样本提取</div>
+      </div>
+      <!-- 结果管理 -->
+      <div class="nav-group" onclick="toggleGroup(this)">
+        <span class="nav-group-icon">📊</span>结果管理
+        <span class="nav-group-arrow">▾</span>
+      </div>
+      <div class="nav-children">
+        <div class="nav-item" data-page="16" onclick="switchPage(16,this)"><span class="nav-item-icon">📑</span>检测报告</div>
+        <div class="nav-item" data-page="17" onclick="switchPage(17,this)"><span class="nav-item-icon">📋</span>日志审计</div>
+        <div class="nav-item" data-page="18" onclick="switchPage(18,this)"><span class="nav-item-icon">⚙</span>系统设置</div>
+      </div>
+    </div>
+    <div class="nav-virus-db">病毒库：20251120 &nbsp;|&nbsp; 共 2,847,391 条</div>
+  </div>
+
+  <!-- 右侧内容区 -->
+  <div class="content-area">
+
+    <!-- ─── PAGE 0: 系统概览 ─── -->
+    <div class="page active" id="page-0">
+      <div class="page-header">
+        <div><div class="page-title">系统概览</div><div class="page-breadcrumb">首页 / 系统概览</div></div>
+        <div class="page-actions">
+          <span style="font-size:11px;color:var(--text-sub)">采集时间：2025-11-20 09:32:15</span>
+          <button class="btn btn-primary btn-sm" onclick="showToast('正在刷新数据...')">↻ 刷新</button>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="stat-cards">
+          <div class="stat-card">
+            <div class="stat-icon blue">🖥</div>
+            <div><div class="stat-num">19</div><div class="stat-label">采集模块</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon red">⚠</div>
+            <div><div class="stat-num" style="color:var(--danger)">3</div><div class="stat-label">高危威胁</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon orange">🔍</div>
+            <div><div class="stat-num" style="color:var(--warning)">7</div><div class="stat-label">待检测文件</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">✓</div>
+            <div><div class="stat-num" style="color:var(--success)">安全</div><div class="stat-label">系统状态</div></div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+          <div class="card">
+            <div class="card-header">最新告警 <span class="tag tag-danger">3 条高危</span></div>
+            <div class="card-body">
+              <div class="alert-list">
+                <div class="alert-item">
+                  <div class="alert-dot high"></div>
+                  <div class="alert-content">
+                    <div class="alert-title">发现木马程序 Trojan.Win32.Backdoor.Generic</div>
+                    <div class="alert-desc">文件：suspicious.exe &nbsp;|&nbsp; 路径：C:\Users\admin\AppData\Roaming\</div>
+                  </div>
+                  <div class="alert-time">09:28</div>
+                </div>
+                <div class="alert-item">
+                  <div class="alert-dot high"></div>
+                  <div class="alert-content">
+                    <div class="alert-title">伪装文件检测：invoice_2025.pdf.exe</div>
+                    <div class="alert-desc">双扩展名伪装PDF文档，已加壳（MPRESS），高危</div>
+                  </div>
+                  <div class="alert-time">09:15</div>
+                </div>
+                <div class="alert-item">
+                  <div class="alert-dot medium"></div>
+                  <div class="alert-content">
+                    <div class="alert-title">可疑进程：svch0st.exe 伪装系统进程</div>
+                    <div class="alert-desc">文件名伪装 svchost.exe，位于 %TEMP% 目录</div>
+                  </div>
+                  <div class="alert-time">08:55</div>
+                </div>
+                <div class="alert-item">
+                  <div class="alert-dot low"></div>
+                  <div class="alert-content">
+                    <div class="alert-title">注册表自启动项异常</div>
+                    <div class="alert-desc">HKCU\Run\SystemUpdate 指向可疑路径</div>
+                  </div>
+                  <div class="alert-time">08:40</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">检测统计</div>
+            <div class="card-body">
+              <div style="margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                  <span style="font-size:12px;">静态检测完成度</span><span style="font-size:12px;font-weight:600;">4/4</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+              </div>
+              <div style="margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                  <span style="font-size:12px;">动态行为检测</span><span style="font-size:12px;font-weight:600;">12/12</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+              </div>
+              <div style="margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                  <span style="font-size:12px;">文件关联检测</span><span style="font-size:12px;font-weight:600;">6/6</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+              </div>
+              <div style="margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                  <span style="font-size:12px;">系统信息采集</span><span style="font-size:12px;font-weight:600;">11/11</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+              </div>
+              <hr class="divider">
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;">
+                <div style="padding:8px;background:#fde8e8;border-radius:var(--radius);">
+                  <div style="font-size:18px;font-weight:700;color:var(--danger);">3</div>
+                  <div style="font-size:11px;color:var(--danger);">高危</div>
+                </div>
+                <div style="padding:8px;background:#fff3e0;border-radius:var(--radius);">
+                  <div style="font-size:18px;font-weight:700;color:var(--warning);">2</div>
+                  <div style="font-size:11px;color:var(--warning);">中危</div>
+                </div>
+                <div style="padding:8px;background:#e8f5e9;border-radius:var(--radius);">
+                  <div style="font-size:18px;font-weight:700;color:var(--success);">1</div>
+                  <div style="font-size:11px;color:var(--success);">安全</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">系统基本信息摘要</div>
+          <div class="card-body">
+            <div class="kv-grid">
+              <div style="padding-right:20px;">
+                <div class="kv-row"><span class="kv-label">主机名</span><span class="kv-value">WORKSTATION-001</span></div>
+                <div class="kv-row"><span class="kv-label">操作系统</span><span class="kv-value">Windows 10 专业版 22H2 (64位)</span></div>
+                <div class="kv-row"><span class="kv-label">CPU</span><span class="kv-value">Intel Core i7-10700 @ 2.90GHz (8核)</span></div>
+                <div class="kv-row"><span class="kv-label">内存</span><span class="kv-value">16 GB (已用 6.2 GB)</span></div>
+              </div>
+              <div>
+                <div class="kv-row"><span class="kv-label">IP 地址</span><span class="kv-value">192.168.1.100 / 10.0.0.5</span></div>
+                <div class="kv-row"><span class="kv-label">MAC 地址</span><span class="kv-value">00:1A:2B:3C:4D:5E</span></div>
+                <div class="kv-row"><span class="kv-label">运行时间</span><span class="kv-value">3天 14小时 22分</span></div>
+                <div class="kv-row"><span class="kv-label">采集时间</span><span class="kv-value">2025-11-20 09:32:15</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE 1: 系统基本信息 ─── -->
+    <div class="page" id="page-1">
+      <div class="page-header">
+        <div><div class="page-title">系统基本信息</div><div class="page-breadcrumb">系统信息采集 / 系统基本信息</div></div>
+        <div class="page-actions">
+          <button class="btn btn-primary btn-sm" onclick="showToast('正在采集系统信息...')">↻ 重新采集</button>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-header">基本信息</div>
+          <div class="card-body">
+            <div class="kv-grid">
+              <div style="padding-right:20px;">
+                <div class="kv-row"><span class="kv-label">主机名</span><span class="kv-value">WORKSTATION-001</span></div>
+                <div class="kv-row"><span class="kv-label">操作系统</span><span class="kv-value">Windows 10 专业版 22H2 (Build 19045)</span></div>
+                <div class="kv-row"><span class="kv-label">系统架构</span><span class="kv-value">x86_64 (64位)</span></div>
+                <div class="kv-row"><span class="kv-label">安装时间</span><span class="kv-value">2024-03-15 10:22:00</span></div>
+                <div class="kv-row"><span class="kv-label">系统目录</span><span class="kv-value">C:\Windows</span></div>
+                <div class="kv-row"><span class="kv-label">System32</span><span class="kv-value">C:\Windows\System32</span></div>
+              </div>
+              <div>
+                <div class="kv-row"><span class="kv-label">CPU 型号</span><span class="kv-value">Intel Core i7-10700 @ 2.90GHz</span></div>
+                <div class="kv-row"><span class="kv-label">CPU 核心数</span><span class="kv-value">8核 16线程</span></div>
+                <div class="kv-row"><span class="kv-label">物理内存</span><span class="kv-value">16,384 MB</span></div>
+                <div class="kv-row"><span class="kv-label">可用内存</span><span class="kv-value">9,820 MB</span></div>
+                <div class="kv-row"><span class="kv-label">系统运行时间</span><span class="kv-value">3天 14小时 22分 18秒</span></div>
+                <div class="kv-row"><span class="kv-label">采集时间</span><span class="kv-value">2025-11-20 09:32:15</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">用户账户</div>
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>用户名</th><th>全名</th><th>描述</th><th>状态</th><th>最后登录</th></tr></thead>
+              <tbody>
+                <tr><td>Administrator</td><td>系统管理员</td><td>内置管理员账户</td><td><span class="tag tag-warning">已禁用</span></td><td>2025-11-18 08:30</td></tr>
+                <tr><td>admin</td><td>管理员</td><td>本地管理员</td><td><span class="tag tag-success">启用</span></td><td>2025-11-20 09:30</td></tr>
+                <tr><td>hacker</td><td></td><td>（可疑账户）</td><td><span class="tag tag-danger">启用</span></td><td>2025-11-19 22:15</td></tr>
+                <tr><td>Guest</td><td>来宾</td><td>内置来宾账户</td><td><span class="tag tag-warning">已禁用</span></td><td>从未</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE 2: 网络信息 ─── -->
+    <div class="page" id="page-2">
+      <div class="page-header">
+        <div><div class="page-title">网络信息</div><div class="page-breadcrumb">系统信息采集 / 网络信息</div></div>
+        <div class="page-actions"><button class="btn btn-primary btn-sm" onclick="showToast('正在采集网络信息...')">↻ 重新采集</button></div>
+      </div>
+      <div class="page-body">
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-header">网络接口</div>
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>接口名</th><th>IP 地址</th><th>子网掩码</th><th>MAC 地址</th><th>网关</th><th>DNS</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr><td>以太网</td><td>192.168.1.100</td><td>255.255.255.0</td><td>00:1A:2B:3C:4D:5E</td><td>192.168.1.1</td><td>8.8.8.8</td><td><span class="tag tag-success">已连接</span></td></tr>
+                <tr><td>以太网 2</td><td>10.0.0.5</td><td>255.255.255.0</td><td>00:1A:2B:3C:4D:5F</td><td>10.0.0.1</td><td>10.0.0.1</td><td><span class="tag tag-success">已连接</span></td></tr>
+                <tr><td>本地回环</td><td>127.0.0.1</td><td>255.0.0.0</td><td>—</td><td>—</td><td>—</td><td><span class="tag tag-default">回环</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">活跃网络连接（Top 10）</div>
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>协议</th><th>本地地址</th><th>远程地址</th><th>状态</th><th>进程</th><th>PID</th></tr></thead>
+              <tbody>
+                <tr><td>TCP</td><td>192.168.1.100:49320</td><td><span style="color:var(--danger);font-weight:600;">203.0.113.45:4444</span></td><td><span class="tag tag-danger">ESTABLISHED</span></td><td>suspicious.exe</td><td>4832</td></tr>
+                <tr><td>TCP</td><td>192.168.1.100:443</td><td>142.250.80.46:443</td><td><span class="tag tag-success">ESTABLISHED</span></td><td>chrome.exe</td><td>3120</td></tr>
+                <tr><td>TCP</td><td>0.0.0.0:3389</td><td>—</td><td><span class="tag tag-info">LISTEN</span></td><td>svchost.exe</td><td>1024</td></tr>
+                <tr><td>TCP</td><td>0.0.0.0:445</td><td>—</td><td><span class="tag tag-info">LISTEN</span></td><td>System</td><td>4</td></tr>
+                <tr><td>UDP</td><td>0.0.0.0:5355</td><td>—</td><td><span class="tag tag-default">—</span></td><td>svchost.exe</td><td>1024</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE 3: 硬盘信息 ─── -->
+    <div class="page" id="page-3">
+      <div class="page-header">
+        <div><div class="page-title">硬盘信息</div><div class="page-breadcrumb">系统信息采集 / 硬盘信息</div></div>
+        <div class="page-actions"><button class="btn btn-primary btn-sm" onclick="showToast('正在采集硬盘信息...')">↻ 重新采集</button></div>
+      </div>
+      <div class="page-body">
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-header">磁盘分区</div>
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>盘符</th><th>卷标</th><th>文件系统</th><th>总容量</th><th>已用</th><th>可用</th><th>使用率</th></tr></thead>
+              <tbody>
+                <tr><td>C:\</td><td>系统盘</td><td>NTFS</td><td>256 GB</td><td>148 GB</td><td>108 GB</td><td><div class="progress-bar" style="width:120px;"><div class="progress-fill warning" style="width:58%"></div></div></td></tr>
+                <tr><td>D:\</td><td>数据盘</td><td>NTFS</td><td>1 TB</td><td>320 GB</td><td>704 GB</td><td><div class="progress-bar" style="width:120px;"><div class="progress-fill" style="width:32%"></div></div></td></tr>
+                <tr><td>E:\</td><td>备份盘</td><td>NTFS</td><td>2 TB</td><td>1.2 TB</td><td>0.8 TB</td><td><div class="progress-bar" style="width:120px;"><div class="progress-fill" style="width:60%"></div></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">物理磁盘</div>
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>磁盘</th><th>型号</th><th>接口</th><th>容量</th><th>序列号</th><th>固件版本</th></tr></thead>
+              <tbody>
+                <tr><td>Disk 0</td><td>Samsung SSD 860 EVO 256GB</td><td>SATA III</td><td>256 GB</td><td>S3Z9NB0K123456</td><td>RVT41B6Q</td></tr>
+                <tr><td>Disk 1</td><td>WDC WD10EZEX-08WN4A0</td><td>SATA III</td><td>1 TB</td><td>WD-WCC6Y3ABCDEF</td><td>01.01A01</td></tr>
+                <tr><td>Disk 2</td><td>Seagate ST2000DM008</td><td>SATA III</td><td>2 TB</td><td>ZFN0ABCD</td><td>0001</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE 4: 进程信息 ─── -->
+    <div class="page" id="page-4">
+      <div class="page-header">
+        <div><div class="page-title">进程信息</div><div class="page-breadcrumb">系统信息采集 / 进程信息</div></div>
+        <div class="page-actions">
+          <input class="search-input" style="width:200px;" placeholder="搜索进程名/PID..." oninput="filterTable('procTable',this.value)">
+          <button class="btn btn-primary btn-sm" onclick="showToast('正在刷新进程列表...')">↻ 刷新</button>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table" id="procTable">
+              <thead><tr><th>PID</th><th>进程名</th><th>路径</th><th>CPU%</th><th>内存(MB)</th><th>用户</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr><td>4</td><td>System</td><td>—</td><td>0.1</td><td>0.2</td><td>SYSTEM</td><td><span class="tag tag-success">正常</span></td></tr>
+                <tr><td>1024</td><td>svchost.exe</td><td>C:\Windows\System32\svchost.exe</td><td>0.5</td><td>12.4</td><td>SYSTEM</td><td><span class="tag tag-success">正常</span></td></tr>
+                <tr><td>3120</td><td>chrome.exe</td><td>C:\Program Files\Google\Chrome\Application\chrome.exe</td><td>2.3</td><td>256.8</td><td>admin</td><td><span class="tag tag-success">正常</span></td></tr>
+                <tr><td>4832</td><td style="color:var(--danger);font-weight:600;">suspicious.exe</td><td style="color:var(--danger);">C:\Users\admin\AppData\Roaming\suspicious.exe</td><td>8.7</td><td>45.2</td><td>admin</td><td><span class="tag tag-danger">高危</span></td></tr>
+                <tr><td>5120</td><td style="color:var(--warning);font-weight:600;">svch0st.exe</td><td style="color:var(--warning);">C:\Windows\Temp\svch0st.exe</td><td>1.2</td><td>8.6</td><td>admin</td><td><span class="tag tag-warning">可疑</span></td></tr>
+                <tr><td>2048</td><td>explorer.exe</td><td>C:\Windows\explorer.exe</td><td>0.8</td><td>48.3</td><td>admin</td><td><span class="tag tag-success">正常</span></td></tr>
+                <tr><td>1536</td><td>lsass.exe</td><td>C:\Windows\System32\lsass.exe</td><td>0.2</td><td>8.1</td><td>SYSTEM</td><td><span class="tag tag-success">正常</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE 5: 端口信息 ─── -->
+    <div class="page" id="page-5">
+      <div class="page-header">
+        <div><div class="page-title">端口信息</div><div class="page-breadcrumb">系统信息采集 / 端口信息</div></div>
+        <div class="page-actions"><button class="btn btn-primary btn-sm" onclick="showToast('正在采集端口信息...')">↻ 刷新</button></div>
+      </div>
+      <div class="page-body">
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>协议</th><th>本地端口</th><th>本地地址</th><th>远程地址</th><th>状态</th><th>关联进程</th><th>PID</th><th>风险</th></tr></thead>
+              <tbody>
+                <tr><td>TCP</td><td><span style="color:var(--danger);font-weight:600;">49320</span></td><td>192.168.1.100</td><td>203.0.113.45:4444</td><td>ESTABLISHED</td><td>suspicious.exe</td><td>4832</td><td><span class="tag tag-danger">高危</span></td></tr>
+                <tr><td>TCP</td><td>3389</td><td>0.0.0.0</td><td>—</td><td>LISTEN</td><td>svchost.exe</td><td>1024</td><td><span class="tag tag-warning">注意</span></td></tr>
+                <tr><td>TCP</td><td>445</td><td>0.0.0.0</td><td>—</td><td>LISTEN</td><td>System</td><td>4</td><td><span class="tag tag-info">正常</span></td></tr>
+                <tr><td>TCP</td><td>443</td><td>192.168.1.100</td><td>142.250.80.46:443</td><td>ESTABLISHED</td><td>chrome.exe</td><td>3120</td><td><span class="tag tag-success">安全</span></td></tr>
+                <tr><td>TCP</td><td>135</td><td>0.0.0.0</td><td>—</td><td>LISTEN</td><td>svchost.exe</td><td>1024</td><td><span class="tag tag-default">正常</span></td></tr>
+                <tr><td>UDP</td><td>5355</td><td>0.0.0.0</td><td>—</td><td>—</td><td>svchost.exe</td><td>1024</td><td><span class="tag tag-default">正常</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE 6: 自启动项 ─── -->
+    <div class="page" id="page-6">
+      <div class="page-header">
+        <div><div class="page-title">自启动项</div><div class="page-breadcrumb">系统信息采集 / 自启动项</div></div>
+        <div class="page-actions"><button class="btn btn-primary btn-sm" onclick="showToast('正在采集自启动项...')">↻ 刷新</button></div>
+      </div>
+      <div class="page-body">
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>名称</th><th>注册表路径</th><th>启动路径</th><th>类型</th><th>风险</th></tr></thead>
+              <tbody>
+                <tr><td style="color:var(--danger);font-weight:600;">SystemUpdate</td><td>HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run</td><td style="color:var(--danger);">C:\Users\admin\AppData\Roaming\suspicious.exe</td><td>注册表</td><td><span class="tag tag-danger">高危</span></td></tr>
+                <tr><td>OneDrive</td><td>HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run</td><td>C:\Users\admin\AppData\Local\Microsoft\OneDrive\OneDrive.exe</td><td>注册表</td><td><span class="tag tag-success">安全</span></td></tr>
+                <tr><td>SecurityHealth</td><td>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run</td><td>C:\Windows\System32\SecurityHealthSystray.exe</td><td>注册表</td><td><span class="tag tag-success">安全</span></td></tr>
+                <tr><td style="color:var(--warning);font-weight:600;">SvcUpdate</td><td>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run</td><td style="color:var(--warning);">C:\Windows\Temp\svch0st.exe</td><td>注册表</td><td><span class="tag tag-warning">可疑</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE 7: 计划任务 ─── -->
+    <div class="page" id="page-7">
+      <div class="page-header">
+        <div><div class="page-title">计划任务</div><div class="page-breadcrumb">系统信息采集 / 计划任务</div></div>
+        <div class="page-actions"><button class="btn btn-primary btn-sm" onclick="showToast('正在采集计划任务...')">↻ 刷新</button></div>
+      </div>
+      <div class="page-body">
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>任务名</th><th>路径</th><th>触发器</th><th>操作</th><th>状态</th><th>风险</th></tr></thead>
+              <tbody>
+                <tr><td style="color:var(--danger);font-weight:600;">MalwareTask</td><td>\Microsoft\Windows\</td><td>每天 03:00</td><td style="color:var(--danger);">C:\Users\admin\AppData\Roaming\suspicious.exe /silent</td><td><span class="tag tag-success">已启用</span></td><td><span class="tag tag-danger">高危</span></td></tr>
+                <tr><td>GoogleUpdateTaskMachine</td><td>\</td><td>每天 09:00</td><td>C:\Program Files (x86)\Google\Update\GoogleUpdate.exe</td><td><span class="tag tag-success">已启用</span></td><td><span class="tag tag-success">安全</span></td></tr>
+                <tr><td>MicrosoftEdgeUpdate</td><td>\Microsoft\EdgeUpdate\</td><td>每小时</td><td>C:\Program Files (x86)\Microsoft\EdgeUpdate\MicrosoftEdgeUpdate.exe</td><td><span class="tag tag-success">已启用</span></td><td><span class="tag tag-success">安全</span></td></tr>
+                <tr><td>WindowsDefenderCache</td><td>\Microsoft\Windows\</td><td>每天 02:00</td><td>C:\ProgramData\Microsoft\Windows Defender\Platform\MpCmdRun.exe</td><td><span class="tag tag-success">已启用</span></td><td><span class="tag tag-success">安全</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE 8: 驱动信息 ─── -->
+    <div class="page" id="page-8">
+      <div class="page-header">
+        <div><div class="page-title">驱动信息</div><div class="page-breadcrumb">系统信息采集 / 驱动信息</div></div>
+        <div class="page-actions"><button class="btn btn-primary btn-sm" onclick="showToast('正在采集驱动信息...')">↻ 刷新</button></div>
+      </div>
+      <div class="page-body">
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>驱动名</th><th>显示名</th><th>路径</th><th>类型</th><th>状态</th><th>签名</th><th>风险</th></tr></thead>
+              <tbody>
+                <tr><td style="color:var(--danger);font-weight:600;">maldrv.sys</td><td>Malware Driver</td><td style="color:var(--danger);">C:\Windows\System32\drivers\maldrv.sys</td><td>内核</td><td><span class="tag tag-success">运行中</span></td><td><span class="tag tag-danger">无签名</span></td><td><span class="tag tag-danger">高危</span></td></tr>
+                <tr><td>ntfs.sys</td><td>NT File System Driver</td><td>C:\Windows\System32\drivers\ntfs.sys</td><td>文件系统</td><td><span class="tag tag-success">运行中</span></td><td><span class="tag tag-success">Microsoft</span></td><td><span class="tag tag-success">安全</span></td></tr>
+                <tr><td>tcpip.sys</td><td>TCP/IP Protocol Driver</td><td>C:\Windows\System32\drivers\tcpip.sys</td><td>网络</td><td><span class="tag tag-success">运行中</span></td><td><span class="tag tag-success">Microsoft</span></td><td><span class="tag tag-success">安全</span></td></tr>
+                <tr><td>WdFilter.sys</td><td>Microsoft antimalware file system filter driver</td><td>C:\Windows\System32\drivers\wd\WdFilter.sys</td><td>过滤器</td><td><span class="tag tag-success">运行中</span></td><td><span class="tag tag-success">Microsoft</span></td><td><span class="tag tag-success">安全</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE 9: 共享资源 ─── -->
+    <div class="page" id="page-9">
+      <div class="page-header">
+        <div><div class="page-title">共享资源</div><div class="page-breadcrumb">系统信息采集 / 共享资源</div></div>
+        <div class="page-actions"><button class="btn btn-primary btn-sm" onclick="showToast('正在采集共享资源...')">↻ 刷新</button></div>
+      </div>
+      <div class="page-body">
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>共享名</th><th>本地路径</th><th>类型</th><th>描述</th><th>权限</th><th>风险</th></tr></thead>
+              <tbody>
+                <tr><td style="color:var(--danger);font-weight:600;">C$_share</td><td style="color:var(--danger);">C:\</td><td>磁盘</td><td>C盘完整共享（可疑）</td><td>完全控制</td><td><span class="tag tag-danger">高危</span></td></tr>
+                <tr><td>ADMIN$</td><td>C:\Windows</td><td>磁盘</td><td>远程管理</td><td>仅管理员</td><td><span class="tag tag-warning">注意</span></td></tr>
+                <tr><td>IPC$</td><td>—</td><td>IPC</td><td>远程IPC</td><td>—</td><td><span class="tag tag-default">正常</span></td></tr>
+                <tr><td>Documents</td><td>C:\Users\admin\Documents</td><td>磁盘</td><td>文档共享</td><td>读取</td><td><span class="tag tag-success">安全</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE 10: 浏览器插件 ─── -->
+    <div class="page" id="page-10">
+      <div class="page-header">
+        <div><div class="page-title">浏览器插件</div><div class="page-breadcrumb">系统信息采集 / 浏览器插件</div></div>
+        <div class="page-actions"><button class="btn btn-primary btn-sm" onclick="showToast('正在采集浏览器插件...')">↻ 刷新</button></div>
+      </div>
+      <div class="page-body">
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>浏览器</th><th>插件名</th><th>版本</th><th>ID</th><th>状态</th><th>风险</th></tr></thead>
+              <tbody>
+                <tr><td>Chrome</td><td style="color:var(--danger);font-weight:600;">MalAds Extension</td><td>1.0.0</td><td>abcdefghijklmnopqrstuvwxyz012345</td><td><span class="tag tag-success">已启用</span></td><td><span class="tag tag-danger">高危</span></td></tr>
+                <tr><td>Chrome</td><td>Google Docs Offline</td><td>1.4.2</td><td>ghbmnnjooekpmoecnnnilnnbdlolhkhi</td><td><span class="tag tag-success">已启用</span></td><td><span class="tag tag-success">安全</span></td></tr>
+                <tr><td>Chrome</td><td>uBlock Origin</td><td>1.52.2</td><td>cjpalhdlnbpafiamejdnhcphjbkeiagm</td><td><span class="tag tag-success">已启用</span></td><td><span class="tag tag-success">安全</span></td></tr>
+                <tr><td>Edge</td><td>Microsoft Editor</td><td>3.0.8</td><td>gpaiobkfhnonedkhhfjpmhdalgeoebfa</td><td><span class="tag tag-success">已启用</span></td><td><span class="tag tag-success">安全</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE 11: 内存映像 ─── -->
+    <div class="page" id="page-11">
+      <div class="page-header">
+        <div><div class="page-title">内存映像</div><div class="page-breadcrumb">系统信息采集 / 内存映像</div></div>
+        <div class="page-actions"><button class="btn btn-primary btn-sm" onclick="showToast('正在采集内存映像...')">↻ 刷新</button></div>
+      </div>
+      <div class="page-body">
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>进程</th><th>PID</th><th>模块名</th><th>基址</th><th>大小</th><th>路径</th><th>风险</th></tr></thead>
+              <tbody>
+                <tr><td style="color:var(--danger);">suspicious.exe</td><td>4832</td><td style="color:var(--danger);font-weight:600;">inject.dll</td><td>0x10000000</td><td>128 KB</td><td style="color:var(--danger);">C:\Users\admin\AppData\Roaming\inject.dll</td><td><span class="tag tag-danger">注入模块</span></td></tr>
+                <tr><td>explorer.exe</td><td>2048</td><td>shell32.dll</td><td>0x7FFE0000</td><td>22 MB</td><td>C:\Windows\System32\shell32.dll</td><td><span class="tag tag-success">安全</span></td></tr>
+                <tr><td>chrome.exe</td><td>3120</td><td>chrome.dll</td><td>0x00400000</td><td>180 MB</td><td>C:\Program Files\Google\Chrome\Application\chrome.dll</td><td><span class="tag tag-success">安全</span></td></tr>
+                <tr><td style="color:var(--warning);">svch0st.exe</td><td>5120</td><td style="color:var(--warning);">hook.dll</td><td>0x20000000</td><td>64 KB</td><td style="color:var(--warning);">C:\Windows\Temp\hook.dll</td><td><span class="tag tag-warning">可疑</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE 12: 静态检测 ─── -->
+    <div class="page" id="page-12" style="overflow:hidden;">
+      <div class="page-header">
+        <div><div class="page-title">静态检测</div><div class="page-breadcrumb">检测分析 / 静态检测</div></div>
+        <div class="page-actions">
+          <button class="btn btn-sm" onclick="showToast('请在左侧列表选择文件')">+ 添加文件</button>
+          <button class="btn btn-sm" onclick="showToast('已移除选中文件')">✕ 移除</button>
+          <button class="btn btn-primary btn-sm" onclick="showToast('正在提交检测...')">▶ 检测选中</button>
+          <button class="btn btn-sm" onclick="showToast('已提交全部文件')">▶▶ 全部检测</button>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;overflow:hidden;">
+        <!-- 左侧文件列表 -->
+        <div class="split-left">
+          <div style="padding:8px 12px;background:#f8f9fb;border-bottom:1px solid var(--border);font-size:11px;color:var(--text-sub);font-weight:600;">文件列表（4个）</div>
+          <div class="file-list">
+            <div class="file-list-item active" onclick="selectStaticFile(this,0)">
+              <span class="file-icon">📄</span>
+              <div style="min-width:0;">
+                <div class="file-name" style="color:var(--danger);">suspicious.exe</div>
+                <div class="file-risk" style="color:var(--danger);">高危 · Trojan.Win32.Backdoor.Generic</div>
+              </div>
+            </div>
+            <div class="file-list-item" onclick="selectStaticFile(this,1)">
+              <span class="file-icon">📄</span>
+              <div style="min-width:0;">
+                <div class="file-name" style="color:var(--warning);">svch0st.exe</div>
+                <div class="file-risk" style="color:var(--warning);">中危 · Trojan.Win32.FakeProcess</div>
+              </div>
+            </div>
+            <div class="file-list-item" onclick="selectStaticFile(this,2)">
+              <span class="file-icon">📄</span>
+              <div style="min-width:0;">
+                <div class="file-name" style="color:var(--success);">chrome.exe</div>
+                <div class="file-risk" style="color:var(--success);">安全</div>
+              </div>
+            </div>
+            <div class="file-list-item" onclick="selectStaticFile(this,3)">
+              <span class="file-icon">📄</span>
+              <div style="min-width:0;">
+                <div class="file-name" style="color:var(--danger);">invoice_2025.pdf.exe</div>
+                <div class="file-risk" style="color:var(--danger);">高危 · Trojan.Win32.Dropper</div>
+              </div>
+            </div>
+          </div>
+          <div class="status-bar" id="staticStatus">已选中：suspicious.exe</div>
+        </div>
+        <!-- 右侧详情 -->
+        <div class="split-right" style="overflow-y:auto;">
+          <!-- 基本属性面板 -->
+          <div class="attr-panel">
+            <div class="attr-panel-title">基本属性</div>
+            <div id="staticAttr">
+              <div class="attr-row"><span class="attr-key">文件名</span><span class="attr-val" id="sa-name">suspicious.exe</span></div>
+              <div class="attr-row"><span class="attr-key">文件路径</span><span class="attr-val" id="sa-path">C:\Users\admin\AppData\Roaming\suspicious.exe</span></div>
+              <div class="attr-row"><span class="attr-key">文件大小</span><span class="attr-val" id="sa-size">100 KB (102400 字节)</span></div>
+              <div class="attr-row"><span class="attr-key">文件类型</span><span class="attr-val" id="sa-type">PE32 executable (GUI) Intel 80386</span></div>
+              <div class="attr-row"><span class="attr-key">MD5</span><span class="attr-val" id="sa-md5" style="font-family:monospace;">a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4</span></div>
+              <div class="attr-row"><span class="attr-key">SHA256</span><span class="attr-val" id="sa-sha256" style="font-family:monospace;font-size:11px;">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span></div>
+              <div class="attr-row"><span class="attr-key">扫描时间</span><span class="attr-val" id="sa-time">2025-11-20 09:28:00</span></div>
+              <div class="attr-row"><span class="attr-key">风险等级</span><span class="attr-val"><span id="sa-risk" class="tag tag-danger" style="font-size:12px;">高危</span></span></div>
+              <div class="attr-row"><span class="attr-key">病毒检测</span><span class="attr-val"><span id="sa-virus-status" style="font-weight:700;color:var(--danger);background:#fde8e8;padding:2px 8px;border-radius:3px;font-size:12px;">威胁</span></span></div>
+              <div class="attr-row"><span class="attr-key">病毒名称</span><span class="attr-val" id="sa-virus-name" style="color:var(--danger);font-weight:600;">Trojan.Win32.Backdoor.Generic</span></div>
+            </div>
+          </div>
+          <!-- 详情Tab -->
+          <div style="padding:14px 16px;flex:1;">
+            <div class="tabs" id="staticTabs">
+              <div class="tab-item active" onclick="switchTab('staticTabs','staticTabContent',0,this)">PE 结构</div>
+              <div class="tab-item" onclick="switchTab('staticTabs','staticTabContent',1,this)">字符串提取</div>
+              <div class="tab-item" onclick="switchTab('staticTabs','staticTabContent',2,this)">规则命中</div>
+              <div class="tab-item" onclick="switchTab('staticTabs','staticTabContent',3,this)">数字证书</div>
+              <div class="tab-item" onclick="switchTab('staticTabs','staticTabContent',4,this)">综合结论</div>
+            </div>
+            <div id="staticTabContent">
+              <div class="tab-content active">
+                <textarea class="code-area" rows="12" readonly id="sa-pe">文件类型:    PE32 可执行文件 (GUI) Intel 80386
+入口点:      0x00401A30
+编译时间:    2025-10-01 12:00:00 UTC
+加壳器:      UPX 3.96
+节区数量:    3
+  .text    VSize:0xB000  RSize:0xB200  Entropy:7.80 [高熵，已加壳]
+  .data    VSize:0x2000  RSize:0x2000  Entropy:6.20
+  .rsrc    VSize:0x1000  RSize:0x1000  Entropy:3.10
+
+导入表:
+  kernel32.dll: CreateProcess, VirtualAlloc, WriteProcessMemory, CreateRemoteThread
+  ws2_32.dll:   connect, send, recv, WSAStartup
+  advapi32.dll: RegSetValueEx, RegOpenKeyEx</textarea>
+              </div>
+              <div class="tab-content">
+                <textarea class="code-area" rows="12" readonly id="sa-strings">[可疑字符串]
+  cmd.exe /c net user hacker Admin@123 /add
+  C:\Windows\Temp\svch0st.exe
+  203.0.113.45
+  SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+  CreateRemoteThread
+  VirtualAllocEx
+  WriteProcessMemory
+  WinExec</textarea>
+              </div>
+              <div class="tab-content">
+                <textarea class="code-area" rows="12" readonly id="sa-rules">[规则命中列表]
+  [HIGH]   Trojan.Win32.Backdoor.Generic: ws2_32!connect + CreateRemoteThread
+  [MEDIUM] Suspicious.UPX.Packed: UPX packer detected, entropy 7.80
+  [HIGH]   Network.ReverseShell: hardcoded C2 IP 203.0.113.45:4444
+  [HIGH]   Persistence.Registry.Run: writes to HKCU\Run registry key</textarea>
+              </div>
+              <div class="tab-content">
+                <textarea class="code-area" rows="12" readonly id="sa-cert">═══════════════════════════════════════
+  数字证书检测结果
+═══════════════════════════════════════
+
+  是否有签名：  否
+  签名有效性：  ✗ 无效（未签名）
+  文件完整性：  无法验证
+
+  验证结论：    该文件无数字签名，无法验证来源合法性，
+               结合其他检测结果，高度怀疑为恶意软件。</textarea>
+              </div>
+              <div class="tab-content">
+                <textarea class="code-area" rows="12" readonly id="sa-conclusion">检测结论：[高危] Trojan.Win32.Backdoor.Generic
+
+该文件具有明显的恶意行为特征：
+1. PE节区存在高熵区域，已经过UPX加壳处理；
+2. 导入了进程注入相关API（CreateRemoteThread、VirtualAllocEx）；
+3. 包含注册表自启动写入行为，具备持久化能力；
+4. 存在网络通信行为，确认C2地址 203.0.113.45:4444；
+5. 字符串中发现明文命令行（添加管理员账户）。
+
+建议：立即隔离该文件，阻止其执行，并进行进一步的动态行为分析。</textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE 13: 动态行为检测 ─── -->
+    <div class="page" id="page-13">
+      <div class="page-header">
+        <div><div class="page-title">动态行为检测</div><div class="page-breadcrumb">检测分析 / 动态行为检测</div></div>
+        <div class="page-actions">
+          <select style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;">
+            <option>suspicious.exe</option><option>svch0st.exe</option><option>invoice_2025.pdf.exe</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="showToast('正在刷新动态行为数据...')">↻ 刷新</button>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="tabs" id="dynTabs">
+          <div class="tab-item active" onclick="switchTab('dynTabs','dynTabContent',0,this)">注册表操作</div>
+          <div class="tab-item" onclick="switchTab('dynTabs','dynTabContent',1,this)">文件行为</div>
+          <div class="tab-item" onclick="switchTab('dynTabs','dynTabContent',2,this)">进程行为</div>
+          <div class="tab-item" onclick="switchTab('dynTabs','dynTabContent',3,this)">网络行为</div>
+          <div class="tab-item" onclick="switchTab('dynTabs','dynTabContent',4,this)">SSDT操作</div>
+          <div class="tab-item" onclick="switchTab('dynTabs','dynTabContent',5,this)">启动项操作</div>
+          <div class="tab-item" onclick="switchTab('dynTabs','dynTabContent',6,this)">计划任务操作</div>
+          <div class="tab-item" onclick="switchTab('dynTabs','dynTabContent',7,this)">浏览器插件操作</div>
+        </div>
+        <div id="dynTabContent">
+          <div class="tab-content active">
+            <div class="card"><div class="card-body" style="padding:0;">
+              <table class="data-table">
+                <thead><tr><th>操作类型</th><th>注册表路径</th><th>键名</th><th>键值</th><th>风险</th></tr></thead>
+                <tbody>
+                  <tr><td>写入</td><td>HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run</td><td>SystemUpdate</td><td>C:\Users\admin\AppData\Roaming\suspicious.exe</td><td><span class="tag tag-danger">高危</span></td></tr>
+                  <tr><td>写入</td><td>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run</td><td>SvcUpdate</td><td>C:\Windows\Temp\svch0st.exe</td><td><span class="tag tag-warning">中危</span></td></tr>
+                  <tr><td>读取</td><td>HKLM\SYSTEM\CurrentControlSet\Services</td><td>—</td><td>—</td><td><span class="tag tag-default">正常</span></td></tr>
+                </tbody>
+              </table>
+            </div></div>
+          </div>
+          <div class="tab-content">
+            <div class="card"><div class="card-body" style="padding:0;">
+              <table class="data-table">
+                <thead><tr><th>操作</th><th>文件路径</th><th>时间</th><th>风险</th></tr></thead>
+                <tbody>
+                  <tr><td>创建</td><td style="color:var(--danger);">C:\Users\admin\AppData\Roaming\suspicious.exe</td><td>2025-11-20 09:28:01</td><td><span class="tag tag-danger">高危</span></td></tr>
+                  <tr><td>写入</td><td style="color:var(--warning);">C:\Windows\Temp\svch0st.exe</td><td>2025-11-20 09:28:03</td><td><span class="tag tag-warning">中危</span></td></tr>
+                  <tr><td>读取</td><td>C:\Windows\System32\ntdll.dll</td><td>2025-11-20 09:28:05</td><td><span class="tag tag-success">正常</span></td></tr>
+                </tbody>
+              </table>
+            </div></div>
+          </div>
+          <div class="tab-content">
+            <div class="card"><div class="card-body" style="padding:0;">
+              <table class="data-table">
+                <thead><tr><th>操作</th><th>进程名</th><th>PID</th><th>父进程</th><th>命令行</th><th>风险</th></tr></thead>
+                <tbody>
+                  <tr><td>创建</td><td style="color:var(--danger);">cmd.exe</td><td>6400</td><td>suspicious.exe(4832)</td><td style="color:var(--danger);">cmd.exe /c net user hacker Admin@123 /add</td><td><span class="tag tag-danger">高危</span></td></tr>
+                  <tr><td>注入</td><td style="color:var(--danger);">explorer.exe</td><td>2048</td><td>suspicious.exe(4832)</td><td>CreateRemoteThread → explorer.exe</td><td><span class="tag tag-danger">高危</span></td></tr>
+                </tbody>
+              </table>
+            </div></div>
+          </div>
+          <div class="tab-content">
+            <div class="card"><div class="card-body" style="padding:0;">
+              <table class="data-table">
+                <thead><tr><th>方向</th><th>本地地址</th><th>远程地址</th><th>协议</th><th>数据量</th><th>风险</th></tr></thead>
+                <tbody>
+                  <tr><td>出站</td><td>192.168.1.100:49320</td><td style="color:var(--danger);font-weight:600;">203.0.113.45:4444</td><td>TCP</td><td>2.4 KB</td><td><span class="tag tag-danger">C2通信</span></td></tr>
+                  <tr><td>出站</td><td>192.168.1.100:49321</td><td>203.0.113.45:80</td><td>HTTP</td><td>512 B</td><td><span class="tag tag-danger">高危</span></td></tr>
+                </tbody>
+              </table>
+            </div></div>
+          </div>
+          <div class="tab-content">
+            <div class="card"><div class="card-body" style="padding:0;">
+              <table class="data-table">
+                <thead><tr><th>操作</th><th>SSDT索引</th><th>原始函数</th><th>Hook地址</th><th>Hook模块</th><th>风险</th></tr></thead>
+                <tbody>
+                  <tr><td>Hook</td><td>0x002A</td><td>NtCreateFile</td><td style="color:var(--danger);font-family:monospace;">0x10001234</td><td style="color:var(--danger);">maldrv.sys</td><td><span class="tag tag-danger">高危</span></td></tr>
+                  <tr><td>Hook</td><td>0x0060</td><td>NtQuerySystemInformation</td><td style="color:var(--danger);font-family:monospace;">0x10001890</td><td style="color:var(--danger);">maldrv.sys</td><td><span class="tag tag-danger">高危</span></td></tr>
+                </tbody>
+              </table>
+            </div></div>
+          </div>
+          <div class="tab-content">
+            <div class="card"><div class="card-body" style="padding:0;">
+              <table class="data-table">
+                <thead><tr><th>操作</th><th>注册表路径</th><th>键值</th><th>风险</th></tr></thead>
+                <tbody>
+                  <tr><td>添加</td><td>HKCU\Run\SystemUpdate</td><td>C:\Users\admin\AppData\Roaming\suspicious.exe</td><td><span class="tag tag-danger">高危</span></td></tr>
+                </tbody>
+              </table>
+            </div></div>
+          </div>
+          <div class="tab-content">
+            <div class="card"><div class="card-body" style="padding:0;">
+              <table class="data-table">
+                <thead><tr><th>操作</th><th>任务名</th><th>触发器</th><th>执行程序</th><th>风险</th></tr></thead>
+                <tbody>
+                  <tr><td>创建</td><td style="color:var(--danger);">MalwareTask</td><td>每天 03:00</td><td style="color:var(--danger);">C:\Users\admin\AppData\Roaming\suspicious.exe /silent</td><td><span class="tag tag-danger">高危</span></td></tr>
+                </tbody>
+              </table>
+            </div></div>
+          </div>
+          <div class="tab-content">
+            <div class="card"><div class="card-body" style="padding:0;">
+              <table class="data-table">
+                <thead><tr><th>操作</th><th>浏览器</th><th>插件名</th><th>ID</th><th>风险</th></tr></thead>
+                <tbody>
+                  <tr><td>安装</td><td>Chrome</td><td style="color:var(--danger);">MalAds Extension</td><td>abcdefghijklmnopqrstuvwxyz012345</td><td><span class="tag tag-danger">高危</span></td></tr>
+                </tbody>
+              </table>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE 14: 文件关联检测 ─── -->
+    <div class="page" id="page-14">
+      <div class="page-header">
+        <div><div class="page-title">文件关联检测</div><div class="page-breadcrumb">检测分析 / 文件关联检测</div></div>
+        <div class="page-actions"><button class="btn btn-primary btn-sm" onclick="showToast('正在刷新文件关联数据...')">↻ 刷新</button></div>
+      </div>
+      <div class="page-body">
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>扩展名</th><th>当前关联程序</th><th>原始关联程序</th><th>是否被劫持</th><th>风险</th></tr></thead>
+              <tbody>
+                <tr><td>.pdf</td><td style="color:var(--danger);">C:\Users\admin\AppData\Roaming\suspicious.exe</td><td>C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe</td><td><span class="tag tag-danger">已劫持</span></td><td><span class="tag tag-danger">高危</span></td></tr>
+                <tr><td>.doc</td><td style="color:var(--warning);">C:\Windows\Temp\svch0st.exe</td><td>C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE</td><td><span class="tag tag-danger">已劫持</span></td><td><span class="tag tag-danger">高危</span></td></tr>
+                <tr><td>.txt</td><td>C:\Windows\System32\notepad.exe</td><td>C:\Windows\System32\notepad.exe</td><td><span class="tag tag-success">正常</span></td><td><span class="tag tag-success">安全</span></td></tr>
+                <tr><td>.jpg</td><td>C:\Windows\System32\mspaint.exe</td><td>C:\Windows\System32\mspaint.exe</td><td><span class="tag tag-success">正常</span></td><td><span class="tag tag-success">安全</span></td></tr>
+                <tr><td>.exe</td><td>C:\Windows\System32\cmd.exe</td><td>C:\Windows\System32\cmd.exe</td><td><span class="tag tag-success">正常</span></td><td><span class="tag tag-success">安全</span></td></tr>
+                <tr><td>.zip</td><td>C:\Program Files\7-Zip\7zFM.exe</td><td>C:\Program Files\7-Zip\7zFM.exe</td><td><span class="tag tag-success">正常</span></td><td><span class="tag tag-success">安全</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE 15: 样本提取 ─── -->
+    <div class="page" id="page-15">
+      <div class="page-header">
+        <div><div class="page-title">样本提取</div><div class="page-breadcrumb">检测分析 / 样本提取</div></div>
+        <div class="page-actions">
+          <button class="btn btn-primary btn-sm" onclick="showToast('正在提取样本...')">⬇ 提取选中</button>
+          <button class="btn btn-sm" onclick="showToast('正在导出全部样本...')">📦 导出全部</button>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>样本名</th><th>来源</th><th>MD5</th><th>原始时间</th><th>提取时间</th><th>类型</th><th>风险</th><th>操作</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>suspicious.exe</td><td>静态检测</td>
+                  <td style="font-family:monospace;font-size:11px;">a1b2c3d4e5f6a1b2</td>
+                  <td>2025-10-01 12:00:00</td><td>2025-11-20 09:28:00</td>
+                  <td><span class="tag tag-info">静态特征</span></td>
+                  <td><span class="tag tag-danger">高危</span></td>
+                  <td><button class="btn btn-sm" onclick="showToast('正在下载样本...')">⬇</button></td>
+                </tr>
+                <tr>
+                  <td>inject.dll</td><td>动态检测</td>
+                  <td style="font-family:monospace;font-size:11px;">b2c3d4e5f6a1b2c3</td>
+                  <td>2025-11-19 22:00:00</td><td>2025-11-20 09:30:00</td>
+                  <td><span class="tag tag-warning">动态特征</span></td>
+                  <td><span class="tag tag-danger">高危</span></td>
+                  <td><button class="btn btn-sm" onclick="showToast('正在下载样本...')">⬇</button></td>
+                </tr>
+                <tr>
+                  <td>svch0st.exe</td><td>静态检测</td>
+                  <td style="font-family:monospace;font-size:11px;">c3d4e5f6a1b2c3d4</td>
+                  <td>2025-11-01 08:00:00</td><td>2025-11-20 09:29:00</td>
+                  <td><span class="tag tag-info">静态特征</span></td>
+                  <td><span class="tag tag-warning">中危</span></td>
+                  <td><button class="btn btn-sm" onclick="showToast('正在下载样本...')">⬇</button></td>
+                </tr>
+                <tr>
+                  <td>invoice_2025.pdf.exe</td><td>静态检测</td>
+                  <td style="font-family:monospace;font-size:11px;">d4e5f6a1b2c3d4e5</td>
+                  <td>2025-11-18 14:30:00</td><td>2025-11-20 09:31:00</td>
+                  <td><span class="tag tag-info">静态特征</span></td>
+                  <td><span class="tag tag-danger">高危</span></td>
+                  <td><button class="btn btn-sm" onclick="showToast('正在下载样本...')">⬇</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE 16: 检测报告 ─── -->
+    <div class="page" id="page-16">
+      <div class="page-header">
+        <div><div class="page-title">检测报告</div><div class="page-breadcrumb">结果管理 / 检测报告</div></div>
+        <div class="page-actions">
+          <button class="btn btn-sm" onclick="showToast('正在导出 DOC 报告...')">📄 导出 DOC</button>
+          <button class="btn btn-sm" onclick="showToast('正在导出 PDF 报告...')">📕 导出 PDF</button>
+          <button class="btn btn-primary btn-sm" onclick="showToast('正在导出 HTML 报告...')">🌐 导出 HTML</button>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-header">报告摘要</div>
+          <div class="card-body">
+            <div class="kv-grid">
+              <div style="padding-right:20px;">
+                <div class="kv-row"><span class="kv-label">检测主机</span><span class="kv-value">WORKSTATION-001</span></div>
+                <div class="kv-row"><span class="kv-label">检测时间</span><span class="kv-value">2025-11-20 09:28:00 ~ 09:32:15</span></div>
+                <div class="kv-row"><span class="kv-label">检测文件数</span><span class="kv-value">4 个</span></div>
+                <div class="kv-row"><span class="kv-label">威胁总数</span><span class="kv-value" style="color:var(--danger);font-weight:600;">5 条（高危3 中危2）</span></div>
+              </div>
+              <div>
+                <div class="kv-row"><span class="kv-label">检测人员</span><span class="kv-value">安全管理员 secadmin</span></div>
+                <div class="kv-row"><span class="kv-label">病毒库版本</span><span class="kv-value">20251120</span></div>
+                <div class="kv-row"><span class="kv-label">综合风险</span><span class="kv-value"><span class="tag tag-danger" style="font-size:13px;">高危</span></span></div>
+                <div class="kv-row"><span class="kv-label">处置建议</span><span class="kv-value">立即隔离高危文件，修复被劫持的文件关联</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">威胁汇总</div>
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>威胁名称</th><th>文件</th><th>检测来源</th><th>风险等级</th><th>处置建议</th></tr></thead>
+              <tbody>
+                <tr><td>Trojan.Win32.Backdoor.Generic</td><td>suspicious.exe</td><td>静态检测</td><td><span class="tag tag-danger">高危</span></td><td>立即隔离并删除</td></tr>
+                <tr><td>Trojan.Win32.Dropper.DoubleExtension</td><td>invoice_2025.pdf.exe</td><td>静态检测</td><td><span class="tag tag-danger">高危</span></td><td>立即隔离并删除</td></tr>
+                <tr><td>SSDT Hook（NtCreateFile）</td><td>maldrv.sys</td><td>动态检测</td><td><span class="tag tag-danger">高危</span></td><td>卸载驱动并删除</td></tr>
+                <tr><td>Trojan.Win32.FakeProcess.Svchost</td><td>svch0st.exe</td><td>静态检测</td><td><span class="tag tag-warning">中危</span></td><td>隔离并进一步分析</td></tr>
+                <tr><td>文件关联劫持（.pdf/.doc）</td><td>—</td><td>文件关联检测</td><td><span class="tag tag-warning">中危</span></td><td>恢复原始关联</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE 17: 日志审计 ─── -->
+    <div class="page" id="page-17">
+      <div class="page-header">
+        <div><div class="page-title">日志审计</div><div class="page-breadcrumb">结果管理 / 日志审计</div></div>
+        <div class="page-actions">
+          <select style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;">
+            <option>全部角色</option><option>系统管理员</option><option>安全管理员</option><option>安全审计员</option>
+          </select>
+          <input type="date" style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;" value="2025-11-20">
+          <button class="btn btn-sm" onclick="showToast('正在导出日志...')">📤 导出</button>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>时间</th><th>用户</th><th>角色</th><th>操作模块</th><th>操作内容</th><th>结果</th></tr></thead>
+              <tbody>
+                <tr><td>09:32:15</td><td>admin</td><td>系统管理员</td><td>系统概览</td><td>查看系统概览</td><td><span class="tag tag-success">成功</span></td></tr>
+                <tr><td>09:31:00</td><td>secadmin</td><td>安全管理员</td><td>样本提取</td><td>提取样本：invoice_2025.pdf.exe</td><td><span class="tag tag-success">成功</span></td></tr>
+                <tr><td>09:30:00</td><td>secadmin</td><td>安全管理员</td><td>动态行为检测</td><td>查看进程行为：suspicious.exe</td><td><span class="tag tag-success">成功</span></td></tr>
+                <tr><td>09:29:00</td><td>secadmin</td><td>安全管理员</td><td>静态检测</td><td>检测文件：svch0st.exe</td><td><span class="tag tag-success">成功</span></td></tr>
+                <tr><td>09:28:00</td><td>secadmin</td><td>安全管理员</td><td>静态检测</td><td>检测文件：suspicious.exe，发现高危威胁</td><td><span class="tag tag-danger">威胁</span></td></tr>
+                <tr><td>09:25:00</td><td>admin</td><td>系统管理员</td><td>系统设置</td><td>更新病毒库至版本 20251120</td><td><span class="tag tag-success">成功</span></td></tr>
+                <tr><td>09:20:00</td><td>auditor</td><td>安全审计员</td><td>日志审计</td><td>导出2025-11-19操作日志</td><td><span class="tag tag-success">成功</span></td></tr>
+                <tr><td>09:15:00</td><td>secadmin</td><td>安全管理员</td><td>登录</td><td>用户登录系统</td><td><span class="tag tag-success">成功</span></td></tr>
+                <tr><td>09:10:00</td><td>unknown</td><td>—</td><td>登录</td><td>登录失败（密码错误），用户：admin</td><td><span class="tag tag-danger">失败</span></td></tr>
+                <tr><td>09:05:00</td><td>admin</td><td>系统管理员</td><td>登录</td><td>用户登录系统</td><td><span class="tag tag-success">成功</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE 18: 系统设置 ─── -->
+    <div class="page" id="page-18" style="overflow:hidden;">
+      <div class="page-header">
+        <div><div class="page-title">系统设置</div><div class="page-breadcrumb">结果管理 / 系统设置</div></div>
+        <div class="page-actions">
+          <button class="btn btn-primary btn-sm" onclick="showToast('设置已保存')">💾 保存设置</button>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;overflow:hidden;">
+        <div class="settings-nav">
+          <div class="settings-nav-item active" onclick="switchSettings(this,0)">病毒库管理</div>
+          <div class="settings-nav-item" onclick="switchSettings(this,1)">扫描策略</div>
+          <div class="settings-nav-item" onclick="switchSettings(this,2)">实时防护</div>
+          <div class="settings-nav-item" onclick="switchSettings(this,3)">白名单管理</div>
+          <div class="settings-nav-item" onclick="switchSettings(this,4)">自定义规则</div>
+          <div class="settings-nav-item" onclick="switchSettings(this,5)">用户管理</div>
+          <div class="settings-nav-item" onclick="switchSettings(this,6)">关于系统</div>
+        </div>
+        <div class="settings-content" id="settingsContent">
+          <!-- 0: 病毒库管理 -->
+          <div id="sc-0">
+            <div class="settings-section">
+              <div class="settings-section-title">病毒库信息</div>
+              <div class="settings-row"><div><div class="settings-label">当前版本</div></div><div style="font-weight:600;color:var(--primary);">20251120</div></div>
+              <div class="settings-row"><div><div class="settings-label">病毒特征数</div></div><div>2,847,391 条</div></div>
+              <div class="settings-row"><div><div class="settings-label">最后更新时间</div></div><div>2025-11-20 09:25:00</div></div>
+              <div class="settings-row"><div><div class="settings-label">更新来源</div></div><div>内网更新服务器（192.168.1.200）</div></div>
+            </div>
+            <div class="settings-section">
+              <div class="settings-section-title">更新设置</div>
+              <div class="settings-row">
+                <div><div class="settings-label">自动更新</div><div class="settings-desc">定期从内网服务器检查并下载更新</div></div>
+                <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="settings-row">
+                <div><div class="settings-label">更新服务器地址</div></div>
+                <input style="padding:5px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;width:220px;" value="192.168.1.200">
+              </div>
+              <div style="margin-top:12px;">
+                <button class="btn btn-primary" onclick="showToast('正在检查更新...')">🔄 立即检查更新</button>
+              </div>
+            </div>
+          </div>
+          <!-- 1: 扫描策略 -->
+          <div id="sc-1" style="display:none;">
+            <div class="settings-section">
+              <div class="settings-section-title">扫描策略配置</div>
+              <div class="settings-row">
+                <div><div class="settings-label">扫描压缩包</div><div class="settings-desc">对 ZIP、RAR、7Z 等压缩文件内部进行扫描</div></div>
+                <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="settings-row">
+                <div><div class="settings-label">扫描隐藏文件</div><div class="settings-desc">包含系统隐藏文件和隐藏目录</div></div>
+                <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="settings-row">
+                <div><div class="settings-label">启发式检测</div><div class="settings-desc">基于行为特征识别未知威胁</div></div>
+                <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="settings-row">
+                <div><div class="settings-label">YARA 规则检测</div><div class="settings-desc">使用自定义 YARA 规则进行扫描</div></div>
+                <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="settings-row">
+                <div><div class="settings-label">最大扫描文件大小</div></div>
+                <select style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;">
+                  <option>100 MB</option><option selected>500 MB</option><option>1 GB</option><option>不限制</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <!-- 2: 实时防护 -->
+          <div id="sc-2" style="display:none;">
+            <div class="settings-section">
+              <div class="settings-section-title">实时防护配置</div>
+              <div class="settings-row">
+                <div><div class="settings-label">文件系统监控</div><div class="settings-desc">监控文件创建、修改、删除操作</div></div>
+                <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="settings-row">
+                <div><div class="settings-label">进程监控</div><div class="settings-desc">监控进程创建和注入行为</div></div>
+                <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="settings-row">
+                <div><div class="settings-label">注册表监控</div><div class="settings-desc">监控注册表关键路径写入操作</div></div>
+                <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="settings-row">
+                <div><div class="settings-label">网络行为监控</div><div class="settings-desc">监控异常网络连接和数据传输</div></div>
+                <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+          <!-- 3: 白名单 -->
+          <div id="sc-3" style="display:none;">
+            <div class="settings-section">
+              <div class="settings-section-title">白名单管理</div>
+              <div style="margin-bottom:10px;display:flex;gap:8px;">
+                <input class="search-input" style="flex:1;" placeholder="输入文件路径或 MD5 添加白名单...">
+                <button class="btn btn-primary btn-sm" onclick="showToast('已添加到白名单')">+ 添加</button>
+              </div>
+              <table class="data-table">
+                <thead><tr><th>类型</th><th>值</th><th>备注</th><th>添加时间</th><th>操作</th></tr></thead>
+                <tbody>
+                  <tr><td>路径</td><td>C:\Program Files\Google\Chrome\Application\chrome.exe</td><td>Google Chrome 浏览器</td><td>2025-11-15</td><td><button class="btn btn-sm btn-danger" onclick="showToast('已移除')">移除</button></td></tr>
+                  <tr><td>MD5</td><td style="font-family:monospace;">c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6</td><td>chrome.exe 已验证</td><td>2025-11-15</td><td><button class="btn btn-sm btn-danger" onclick="showToast('已移除')">移除</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <!-- 4: 自定义规则 -->
+          <div id="sc-4" style="display:none;">
+            <div class="settings-section">
+              <div class="settings-section-title">自定义 YARA 规则</div>
+              <div style="margin-bottom:10px;display:flex;gap:8px;">
+                <button class="btn btn-primary btn-sm" onclick="showToast('请选择 YARA 规则文件')">+ 导入规则</button>
+                <button class="btn btn-sm" onclick="showToast('正在导出规则...')">📤 导出</button>
+              </div>
+              <table class="data-table">
+                <thead><tr><th>规则名</th><th>描述</th><th>状态</th><th>添加时间</th><th>操作</th></tr></thead>
+                <tbody>
+                  <tr><td>Detect_UPX_Packed</td><td>检测 UPX 加壳可执行文件</td><td><span class="tag tag-success">已启用</span></td
+<td>2025-11-10</td><td><button class="btn btn-sm btn-danger" onclick="showToast('已禁用')">禁用</button></td></tr>
+                  <tr><td>Detect_Reverse_Shell</td><td>检测反弹Shell特征字符串</td><td><span class="tag tag-success">已启用</span></td><td>2025-11-12</td><td><button class="btn btn-sm btn-danger" onclick="showToast('已禁用')">禁用</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <!-- 5: 用户管理 -->
+          <div id="sc-5" style="display:none;">
+            <div class="settings-section">
+              <div class="settings-section-title">用户管理</div>
+              <div style="margin-bottom:10px;">
+                <button class="btn btn-primary btn-sm" onclick="showToast('请填写新用户信息')">+ 新增用户</button>
+              </div>
+              <table class="data-table">
+                <thead><tr><th>用户名</th><th>角色</th><th>状态</th><th>最后登录</th><th>操作</th></tr></thead>
+                <tbody>
+                  <tr><td>admin</td><td>系统管理员</td><td><span class="tag tag-success">启用</span></td><td>2025-11-20 09:05</td><td><button class="btn btn-sm" onclick="showToast('修改密码')">改密</button></td></tr>
+                  <tr><td>secadmin</td><td>安全管理员</td><td><span class="tag tag-success">启用</span></td><td>2025-11-20 09:15</td><td><button class="btn btn-sm" onclick="showToast('修改密码')">改密</button></td></tr>
+                  <tr><td>auditor</td><td>安全审计员</td><td><span class="tag tag-success">启用</span></td><td>2025-11-20 09:20</td><td><button class="btn btn-sm" onclick="showToast('修改密码')">改密</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <!-- 6: 关于系统 -->
+          <div id="sc-6" style="display:none;">
+            <div class="settings-section">
+              <div class="settings-section-title">关于系统</div>
+              <div class="settings-row"><div class="settings-label">系统名称</div><div>恶意代码辅助检测系统</div></div>
+              <div class="settings-row"><div class="settings-label">版本号</div><div style="font-weight:600;color:var(--primary);">V3.0.0</div></div>
+              <div class="settings-row"><div class="settings-label">病毒库版本</div><div>20251120</div></div>
+              <div class="settings-row"><div class="settings-label">检测引擎</div><div>AVL SDK 5.2 + YARA 4.3</div></div>
+              <div class="settings-row"><div class="settings-label">开发框架</div><div>Qt 5.15.2 + SQLite 3.39</div></div>
+              <div class="settings-row"><div class="settings-label">认证信息</div><div>国家保密局认证产品 · 证书编号：BMJ-2025-0001</div></div>
+              <div class="settings-row"><div class="settings-label">版权信息</div><div>Copyright © 2025 All Rights Reserved</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content-area -->
+</div><!-- /mainPage -->
+
+<!-- Toast 提示 -->
+<div id="toast" style="
+  display:none;position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
+  background:rgba(26,35,50,.9);color:#fff;padding:10px 22px;border-radius:20px;
+  font-size:13px;z-index:9999;white-space:nowrap;
+"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  状态变量
+// ═══════════════════════════════════════════════════════════
+var currentRole = 'system_admin';
+var currentPage = 0;
+
+// ═══════════════════════════════════════════════════════════
+//  登录
+// ═══════════════════════════════════════════════════════════
+function selectRole(el, role) {
+  document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentRole = role;
+}
+
+function doLogin() {
+  var user = document.getElementById('loginUser').value.trim();
+  if (!user) { showToast('请输入用户名'); return; }
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('mainPage').classList.add('show');
+  // 更新用户信息
+  var roleNames = {system_admin:'系统管理员', sec_admin:'安全管理员', auditor:'安全审计员'};
+  document.getElementById('userNameLabel').textContent = user;
+  document.getElementById('userRoleLabel').textContent = roleNames[currentRole] || '系统管理员';
+  document.getElementById('userAvatar').textContent = user.charAt(0).toUpperCase();
+}
+
+function doLogout() {
+  document.getElementById('mainPage').classList.remove('show');
+  document.getElementById('loginPage').style.display = 'flex';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  页面切换
+// ═══════════════════════════════════════════════════════════
+function switchPage(idx, navEl) {
+  // 隐藏所有页面
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  // 显示目标页面
+  var pg = document.getElementById('page-' + idx);
+  if (pg) pg.classList.add('active');
+  // 更新导航高亮
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+  currentPage = idx;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  导航组折叠
+// ═══════════════════════════════════════════════════════════
+function toggleGroup(el) {
+  el.classList.toggle('collapsed');
+  var children = el.nextElementSibling;
+  if (children && children.classList.contains('nav-children')) {
+    children.style.display = el.classList.contains('collapsed') ? 'none' : '';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Tab 切换
+// ═══════════════════════════════════════════════════════════
+function switchTab(tabsId, contentId, idx, el) {
+  var tabs = document.getElementById(tabsId);
+  var content = document.getElementById(contentId);
+  if (!tabs || !content) return;
+  tabs.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  content.querySelectorAll('.tab-content').forEach((c, i) => {
+    c.classList.toggle('active', i === idx);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  静态检测 - 文件列表点击
+// ═══════════════════════════════════════════════════════════
+var staticFiles = [
+  {
+    name: 'suspicious.exe',
+    path: 'C:\\Users\\admin\\AppData\\Roaming\\suspicious.exe',
+    size: '100 KB (102400 字节)',
+    type: 'PE32 executable (GUI) Intel 80386',
+    md5:  'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
+    sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+    time: '2025-11-20 09:28:00',
+    risk: '高危', riskClass: 'tag-danger',
+    virusStatus: '威胁', virusColor: 'var(--danger)', virusBg: '#fde8e8',
+    virusName: 'Trojan.Win32.Backdoor.Generic',
+    pe: '文件类型:    PE32 可执行文件 (GUI) Intel 80386\n入口点:      0x00401A30\n编译时间:    2025-10-01 12:00:00 UTC\n加壳器:      UPX 3.96\n节区数量:    3\n  .text    VSize:0xB000  Entropy:7.80 [高熵，已加壳]\n  .data    VSize:0x2000  Entropy:6.20\n  .rsrc    VSize:0x1000  Entropy:3.10\n\n导入表:\n  kernel32.dll: CreateProcess, VirtualAlloc, WriteProcessMemory, CreateRemoteThread\n  ws2_32.dll:   connect, send, recv, WSAStartup\n  advapi32.dll: RegSetValueEx, RegOpenKeyEx',
+    strings: '[可疑字符串]\n  cmd.exe /c net user hacker Admin@123 /add\n  C:\\Windows\\Temp\\svch0st.exe\n  203.0.113.45\n  SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\n  CreateRemoteThread\n  VirtualAllocEx\n  WriteProcessMemory\n  WinExec',
+    rules: '[规则命中列表]\n  [HIGH]   Trojan.Win32.Backdoor.Generic: ws2_32!connect + CreateRemoteThread\n  [MEDIUM] Suspicious.UPX.Packed: UPX packer detected, entropy 7.80\n  [HIGH]   Network.ReverseShell: hardcoded C2 IP 203.0.113.45:4444\n  [HIGH]   Persistence.Registry.Run: writes to HKCU\\Run registry key',
+    cert: '是否有签名：  否\n签名有效性：  ✗ 无效（未签名）\n文件完整性：  无法验证\n\n验证结论：    该文件无数字签名，无法验证来源合法性，\n             结合其他检测结果，高度怀疑为恶意软件。',
+    conclusion: '检测结论：[高危] Trojan.Win32.Backdoor.Generic\n\n该文件具有明显的恶意行为特征：\n1. PE节区存在高熵区域，已经过UPX加壳处理；\n2. 导入了进程注入相关API（CreateRemoteThread、VirtualAllocEx）；\n3. 包含注册表自启动写入行为，具备持久化能力；\n4. 存在网络通信行为，确认C2地址 203.0.113.45:4444；\n5. 字符串中发现明文命令行（添加管理员账户）。\n\n建议：立即隔离该文件，阻止其执行，并进行进一步的动态行为分析。'
+  },
+  {
+    name: 'svch0st.exe',
+    path: 'C:\\Windows\\Temp\\svch0st.exe',
+    size: '28 KB (28672 字节)',
+    type: 'PE32 executable (console) Intel 80386',
+    md5:  'c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6',
+    sha256: 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2',
+    time: '2025-11-20 09:29:00',
+    risk: '中危', riskClass: 'tag-warning',
+    virusStatus: '威胁', virusColor: 'var(--warning)', virusBg: '#fff3e0',
+    virusName: 'Trojan.Win32.FakeProcess',
+    pe: '文件类型:    PE32 可执行文件 (console) Intel 80386\n入口点:      0x00401000\n编译时间:    2025-11-01 08:00:00 UTC\n加壳器:      未检测到\n节区数量:    2\n  .text    VSize:0x4000  Entropy:5.80\n  .data    VSize:0x1000  Entropy:3.10\n\n导入表:\n  kernel32.dll: CreateProcess, Sleep, ExitProcess\n  advapi32.dll: RegSetValueEx',
+    strings: '[可疑字符串]\n  C:\\Windows\\Temp\\hook.dll\n  SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\n  SvcUpdate\n  LoadLibraryA',
+    rules: '[规则命中列表]\n  [MEDIUM] Suspicious.FakeProcess: filename mimics svchost.exe\n  [MEDIUM] Persistence.Registry.Run: writes to HKLM\\Run registry key\n  [LOW]    Suspicious.TempDir: executable located in %TEMP% directory',
+    cert: '是否有签名：  否\n签名有效性：  ✗ 无效（未签名）\n文件完整性：  无法验证\n\n验证结论：    该文件无数字签名，位于临时目录，文件名伪装系统进程。',
+    conclusion: '检测结论：[中危] Trojan.Win32.FakeProcess\n\n该文件通过文件名伪装系统进程 svchost.exe，位于临时目录，\n具有注册表持久化行为，建议进一步分析。'
+  },
+  {
+    name: 'chrome.exe',
+    path: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    size: '2.8 MB (2936832 字节)',
+    type: 'PE32+ executable (GUI) x86-64',
+    md5:  'f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3',
+    sha256: 'b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3',
+    time: '2025-11-20 09:30:00',
+    risk: '安全', riskClass: 'tag-success',
+    virusStatus: '安全', virusColor: 'var(--success)', virusBg: '#e8f5e9',
+    virusName: '--',
+    pe: '文件类型:    PE32+ 可执行文件 (GUI) x86-64\n入口点:      0x00401000\n编译时间:    2025-10-15 08:00:00 UTC\n加壳器:      未检测到\n节区数量:    6\n  .text    Entropy:6.20 [正常]\n  .data    Entropy:4.10\n  .rsrc    Entropy:3.80',
+    strings: '[无可疑字符串]\n  正常导入：kernel32.dll, user32.dll, gdi32.dll\n  版本信息：Google Chrome 120.0.6099.130',
+    rules: '[规则命中列表]\n  无命中规则\n\n  该文件通过所有检测规则，未发现恶意特征。',
+    cert: '是否有签名：  是\n签名者：      Google LLC\n签名算法：    SHA-256 with RSA\n证书有效期：  2024-01-01 ~ 2026-01-01\n时间戳：      2025-10-15 08:00:00 UTC\n文件完整性：  ✓ 完整（未被篡改）\n\n验证结论：    数字签名有效，文件来源可信。',
+    conclusion: '检测结论：[安全] 未发现威胁\n\n该文件为 Google Chrome 浏览器主程序，具有有效的数字签名，\n文件完整性验证通过，未发现任何恶意特征。'
+  },
+  {
+    name: 'invoice_2025.pdf.exe',
+    path: 'C:\\Users\\admin\\Downloads\\invoice_2025.pdf.exe',
+    size: '156 KB (159744 字节)',
+    type: 'PE32 executable (GUI) Intel 80386 [伪装PDF]',
+    md5:  'd4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1',
+    sha256: 'c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4',
+    time: '2025-11-20 09:31:00',
+    risk: '高危', riskClass: 'tag-danger',
+    virusStatus: '威胁', virusColor: 'var(--danger)', virusBg: '#fde8e8',
+    virusName: 'Trojan.Win32.Dropper.DoubleExtension',
+    pe: '文件类型:    PE32 可执行文件 (GUI) Intel 80386\n入口点:      0x00401500\n编译时间:    2025-11-18 14:00:00 UTC\n加壳器:      MPRESS 2.19\n节区数量:    2\n  .MPRESS1 Entropy:7.95 [极高熵，已加壳]\n  .MPRESS2 Entropy:7.88\n\n伪装特征：双扩展名 .pdf.exe，图标伪装为PDF文档',
+    strings: '[可疑字符串]\n  WScript.Shell\n  powershell -enc ...\n  C:\\ProgramData\\update.exe\n  http://203.0.113.45/payload.bin',
+    rules: '[规则命中列表]\n  [HIGH]   Trojan.Win32.Dropper.DoubleExtension: double extension .pdf.exe\n  [HIGH]   Suspicious.MPRESS.Packed: MPRESS packer, entropy 7.95\n  [HIGH]   Network.Downloader: downloads payload from remote URL\n  [HIGH]   Evasion.IconSpoofing: PDF icon spoofing detected',
+    cert: '是否有签名：  否\n签名有效性：  ✗ 无效（未签名）\n文件完整性：  无法验证\n\n验证结论：    该文件无数字签名，使用双扩展名伪装PDF文档，\n             极高熵值表明已加壳，为典型的投递型木马。',
+    conclusion: '检测结论：[高危] Trojan.Win32.Dropper.DoubleExtension\n\n该文件为典型的伪装型投递木马：\n1. 使用双扩展名 .pdf.exe 伪装成PDF文档；\n2. 图标伪装为PDF图标，欺骗用户点击；\n3. 使用MPRESS加壳，极高熵值（7.95）；\n4. 包含远程下载行为，会从C2服务器下载二级载荷。\n\n建议：立即删除该文件，检查是否已被执行，排查系统是否存在二级载荷。'
+  }
+];
+
+function selectStaticFile(el, idx) {
+  // 更新列表高亮
+  document.querySelectorAll('.file-list-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  var f = staticFiles[idx];
+  // 更新状态栏
+  document.getElementById('staticStatus').textContent = '已选中：' + f.name;
+  // 更新基本属性
+  document.getElementById('sa-name').textContent = f.name;
+  document.getElementById('sa-path').textContent = f.path;
+  document.getElementById('sa-size').textContent = f.size;
+  document.getElementById('sa-type').textContent = f.type;
+  document.getElementById('sa-md5').textContent = f.md5;
+  document.getElementById('sa-sha256').textContent = f.sha256;
+  document.getElementById('sa-time').textContent = f.time;
+  var riskEl = document.getElementById('sa-risk');
+  riskEl.textContent = f.risk;
+  riskEl.className = 'tag ' + f.riskClass;
+  // 病毒检测
+  var vsEl = document.getElementById('sa-virus-status');
+  vsEl.textContent = f.virusStatus;
+  vsEl.style.color = f.virusColor;
+  vsEl.style.background = f.virusBg;
+  var vnEl = document.getElementById('sa-virus-name');
+  vnEl.textContent = f.virusName;
+  vnEl.style.color = (f.virusName === '--') ? 'var(--text-sub)' : f.virusColor;
+  vnEl.style.fontWeight = (f.virusName === '--') ? 'normal' : '600';
+  // 更新Tab内容
+  document.getElementById('sa-pe').value = f.pe;
+  document.getElementById('sa-strings').value = f.strings;
+  document.getElementById('sa-rules').value = f.rules;
+  document.getElementById('sa-cert').value = f.cert;
+  document.getElementById('sa-conclusion').value = f.conclusion;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  系统设置 - 左侧导航
+// ═══════════════════════════════════════════════════════════
+function switchSettings(el, idx) {
+  document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  for (var i = 0; i <= 6; i++) {
+    var sc = document.getElementById('sc-' + i);
+    if (sc) sc.style.display = (i === idx) ? '' : 'none';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  表格搜索过滤
+// ═══════════════════════════════════════════════════════════
+function filterTable(tableId, keyword) {
+  var tbl = document.getElementById(tableId);
+  if (!tbl) return;
+  var kw = keyword.toLowerCase();
+  tbl.querySelectorAll('tbody tr').forEach(function(row) {
+    row.style.display = row.textContent.toLowerCase().includes(kw) ? '' : 'none';
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Toast 提示
+// ═══════════════════════════════════════════════════════════
+var toastTimer = null;
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { t.style.display = 'none'; }, 2200);
+}
+</script>
+</body>
+</html>
