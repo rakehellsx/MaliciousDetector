@@ -3,13 +3,16 @@
 #define SCHEDULEDTASKPAGE_H
 #include "pages/BasePage.h"
 #include <QTableWidget>
+#include <QLabel>
+
 class ScheduledTaskPage : public BasePage {
     Q_OBJECT
 public:
-    explicit ScheduledTaskPage(QWidget *p=nullptr);
+    explicit ScheduledTaskPage(QWidget *p = nullptr);
     void refreshData() override;
 private:
     void setupUi();
     QTableWidget *m_tbl;
+    QLabel       *m_lblSummary;
 };
 #endif

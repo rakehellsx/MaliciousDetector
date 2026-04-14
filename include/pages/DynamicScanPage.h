@@ -7,22 +7,28 @@
 #include <QTableWidget>
 #include <QTreeWidget>
 #include <QPushButton>
+#include <QLabel>
+
 class DynamicScanPage : public BasePage {
     Q_OBJECT
 public:
-    explicit DynamicScanPage(QWidget *p=nullptr);
+    explicit DynamicScanPage(QWidget *p = nullptr);
     void refreshData() override;
+
 private slots:
     void onBrowseFile();
     void onStartScan();
     void onStopScan();
+
 private:
     void setupUi();
     void loadBehaviorData(const QString &type);
+
     QLineEdit    *m_editPath;
     QPushButton  *m_btnBrowse;
     QPushButton  *m_btnStart;
     QPushButton  *m_btnStop;
+    QLabel       *m_lblMonitorStatus;
     QTabWidget   *m_tabBehavior;
     QTableWidget *m_tblRegistry;
     QTableWidget *m_tblFile;
