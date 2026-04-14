@@ -140,7 +140,7 @@ nmake          # MSVC
 mingw32-make   # MinGW
 ```
 
-### Linux
+### Linux（原生编译）
 
 ```bash
 sudo apt install qtbase5-dev qtchooser qt5-qmake build-essential
@@ -148,6 +148,50 @@ mkdir build && cd build
 qmake ..
 make -j4
 ```
+
+### Linux（使用 MinGW + Qt5 交叉编译 Windows 目标）
+
+在 Linux 环境下，可以使用 MXE (M cross environment) 或 Ubuntu 源内的 `mingw-w64` 与预编译的 Qt5 库进行交叉编译，直接生成 Windows 可执行文件（`.exe`）。
+
+#### 方法一：使用 Ubuntu 官方包（适用于 Ubuntu 20.04+）
+
+1. 安装交叉编译工具链及 Windows 版 Qt5 库：
+   ```bash
+   sudo apt update
+   sudo apt install mingw-w64
+   # 安装预编译的 Qt5 MinGW 库（部分发行版可能需要第三方 PPA）
+   # 如果没有 qtbase5-dev-mingw 类似包，建议使用 MXE（方法二）
+   ```
+
+2. 交叉编译：
+   ```bash
+   mkdir build-mingw && cd build-mingw
+   # 使用对应架构的 qmake，例如 x86_64-w64-mingw32-qmake
+   x86_64-w64-mingw32-qmake ../MalwareDetector.pro
+   make -j4
+   ```
+
+#### 方法二：使用 MXE 环境（推荐，依赖最全）
+
+1. 克隆 MXE 仓库并编译 Qt5：
+   ```bash
+   git clone https://github.com/mxe/mxe.git
+   cd mxe
+   # 编译 64 位 Windows 的 Qt5 库
+   make qtbase qttools MXE_TARGETS=x86_64-w64-mingw32.shared -j4
+   export PATH=`pwd`/usr/bin:$PATH
+   ```
+
+2. 交叉编译项目：
+   ```bash
+   cd /path/to/MalwareDetector
+   mkdir build-mxe && cd build-mxe
+   # 调用 MXE 提供的 qmake
+   x86_64-w64-mingw32.shared-qmake-qt5 ../MalwareDetector.pro
+   make -j4
+   ```
+
+编译成功后，在 `build-mxe/release/` 目录下会生成 `MalwareDetector.exe`。运行前需将对应的 Qt DLL 文件（从 MXE 的 `usr/x86_64-w64-mingw32.shared/qt5/bin/` 目录拷贝）以及 `basic.dll` 放置在同级目录下。
 
 ---
 
