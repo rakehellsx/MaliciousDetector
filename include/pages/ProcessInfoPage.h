@@ -4,20 +4,22 @@
 #include "pages/BasePage.h"
 #include <QTableWidget>
 #include <QLineEdit>
+#include <QComboBox>
 #include <QLabel>
-#include <QVariantMap>
 class ProcessInfoPage : public BasePage {
     Q_OBJECT
 public:
     explicit ProcessInfoPage(QWidget *p=nullptr);
     void refreshData() override;
 private slots:
-    void filterTable(const QString &kw);
+    void onQuery();
 private:
     void setupUi();
-    QTableWidget       *m_tbl{nullptr};
-    QLineEdit          *m_edtSearch{nullptr};
-    QLabel             *m_lblStatus{nullptr};
-    QList<QVariantMap>  m_allRows;
+    void fillTable(const QVariantList &rows);
+    QTableWidget *m_tbl{nullptr};
+    QLineEdit    *m_edtKeyword{nullptr};  // 进程名/路径/用户
+    QComboBox    *m_cmbRisk{nullptr};     // 风险等级
+    QComboBox    *m_cmbStatus{nullptr};   // 进程状态
+    QLabel       *m_lblStatus{nullptr};
 };
 #endif

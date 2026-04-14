@@ -117,6 +117,10 @@ public:
     QVariantMap  queryDashboardStats();        // 统计数字（高危/中危/低危/保护天数/病毒库版本）
     QVariantList queryRecentAlerts(int limit = 5); // 最近告警
 
+    // 工具函数：执行查询，返回 QVariantList（每行为 QVariantMap）
+    QVariantList execSelect(const QString &sql, const QVariantList &binds = {});
+    QVariantMap  execSelectOne(const QString &sql, const QVariantList &binds = {});
+
     QString lastError() const { return m_lastError; }
     QString dbPath()    const { return m_dbPath; }
 
@@ -129,10 +133,6 @@ private:
 
     bool createTables();
     void insertTestData();
-
-    // 工具函数：执行查询，返回 QVariantList（每行为 QVariantMap）
-    QVariantList execSelect(const QString &sql, const QVariantList &binds = {});
-    QVariantMap  execSelectOne(const QString &sql, const QVariantList &binds = {});
 };
 
 #endif // DATABASEMANAGER_H

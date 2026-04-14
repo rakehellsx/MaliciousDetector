@@ -3,13 +3,22 @@
 #define NETWORKINFOPAGE_H
 #include "pages/BasePage.h"
 #include <QTableWidget>
+#include <QLineEdit>
+#include <QComboBox>
+#include <QLabel>
 class NetworkInfoPage : public BasePage {
     Q_OBJECT
 public:
     explicit NetworkInfoPage(QWidget *p=nullptr);
     void refreshData() override;
+private slots:
+    void onQuery();
 private:
     void setupUi();
-    QTableWidget *m_tbl;
+    void fillTable(const QVariantList &rows);
+    QTableWidget *m_tbl{nullptr};
+    QLineEdit    *m_edtKeyword{nullptr};  // 关键字：适配器名/IP/MAC
+    QComboBox    *m_cmbStatus{nullptr};   // 状态筛选
+    QLabel       *m_lblStatus{nullptr};
 };
 #endif

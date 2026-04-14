@@ -3,6 +3,7 @@
 #define STATICSCANPAGE_H
 
 #include "pages/BasePage.h"
+#include <QComboBox>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QTableWidget>
@@ -45,6 +46,11 @@ private slots:
     void onScanSelected();
     void onScanAll();
     void onFileItemClicked(QListWidgetItem *item);
+    // 各 Tab 查询 slot
+    void onQueryFileList();
+    void onQueryStrings();
+    void onQueryRules();
+    void onQueryCert();
 
 private:
     void setupUi();
@@ -72,13 +78,15 @@ private:
     // 辅助：创建带颜色的徽章标签
     static QLabel *makeBadge(const QString &text, const QString &bg,
                               const QString &fg = "#fff", QWidget *parent = nullptr);
-
-    // ── 左侧文件列表区 ──────────────────────────────────────
-    QListWidget  *m_fileList;
-    QPushButton  *m_btnAddFile;
-    QPushButton  *m_btnRemoveFile;
-    QPushButton  *m_btnScanSelected;
-    QPushButton  *m_btnScanAll;
+    // ── 左侧文件列表区 ────────────────────────────────────────────
+    QListWidget  *m_fileList{nullptr};
+    QPushButton  *m_btnAddFile{nullptr};
+    QPushButton  *m_btnRemoveFile{nullptr};
+    QPushButton  *m_btnScanSelected{nullptr};
+    QPushButton  *m_btnScanAll{nullptr};
+    // 文件列表查询栏
+    QLineEdit    *m_edtFileKw{nullptr};
+    QComboBox    *m_cmbFileRisk{nullptr};
 
     // ── 右侧上方：基本属性面板 ──────────────────────────────
     // 基本信息
@@ -101,12 +109,18 @@ private:
     QTreeWidget  *m_treePe;
 
     // Tab2: 字符串提取 - QTableWidget
-    QTableWidget *m_tblStrings;
+    QLineEdit    *m_edtStrKw{nullptr};
+    QComboBox    *m_cmbStrType{nullptr};
+    QTableWidget *m_tblStrings{nullptr};
 
     // Tab3: 规则命中 - QTableWidget
-    QTableWidget *m_tblRules;
+    QLineEdit    *m_edtRuleKw{nullptr};
+    QComboBox    *m_cmbRuleRisk{nullptr};
+    QTableWidget *m_tblRules{nullptr};
 
     // Tab4: 数字证书 - 卡片控件
+    QLineEdit    *m_edtCertKw{nullptr};
+    QComboBox    *m_cmbCertStatus{nullptr};
     QLabel *m_certStatusBadge;
     QLabel *m_certSignedBadge;
     QLabel *m_certExpiredBadge;

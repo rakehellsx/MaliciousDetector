@@ -72,6 +72,29 @@ void MemoryImagePage::setupUi()
     QVBoxLayout *kernelLayout = new QVBoxLayout(gbKernel);
     kernelLayout->setContentsMargins(6,14,6,6);
 
+    // 内核模块查询栏
+    QHBoxLayout *kernelQueryRow = new QHBoxLayout;
+    kernelQueryRow->setSpacing(6);
+    m_edtKernelKw = new QLineEdit;
+    m_edtKernelKw->setPlaceholderText("模块名 / 路径");
+    m_edtKernelKw->setClearButtonEnabled(true);
+    m_edtKernelKw->setFixedWidth(160);
+    connect(m_edtKernelKw, &QLineEdit::returnPressed, this, &MemoryImagePage::onQueryKernel);
+    m_cmbKernelTrusted = new QComboBox;
+    m_cmbKernelTrusted->addItems({"全部", "已签名", "未签名"});
+    connect(m_cmbKernelTrusted, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &MemoryImagePage::onQueryKernel);
+    QPushButton *btnKernelQuery = new QPushButton("查询");
+    btnKernelQuery->setFixedWidth(55);
+    connect(btnKernelQuery, &QPushButton::clicked, this, &MemoryImagePage::onQueryKernel);
+    kernelQueryRow->addWidget(new QLabel("关键字："));
+    kernelQueryRow->addWidget(m_edtKernelKw);
+    kernelQueryRow->addWidget(new QLabel("签名："));
+    kernelQueryRow->addWidget(m_cmbKernelTrusted);
+    kernelQueryRow->addWidget(btnKernelQuery);
+    kernelQueryRow->addStretch();
+    kernelLayout->addLayout(kernelQueryRow);
+
     m_tblKernel = new QTableWidget(0, 7);
     m_tblKernel->setHorizontalHeaderLabels({"模块名", "基址", "映像大小", "标志", "序号", "路径", "授信"});
     m_tblKernel->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
@@ -91,10 +114,33 @@ void MemoryImagePage::setupUi()
     topSplitter->setStretchFactor(1, 2);
 
     // 下半部分：进程内存映射
-    QGroupBox *gbProc = new QGroupBox("进程内存映射（Top 5 占用）");
+    QGroupBox *gbProc = new QGroupBox("进程内存映射");
     gbProc->setStyleSheet(gbStatus->styleSheet());
     QVBoxLayout *procLayout = new QVBoxLayout(gbProc);
     procLayout->setContentsMargins(6,14,6,6);
+
+    // 进程内存查询栏
+    QHBoxLayout *procQueryRow = new QHBoxLayout;
+    procQueryRow->setSpacing(6);
+    m_edtProcKw = new QLineEdit;
+    m_edtProcKw->setPlaceholderText("进程名 / PID");
+    m_edtProcKw->setClearButtonEnabled(true);
+    m_edtProcKw->setFixedWidth(160);
+    connect(m_edtProcKw, &QLineEdit::returnPressed, this, &MemoryImagePage::onQueryProc);
+    m_cmbProcSuspect = new QComboBox;
+    m_cmbProcSuspect->addItems({"全部", "可疑注入", "正常"});
+    connect(m_cmbProcSuspect, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &MemoryImagePage::onQueryProc);
+    QPushButton *btnProcQuery = new QPushButton("查询");
+    btnProcQuery->setFixedWidth(55);
+    connect(btnProcQuery, &QPushButton::clicked, this, &MemoryImagePage::onQueryProc);
+    procQueryRow->addWidget(new QLabel("关键字："));
+    procQueryRow->addWidget(m_edtProcKw);
+    procQueryRow->addWidget(new QLabel("状态："));
+    procQueryRow->addWidget(m_cmbProcSuspect);
+    procQueryRow->addWidget(btnProcQuery);
+    procQueryRow->addStretch();
+    procLayout->addLayout(procQueryRow);
 
     m_tblProc = new QTableWidget(0, 6);
     m_tblProc->setHorizontalHeaderLabels({"进程名", "PID", "私有内存", "工作集", "虚拟内存", "可疑注入"});
@@ -408,4 +454,44 @@ void MemoryImagePage::populateProcessMemoryFromDB(const QVariantList &rows)
     if (suspicious > 0)
         summary += QString(" ｜ <span style='color:#f5222d'>%1 条可疑进程</span>").arg(suspicious);
     m_lblProcSummary->setText(summary);
+}
+
+void MemoryImagePage::onQueryKernel()
+{
+    QString kw      = m_edtKernelKw->text().trimmed();
+    int     trusted = m_cmbKernelTrusted->currentIndex(); // 0=全部,1=已签名,2=未签名
+
+    QString sql = "SELECT name,base_address,image_size,flags,idx,path,is_trusted FROM kernel_module WHERE 1=1";
+    QVariantList binds;
+    if (!kw.isEmpty()) {
+        sql += " AND (name LIKE ? OR path LIKE ?)";
+        QString like = "%" + kw + "%";
+        binds << like << like;
+    }
+    if (trusted == 1) { sql += " AND is_trusted=1"; }
+    if (trusted == 2) { sql += " AND is_trusted=0"; }
+    sql += " ORDER BY is_trusted ASC, id";
+
+    auto rows = DatabaseManager::instance()->execSelect(sql, binds);
+    populateKernelModulesFromDB(rows);
+}
+
+void MemoryImagePage::onQueryProc()
+{
+    QString kw      = m_edtProcKw->text().trimmed();
+    int     suspect = m_cmbProcSuspect->currentIndex(); // 0=全部,1=可疑注入,2=正常
+
+    QString sql = "SELECT name,pid,private_mb,working_set_mb,virtual_mb,suspicious_inject FROM process_memory WHERE 1=1";
+    QVariantList binds;
+    if (!kw.isEmpty()) {
+        sql += " AND (name LIKE ? OR CAST(pid AS TEXT) LIKE ?)";
+        QString like = "%" + kw + "%";
+        binds << like << like;
+    }
+    if (suspect == 1) { sql += " AND suspicious_inject > 0"; }
+    if (suspect == 2) { sql += " AND suspicious_inject = 0"; }
+    sql += " ORDER BY suspicious_inject DESC, private_mb DESC";
+
+    auto rows = DatabaseManager::instance()->execSelect(sql, binds);
+    populateProcessMemoryFromDB(rows);
 }

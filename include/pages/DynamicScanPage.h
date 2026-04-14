@@ -2,6 +2,7 @@
 #ifndef DYNAMICSCANPAGE_H
 #define DYNAMICSCANPAGE_H
 #include "pages/BasePage.h"
+#include <QComboBox>
 #include <QLineEdit>
 #include <QTabWidget>
 #include <QTableWidget>
@@ -19,16 +20,22 @@ private slots:
     void onBrowseFile();
     void onStartScan();
     void onStopScan();
+    void onQueryBehavior();
 
 private:
     void setupUi();
     void loadBehaviorData(const QString &type);
+    void queryAndFill(QTableWidget *tbl, const QString &type,
+                      const QString &kw, const QString &risk);
 
     QLineEdit    *m_editPath;
     QPushButton  *m_btnBrowse;
     QPushButton  *m_btnStart;
     QPushButton  *m_btnStop;
     QLabel       *m_lblMonitorStatus;
+    // 行为数据全局查询栏
+    QLineEdit    *m_edtBehaviorKw{nullptr};
+    QComboBox    *m_cmbBehaviorRisk{nullptr};
     QTabWidget   *m_tabBehavior;
     QTableWidget *m_tblRegistry;
     QTableWidget *m_tblFile;

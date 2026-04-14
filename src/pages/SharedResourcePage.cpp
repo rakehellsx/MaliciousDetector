@@ -3,9 +3,10 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPushButton>
+#include <QLabel>
 
 SharedResourcePage::SharedResourcePage(QWidget *parent)
-    : BasePage("\u5171\u4eab\u8d44\u6e90", parent)
+    : BasePage("共享资源", parent)
 {
     setupUi();
     refreshData();
@@ -14,17 +15,46 @@ SharedResourcePage::SharedResourcePage(QWidget *parent)
 void SharedResourcePage::setupUi()
 {
     QHBoxLayout *toolRow = new QHBoxLayout;
-    QPushButton *btnRefresh = new QPushButton("\u5237\u65b0");
+    toolRow->setSpacing(6);
+
+    m_edtKeyword = new QLineEdit;
+    m_edtKeyword->setPlaceholderText("共享名 / 本地路径 / 权限");
+    m_edtKeyword->setClearButtonEnabled(true);
+    m_edtKeyword->setFixedWidth(220);
+    connect(m_edtKeyword, &QLineEdit::returnPressed, this, &SharedResourcePage::onQuery);
+
+    m_cmbRisk = new QComboBox;
+    m_cmbRisk->addItems({"全部风险", "高危", "中危", "低危"});
+    connect(m_cmbRisk, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &SharedResourcePage::onQuery);
+
+    QPushButton *btnQuery   = new QPushButton("查询");
+    btnQuery->setObjectName("btnPrimary");
+    btnQuery->setFixedWidth(70);
+    connect(btnQuery, &QPushButton::clicked, this, &SharedResourcePage::onQuery);
+
+    QPushButton *btnRefresh = new QPushButton("刷新");
     btnRefresh->setObjectName("btnSecondary");
-    btnRefresh->setFixedWidth(80);
+    btnRefresh->setFixedWidth(70);
     connect(btnRefresh, &QPushButton::clicked, this, &SharedResourcePage::refreshData);
+
+    toolRow->addWidget(new QLabel("关键字："));
+    toolRow->addWidget(m_edtKeyword);
+    toolRow->addSpacing(8);
+    toolRow->addWidget(new QLabel("风险："));
+    toolRow->addWidget(m_cmbRisk);
+    toolRow->addWidget(btnQuery);
     toolRow->addWidget(btnRefresh);
     toolRow->addStretch();
     m_mainLayout->addLayout(toolRow);
 
+    m_lblStatus = new QLabel;
+    m_lblStatus->setObjectName("statusLabel");
+    m_mainLayout->addWidget(m_lblStatus);
+
     // DB字段: name, path, type, permission, connected, risk
     m_tbl = new QTableWidget(0, 6);
-    m_tbl->setHorizontalHeaderLabels({"\u5171\u4eab\u540d", "\u672c\u5730\u8def\u5f84", "\u7c7b\u578b", "\u6743\u9650", "\u5df2\u8fde\u63a5", "\u98ce\u9669"});
+    m_tbl->setHorizontalHeaderLabels({"共享名", "本地路径", "类型", "权限", "已连接", "风险"});
     styleTable(m_tbl);
     m_tbl->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     m_mainLayout->addWidget(m_tbl, 1);
@@ -32,34 +62,62 @@ void SharedResourcePage::setupUi()
 
 void SharedResourcePage::refreshData()
 {
+    m_edtKeyword->clear();
+    m_cmbRisk->setCurrentIndex(0);
+    onQuery();
+}
+
+void SharedResourcePage::onQuery()
+{
+    QString kw      = m_edtKeyword->text().trimmed();
+    int     riskIdx = m_cmbRisk->currentIndex();
+    QStringList riskMap = {"", "高危", "中危", "低危"};
+    QString riskFilter = (riskIdx > 0 && riskIdx < riskMap.size()) ? riskMap[riskIdx] : "";
+
+    QString sql = "SELECT name,path,type,permission,connected,risk FROM shared_resource WHERE 1=1";
+    QVariantList binds;
+
+    if (!kw.isEmpty()) {
+        sql += " AND (name LIKE ? OR path LIKE ? OR permission LIKE ?)";
+        QString like = "%" + kw + "%";
+        binds << like << like << like;
+    }
+    if (!riskFilter.isEmpty()) {
+        sql += " AND risk = ?";
+        binds << riskFilter;
+    }
+    sql += " ORDER BY risk DESC, id";
+
+    auto rows = DatabaseManager::instance()->execSelect(sql, binds);
+    fillTable(rows);
+    m_lblStatus->setText(QString("共 %1 个共享资源").arg(rows.size()));
+}
+
+void SharedResourcePage::fillTable(const QVariantList &rows)
+{
     m_tbl->setRowCount(0);
-    auto rows = DatabaseManager::instance()->querySharedResources();
-    for (const QVariant &_var : rows) {
-        QVariantMap m = _var.toMap();
+    for (const QVariant &v : rows) {
+        QVariantMap m = v.toMap();
         int r = m_tbl->rowCount();
         m_tbl->insertRow(r);
         m_tbl->setItem(r, 0, new QTableWidgetItem(m["name"].toString()));
         m_tbl->setItem(r, 1, new QTableWidgetItem(m["path"].toString()));
         m_tbl->setItem(r, 2, new QTableWidgetItem(m["type"].toString()));
         m_tbl->setItem(r, 3, new QTableWidgetItem(m["permission"].toString()));
-        // connected: 0=未连接, 非0=已连接
         bool connected = m["connected"].toInt() > 0;
-        QTableWidgetItem *ci = new QTableWidgetItem(connected ? "\u662f" : "\u5426");
+        QTableWidgetItem *ci = new QTableWidgetItem(connected ? "是" : "否");
         ci->setForeground(connected ? QColor("#f5222d") : QColor("#4caf50"));
         ci->setTextAlignment(Qt::AlignCenter);
         m_tbl->setItem(r, 4, ci);
-        // 风险着色
         QString risk = m["risk"].toString();
         auto *ri = new QTableWidgetItem(risk);
-        if (risk == "\u9ad8\u5371") ri->setForeground(QColor("#ef5350"));
-        else if (risk == "\u4e2d\u5371") ri->setForeground(QColor("#ff9800"));
-        else ri->setForeground(QColor("#4caf50"));
+        if      (risk == "高危") ri->setForeground(QColor("#ef5350"));
+        else if (risk == "中危") ri->setForeground(QColor("#ff9800"));
+        else                     ri->setForeground(QColor("#4caf50"));
         ri->setTextAlignment(Qt::AlignCenter);
         m_tbl->setItem(r, 5, ri);
-        // 高危行背景
-        if (risk == "\u9ad8\u5371")
+        if (risk == "高危")
             for (int c = 0; c < 6; c++)
                 if (m_tbl->item(r, c)) m_tbl->item(r, c)->setBackground(QColor("#fff1f0"));
     }
-    m_lblStatus->setText(QString("\u5171 %1 \u4e2a\u5171\u4eab\u8d44\u6e90").arg(m_tbl->rowCount()));
 }

@@ -62,6 +62,26 @@ void StaticScanPage::setupUi()
     lblList->setStyleSheet("font-weight:bold; font-size:13px; padding:4px 0;");
     leftLayout->addWidget(lblList);
 
+    // 文件列表查询栏
+    QHBoxLayout *fileQueryRow = new QHBoxLayout;
+    fileQueryRow->setSpacing(4);
+    m_edtFileKw = new QLineEdit;
+    m_edtFileKw->setPlaceholderText("文件名 / MD5 关键字");
+    m_edtFileKw->setClearButtonEnabled(true);
+    connect(m_edtFileKw, &QLineEdit::returnPressed, this, &StaticScanPage::onQueryFileList);
+    m_cmbFileRisk = new QComboBox;
+    m_cmbFileRisk->addItems({"全部", "高危", "中危", "低危", "安全"});
+    connect(m_cmbFileRisk, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &StaticScanPage::onQueryFileList);
+    QPushButton *btnFileQuery = new QPushButton("搜索");
+    btnFileQuery->setObjectName("btnPrimary");
+    btnFileQuery->setFixedWidth(55);
+    connect(btnFileQuery, &QPushButton::clicked, this, &StaticScanPage::onQueryFileList);
+    fileQueryRow->addWidget(m_edtFileKw, 1);
+    fileQueryRow->addWidget(m_cmbFileRisk);
+    fileQueryRow->addWidget(btnFileQuery);
+    leftLayout->addLayout(fileQueryRow);
+
     m_fileList = new QListWidget;
     m_fileList->setAlternatingRowColors(true);
     m_fileList->setStyleSheet(
@@ -194,6 +214,32 @@ QWidget *StaticScanPage::buildStringsTab()
     QLabel *hint = new QLabel("从 PE 文件中提取的可疑字符串（URL / IP / API / 路径 / 其他）");
     hint->setStyleSheet("color:#666; font-size:11px; padding:2px 4px;");
     lay->addWidget(hint);
+
+    // 字符串查询栏
+    QHBoxLayout *strQueryRow = new QHBoxLayout;
+    strQueryRow->setSpacing(6);
+    m_edtStrKw = new QLineEdit;
+    m_edtStrKw->setPlaceholderText("字符串内容关键字");
+    m_edtStrKw->setClearButtonEnabled(true);
+    m_edtStrKw->setFixedWidth(200);
+    connect(m_edtStrKw, &QLineEdit::returnPressed, this, &StaticScanPage::onQueryStrings);
+    m_cmbStrType = new QComboBox;
+    m_cmbStrType->addItems({"全部类型", "URL", "IP", "API", "路径", "命令", "其他"});
+    connect(m_cmbStrType, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &StaticScanPage::onQueryStrings);
+    QPushButton *btnStrQuery = new QPushButton("查询");
+    btnStrQuery->setObjectName("btnPrimary");
+    btnStrQuery->setFixedWidth(70);
+    connect(btnStrQuery, &QPushButton::clicked, this, &StaticScanPage::onQueryStrings);
+    strQueryRow->addWidget(new QLabel("关键字："));
+    strQueryRow->addWidget(m_edtStrKw);
+    strQueryRow->addSpacing(8);
+    strQueryRow->addWidget(new QLabel("类型："));
+    strQueryRow->addWidget(m_cmbStrType);
+    strQueryRow->addWidget(btnStrQuery);
+    strQueryRow->addStretch();
+    lay->addLayout(strQueryRow);
+
     m_tblStrings = new QTableWidget(0, 3);
     m_tblStrings->setHorizontalHeaderLabels({"偏移量", "类型", "字符串内容"});
     m_tblStrings->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
@@ -220,6 +266,32 @@ QWidget *StaticScanPage::buildRulesTab()
     QLabel *hint = new QLabel("YARA 规则 / MD5 黑名单命中详情（高危行红色高亮）");
     hint->setStyleSheet("color:#666; font-size:11px; padding:2px 4px;");
     lay->addWidget(hint);
+
+    // 规则命中查询栏
+    QHBoxLayout *ruleQueryRow = new QHBoxLayout;
+    ruleQueryRow->setSpacing(6);
+    m_edtRuleKw = new QLineEdit;
+    m_edtRuleKw->setPlaceholderText("规则名称 / 命中内容");
+    m_edtRuleKw->setClearButtonEnabled(true);
+    m_edtRuleKw->setFixedWidth(200);
+    connect(m_edtRuleKw, &QLineEdit::returnPressed, this, &StaticScanPage::onQueryRules);
+    m_cmbRuleRisk = new QComboBox;
+    m_cmbRuleRisk->addItems({"全部风险", "高危(high)", "中危(medium)", "低危(low)"});
+    connect(m_cmbRuleRisk, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &StaticScanPage::onQueryRules);
+    QPushButton *btnRuleQuery = new QPushButton("查询");
+    btnRuleQuery->setObjectName("btnPrimary");
+    btnRuleQuery->setFixedWidth(70);
+    connect(btnRuleQuery, &QPushButton::clicked, this, &StaticScanPage::onQueryRules);
+    ruleQueryRow->addWidget(new QLabel("关键字："));
+    ruleQueryRow->addWidget(m_edtRuleKw);
+    ruleQueryRow->addSpacing(8);
+    ruleQueryRow->addWidget(new QLabel("风险："));
+    ruleQueryRow->addWidget(m_cmbRuleRisk);
+    ruleQueryRow->addWidget(btnRuleQuery);
+    ruleQueryRow->addStretch();
+    lay->addLayout(ruleQueryRow);
+
     m_tblRules = new QTableWidget(0, 4);
     m_tblRules->setHorizontalHeaderLabels({"规则名称", "类型", "命中内容", "风险等级"});
     m_tblRules->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
@@ -247,6 +319,31 @@ QWidget *StaticScanPage::buildCertTab()
     QVBoxLayout *lay = new QVBoxLayout(inner);
     lay->setContentsMargins(12, 12, 12, 12);
     lay->setSpacing(12);
+
+    // 证书查询栏
+    QHBoxLayout *certQueryRow = new QHBoxLayout;
+    certQueryRow->setSpacing(6);
+    m_edtCertKw = new QLineEdit;
+    m_edtCertKw->setPlaceholderText("文件名 / 签名者 / 题目");
+    m_edtCertKw->setClearButtonEnabled(true);
+    m_edtCertKw->setFixedWidth(200);
+    connect(m_edtCertKw, &QLineEdit::returnPressed, this, &StaticScanPage::onQueryCert);
+    m_cmbCertStatus = new QComboBox;
+    m_cmbCertStatus->addItems({"全部状态", "已签名", "未签名", "证书有效", "证书过期", "文件被篹改"});
+    connect(m_cmbCertStatus, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &StaticScanPage::onQueryCert);
+    QPushButton *btnCertQuery = new QPushButton("查询");
+    btnCertQuery->setObjectName("btnPrimary");
+    btnCertQuery->setFixedWidth(70);
+    connect(btnCertQuery, &QPushButton::clicked, this, &StaticScanPage::onQueryCert);
+    certQueryRow->addWidget(new QLabel("关键字："));
+    certQueryRow->addWidget(m_edtCertKw);
+    certQueryRow->addSpacing(8);
+    certQueryRow->addWidget(new QLabel("状态："));
+    certQueryRow->addWidget(m_cmbCertStatus);
+    certQueryRow->addWidget(btnCertQuery);
+    certQueryRow->addStretch();
+    lay->addLayout(certQueryRow);
 
     QString gbStyle =
         "QGroupBox { font-weight:bold; font-size:12px; "
@@ -826,4 +923,198 @@ void StaticScanPage::onScanAll()
     DatabaseManager::instance()->writeLog(
         m_role, m_username, "静态检测",
         QString("批量提交 %1 个文件").arg(m_fileList->count()), "success");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 文件列表查询：关键字（file_name/md5）+ 风险等级 → 直接查 SQLite3
+// ─────────────────────────────────────────────────────────────────────────────
+void StaticScanPage::onQueryFileList()
+{
+    QString kw      = m_edtFileKw->text().trimmed();
+    int     riskIdx = m_cmbFileRisk->currentIndex();
+    // 0=全部 1=高危 2=中危 3=低危 4=安全
+    static const QStringList riskMap = {"", "high", "medium", "low", "clean"};
+    QString riskFilter = (riskIdx > 0 && riskIdx < riskMap.size()) ? riskMap[riskIdx] : "";
+
+    QString sql = "SELECT id, file_name, file_path, risk_level, scan_time "
+                  "FROM static_scan WHERE 1=1";
+    QVariantList binds;
+    if (!kw.isEmpty()) {
+        sql += " AND (file_name LIKE ? OR md5 LIKE ?)";
+        QString like = "%" + kw + "%";
+        binds << like << like;
+    }
+    if (!riskFilter.isEmpty()) {
+        sql += " AND risk_level = ?";
+        binds << riskFilter;
+    }
+    sql += " ORDER BY id DESC LIMIT 200";
+
+    m_fileList->clear();
+    auto rows = DatabaseManager::instance()->execSelect(sql, binds);
+    for (const QVariant &v : rows) {
+        QVariantMap m = v.toMap();
+        int     id       = m["id"].toInt();
+        QString name     = m["file_name"].toString();
+        QString path     = m["file_path"].toString();
+        QString risk     = m["risk_level"].toString();
+        QString scanTime = m["scan_time"].toString();
+        QString riskTag;
+        if      (risk == "high")   riskTag = " [高危]";
+        else if (risk == "medium") riskTag = " [中危]";
+        else if (risk == "low")    riskTag = " [低危]";
+        else if (risk == "clean")  riskTag = " [安全]";
+        QListWidgetItem *item = new QListWidgetItem(name + riskTag);
+        item->setData(Qt::UserRole,     id);
+        item->setData(Qt::UserRole + 1, path);
+        item->setData(Qt::UserRole + 2, risk);
+        item->setToolTip(path + "\n扫描时间：" + scanTime);
+        if      (risk == "high")   item->setForeground(QColor("#c62828"));
+        else if (risk == "medium") item->setForeground(QColor("#e65100"));
+        else if (risk == "low")    item->setForeground(QColor("#1565c0"));
+        else if (risk == "clean")  item->setForeground(QColor("#2e7d32"));
+        m_fileList->addItem(item);
+    }
+    m_lblStatus->setText(QString("查询结果：共 %1 个文件").arg(m_fileList->count()));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 字符串提取查询：对当前选中文件的 strings_info JSON 做内存过滤
+// （strings_info 为 JSON blob，不单独建表，在内存中过滤）
+// ─────────────────────────────────────────────────────────────────────────────
+void StaticScanPage::onQueryStrings()
+{
+    QListWidgetItem *cur = m_fileList->currentItem();
+    if (!cur) { m_lblStatus->setText("请先在左侧列表中选择文件"); return; }
+
+    QString kw      = m_edtStrKw->text().trimmed();
+    int     typeIdx = m_cmbStrType->currentIndex();
+    // 0=全部 1=URL 2=IP 3=API 4=路径 5=命令 6=其他
+    static const QStringList typeMap = {"", "URL", "IP", "API", "路径", "命令", "其他"};
+    QString typeFilter = (typeIdx > 0 && typeIdx < typeMap.size()) ? typeMap[typeIdx] : "";
+
+    int staticId = cur->data(Qt::UserRole).toInt();
+    if (staticId <= 0) { m_lblStatus->setText("该文件尚未入库，无法查询字符串"); return; }
+
+    // 从 DB 取 strings_info JSON
+    auto rows = DatabaseManager::instance()->execSelect(
+        "SELECT strings_info FROM static_scan WHERE id = ?",
+        QVariantList{staticId});
+    if (rows.isEmpty()) return;
+    QString stringsJson = rows.first().toMap()["strings_info"].toString();
+
+    // 解析 JSON 并在内存中过滤
+    QJsonDocument doc = QJsonDocument::fromJson(stringsJson.toUtf8());
+    if (!doc.isArray()) { fillStringsTab(stringsJson); return; }
+
+    QJsonArray arr = doc.array();
+    QJsonArray filtered;
+    for (const QJsonValue &v : arr) {
+        QJsonObject o = v.toObject();
+        QString type  = o.value("type").toString();
+        QString value = o.value("value").toString();
+        if (!typeFilter.isEmpty() && type != typeFilter) continue;
+        if (!kw.isEmpty() && !value.contains(kw, Qt::CaseInsensitive)) continue;
+        filtered.append(o);
+    }
+    fillStringsTab(QJsonDocument(filtered).toJson(QJsonDocument::Compact));
+    m_lblStatus->setText(QString("字符串查询：命中 %1 条").arg(filtered.size()));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 规则命中查询：对当前选中文件的 rule_hits JSON 做内存过滤
+// ─────────────────────────────────────────────────────────────────────────────
+void StaticScanPage::onQueryRules()
+{
+    QListWidgetItem *cur = m_fileList->currentItem();
+    if (!cur) { m_lblStatus->setText("请先在左侧列表中选择文件"); return; }
+
+    QString kw      = m_edtRuleKw->text().trimmed();
+    int     riskIdx = m_cmbRuleRisk->currentIndex();
+    // 0=全部 1=高危(high) 2=中危(medium) 3=低危(low)
+    static const QStringList riskMap = {"", "high", "medium", "low"};
+    QString riskFilter = (riskIdx > 0 && riskIdx < riskMap.size()) ? riskMap[riskIdx] : "";
+
+    int staticId = cur->data(Qt::UserRole).toInt();
+    if (staticId <= 0) { m_lblStatus->setText("该文件尚未入库，无法查询规则命中"); return; }
+
+    auto rows = DatabaseManager::instance()->execSelect(
+        "SELECT rule_hits FROM static_scan WHERE id = ?",
+        QVariantList{staticId});
+    if (rows.isEmpty()) return;
+    QString rulesJson = rows.first().toMap()["rule_hits"].toString();
+
+    QJsonDocument doc = QJsonDocument::fromJson(rulesJson.toUtf8());
+    if (!doc.isArray()) { fillRulesTab(rulesJson); return; }
+
+    QJsonArray arr = doc.array();
+    QJsonArray filtered;
+    for (const QJsonValue &v : arr) {
+        QJsonObject o = v.toObject();
+        QString rule = o.value("rule").toString();
+        QString hit  = o.value("hit").toString();
+        QString risk = o.value("risk").toString();
+        if (!riskFilter.isEmpty() && risk != riskFilter) continue;
+        if (!kw.isEmpty() &&
+            !rule.contains(kw, Qt::CaseInsensitive) &&
+            !hit.contains(kw, Qt::CaseInsensitive)) continue;
+        filtered.append(o);
+    }
+    fillRulesTab(QJsonDocument(filtered).toJson(QJsonDocument::Compact));
+    m_lblStatus->setText(QString("规则查询：命中 %1 条").arg(filtered.size()));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 数字证书查询：按关键字（file_path/subject/issuer）+ 签名状态 查 cert_scan 表
+// ─────────────────────────────────────────────────────────────────────────────
+void StaticScanPage::onQueryCert()
+{
+    QString kw         = m_edtCertKw->text().trimmed();
+    int     statusIdx  = m_cmbCertStatus->currentIndex();
+    // 0=全部 1=已签名 2=未签名 3=证书有效 4=证书过期 5=文件被篡改
+
+    QString sql = "SELECT file_path, has_signature, signature_valid, file_tampered, "
+                  "       subject, issuer, serial_number, not_before, not_after, "
+                  "       not_expired, hash_algorithm, thumbprint_sha1, verify_result "
+                  "FROM cert_scan WHERE 1=1";
+    QVariantList binds;
+    if (!kw.isEmpty()) {
+        sql += " AND (file_path LIKE ? OR subject LIKE ? OR issuer LIKE ?)";
+        QString like = "%" + kw + "%";
+        binds << like << like << like;
+    }
+    switch (statusIdx) {
+        case 1: sql += " AND has_signature = 1";  break;  // 已签名
+        case 2: sql += " AND has_signature = 0";  break;  // 未签名
+        case 3: sql += " AND signature_valid = 1 AND not_expired = 1 AND file_tampered = 0"; break; // 证书有效
+        case 4: sql += " AND not_expired = 0";    break;  // 证书过期
+        case 5: sql += " AND file_tampered = 1";  break;  // 文件被篡改
+        default: break;
+    }
+    sql += " ORDER BY id DESC LIMIT 100";
+
+    auto rows = DatabaseManager::instance()->execSelect(sql, binds);
+
+    // 证书 Tab 展示第一条匹配记录的详情
+    if (!rows.isEmpty()) {
+        QVariantMap m = rows.first().toMap();
+        QString filePath = m["file_path"].toString();
+        fillCertTab(filePath);
+        m_lblStatus->setText(QString("证书查询：共 %1 条记录，显示第一条").arg(rows.size()));
+    } else {
+        // 清空证书详情
+        auto rb = [](QLabel *lbl, const QString &text) {
+            lbl->setText(text);
+            lbl->setStyleSheet("QLabel { background:#9e9e9e; color:#fff; "
+                               "border-radius:4px; padding:2px 10px; "
+                               "font-weight:bold; font-size:12px; }");
+        };
+        rb(m_certStatusBadge, "无匹配记录"); rb(m_certSignedBadge, "签名状态");
+        rb(m_certExpiredBadge, "有效期");    rb(m_certTamperedBadge, "文件完整性");
+        m_certSubject->setText("--");        m_certIssuer->setText("--");
+        m_certSerial->setText("--");         m_certNotBefore->setText("--");
+        m_certNotAfter->setText("--");       m_certHashAlg->setText("--");
+        m_certThumbprint->setText("--");     m_certVerifyResult->setText("--");
+        m_lblStatus->setText("证书查询：无匹配记录");
+    }
 }

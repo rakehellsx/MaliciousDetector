@@ -95,6 +95,36 @@ void DynamicScanPage::setupUi()
     ctrlRow->addWidget(m_lblMonitorStatus);
     m_mainLayout->addLayout(ctrlRow);
 
+    // 行为数据查询栏
+    QHBoxLayout *behaviorQueryRow = new QHBoxLayout;
+    behaviorQueryRow->setSpacing(6);
+    m_edtBehaviorKw = new QLineEdit;
+    m_edtBehaviorKw->setPlaceholderText("操作类型 / 路径 / 进程名");
+    m_edtBehaviorKw->setClearButtonEnabled(true);
+    m_edtBehaviorKw->setFixedWidth(220);
+    connect(m_edtBehaviorKw, &QLineEdit::returnPressed, this, &DynamicScanPage::onQueryBehavior);
+    m_cmbBehaviorRisk = new QComboBox;
+    m_cmbBehaviorRisk->addItems({"全部风险", "高危(high)", "注意(medium)", "正常(low)"});
+    connect(m_cmbBehaviorRisk, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &DynamicScanPage::onQueryBehavior);
+    QPushButton *btnBehaviorQuery = new QPushButton("查询");
+    btnBehaviorQuery->setObjectName("btnPrimary");
+    btnBehaviorQuery->setFixedWidth(70);
+    connect(btnBehaviorQuery, &QPushButton::clicked, this, &DynamicScanPage::onQueryBehavior);
+    QPushButton *btnBehaviorRefresh = new QPushButton("刷新");
+    btnBehaviorRefresh->setObjectName("btnSecondary");
+    btnBehaviorRefresh->setFixedWidth(70);
+    connect(btnBehaviorRefresh, &QPushButton::clicked, this, &DynamicScanPage::refreshData);
+    behaviorQueryRow->addWidget(new QLabel("行为关键字："));
+    behaviorQueryRow->addWidget(m_edtBehaviorKw);
+    behaviorQueryRow->addSpacing(8);
+    behaviorQueryRow->addWidget(new QLabel("风险："));
+    behaviorQueryRow->addWidget(m_cmbBehaviorRisk);
+    behaviorQueryRow->addWidget(btnBehaviorQuery);
+    behaviorQueryRow->addWidget(btnBehaviorRefresh);
+    behaviorQueryRow->addStretch();
+    m_mainLayout->addLayout(behaviorQueryRow);
+
     // Tab 控件
     m_tabBehavior = new QTabWidget;
     m_tabBehavior->setStyleSheet(
@@ -258,6 +288,66 @@ void DynamicScanPage::loadBehaviorData(const QString &/*type*/)
     Q_UNUSED(hasData);
 
     m_lblStatus->setText("已刷新：" + QDateTime::currentDateTime().toString("HH:mm:ss"));
+}
+
+void DynamicScanPage::onQueryBehavior()
+{
+    QString kw      = m_edtBehaviorKw->text().trimmed();
+    int     riskIdx = m_cmbBehaviorRisk->currentIndex();
+    QStringList riskMap = {"", "high", "medium", "low"};
+    QString riskFilter = (riskIdx > 0 && riskIdx < riskMap.size()) ? riskMap[riskIdx] : "";
+
+    queryAndFill(m_tblRegistry,     "registry", kw, riskFilter);
+    queryAndFill(m_tblFile,         "file",     kw, riskFilter);
+    queryAndFill(m_tblNetwork,      "network",  kw, riskFilter);
+    queryAndFill(m_tblSsdt,         "ssdt",     kw, riskFilter);
+    queryAndFill(m_tblAutorun,      "autorun",  kw, riskFilter);
+    queryAndFill(m_tblTask,         "task",     kw, riskFilter);
+    queryAndFill(m_tblBrowserPlugin,"browser",  kw, riskFilter);
+    queryAndFill(m_tblProcessDetail,"process",  kw, riskFilter);
+}
+
+void DynamicScanPage::queryAndFill(QTableWidget *tbl, const QString &type,
+                                    const QString &kw, const QString &risk)
+{
+    tbl->setRowCount(0);
+    QString sql = "SELECT scan_time,action_type,source_proc,target_path,detail,risk_level "
+                  "FROM dynamic_scan WHERE behavior_type=?";
+    QVariantList binds;
+    binds << type;
+    if (!kw.isEmpty()) {
+        sql += " AND (action_type LIKE ? OR source_proc LIKE ? OR target_path LIKE ? OR detail LIKE ?)";
+        QString like = "%" + kw + "%";
+        binds << like << like << like << like;
+    }
+    if (!risk.isEmpty()) {
+        sql += " AND risk_level = ?";
+        binds << risk;
+    }
+    sql += " ORDER BY id DESC LIMIT 200";
+
+    auto rows = DatabaseManager::instance()->execSelect(sql, binds);
+    for (const QVariant &v : rows) {
+        QVariantMap m = v.toMap();
+        int row = tbl->rowCount(); tbl->insertRow(row);
+        tbl->setItem(row, 0, new QTableWidgetItem(m["scan_time"].toString().mid(11,8)));
+        tbl->setItem(row, 1, new QTableWidgetItem(m["action_type"].toString()));
+        if (tbl->columnCount() > 2) {
+            QTableWidgetItem *pi = new QTableWidgetItem(m["source_proc"].toString());
+            pi->setFont(QFont("Consolas", 11));
+            tbl->setItem(row, 2, pi);
+        }
+        if (tbl->columnCount() > 3) {
+            QTableWidgetItem *ti = new QTableWidgetItem(m["target_path"].toString());
+            ti->setFont(QFont("Consolas", 11));
+            tbl->setItem(row, 3, ti);
+        }
+        if (tbl->columnCount() > 4)
+            tbl->setItem(row, 4, new QTableWidgetItem(m["detail"].toString()));
+        QString riskVal = m["risk_level"].toString();
+        tbl->setItem(row, tbl->columnCount()-1, riskItem(riskVal));
+        highlightRow(tbl, row, riskVal);
+    }
 }
 
 void DynamicScanPage::onBrowseFile()

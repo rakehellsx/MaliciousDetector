@@ -2,6 +2,7 @@
 #ifndef SAMPLEEXTRACTPAGE_H
 #define SAMPLEEXTRACTPAGE_H
 #include "pages/BasePage.h"
+#include <QComboBox>
 #include <QTableWidget>
 #include <QPushButton>
 #include <QLineEdit>
@@ -15,13 +16,18 @@ public:
 
 private slots:
     void onExtract();
+    void onQuery();
 
 private:
     void setupUi();
-    QLineEdit    *m_editPath;
-    QPushButton  *m_btnBrowse;
-    QPushButton  *m_btnExtract;
-    QTableWidget *m_tbl;
-    QLabel       *m_lblSummary;
+    void fillTable(const QVariantList &rows);
+    QLineEdit    *m_editPath{nullptr};
+    QPushButton  *m_btnBrowse{nullptr};
+    QPushButton  *m_btnExtract{nullptr};
+    QTableWidget *m_tbl{nullptr};
+    QLineEdit    *m_edtKeyword{nullptr};
+    QComboBox    *m_cmbType{nullptr};
+    QLabel       *m_lblSummary{nullptr};
+    QLabel       *m_lblStatus{nullptr};
 };
 #endif

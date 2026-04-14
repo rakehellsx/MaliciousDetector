@@ -3,6 +3,8 @@
 #define FILEASSOCPAGE_H
 #include "pages/BasePage.h"
 #include <QTableWidget>
+#include <QLineEdit>
+#include <QComboBox>
 #include <QPushButton>
 #include <QLabel>
 
@@ -11,10 +13,16 @@ class FileAssocPage : public BasePage {
 public:
     explicit FileAssocPage(QWidget *p = nullptr);
     void refreshData() override;
+private slots:
+    void onQuery();
 private:
     void setupUi();
-    QTableWidget *m_tbl;
-    QPushButton  *m_btnScan;
-    QLabel       *m_lblSummary;
+    void fillTable(const QVariantList &rows);
+    QTableWidget *m_tbl{nullptr};
+    QPushButton  *m_btnScan{nullptr};
+    QLineEdit    *m_edtKeyword{nullptr};
+    QComboBox    *m_cmbRisk{nullptr};
+    QLabel       *m_lblSummary{nullptr};
+    QLabel       *m_lblStatus{nullptr};
 };
 #endif

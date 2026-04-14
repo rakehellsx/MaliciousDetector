@@ -122,6 +122,31 @@ void ReportPage::setupUi() {
     lblSec2->setStyleSheet("font-weight:bold;font-size:12px;color:#333;margin-top:10px;");
     m_mainLayout->addWidget(lblSec2);
 
+    // 威胁列表查询栏
+    QHBoxLayout *threatQueryRow = new QHBoxLayout;
+    threatQueryRow->setSpacing(6);
+    m_edtThreatKw = new QLineEdit;
+    m_edtThreatKw->setPlaceholderText("威胁名称 / 文件名 / 恶意类型");
+    m_edtThreatKw->setClearButtonEnabled(true);
+    m_edtThreatKw->setFixedWidth(200);
+    connect(m_edtThreatKw, &QLineEdit::returnPressed, this, &ReportPage::onQueryThreats);
+    m_cmbThreatRisk = new QComboBox;
+    m_cmbThreatRisk->addItems({"全部风险", "高危", "中危", "低危"});
+    connect(m_cmbThreatRisk, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &ReportPage::onQueryThreats);
+    QPushButton *btnThreatQuery = new QPushButton("查询");
+    btnThreatQuery->setObjectName("btnPrimary");
+    btnThreatQuery->setFixedWidth(70);
+    connect(btnThreatQuery, &QPushButton::clicked, this, &ReportPage::onQueryThreats);
+    threatQueryRow->addWidget(new QLabel("威胁关键字："));
+    threatQueryRow->addWidget(m_edtThreatKw);
+    threatQueryRow->addSpacing(8);
+    threatQueryRow->addWidget(new QLabel("风险等级："));
+    threatQueryRow->addWidget(m_cmbThreatRisk);
+    threatQueryRow->addWidget(btnThreatQuery);
+    threatQueryRow->addStretch();
+    m_mainLayout->addLayout(threatQueryRow);
+
     m_tblThreats = new QTableWidget(0, 6);
     m_tblThreats->setHorizontalHeaderLabels({"威胁名称","危险等级","恶意类型","文件路径","发现时间","状态"});
     styleTable(m_tblThreats);
@@ -146,27 +171,62 @@ void ReportPage::setupUi() {
 }
 
 void ReportPage::refreshData() {
+    m_edtThreatKw->clear();
+    m_cmbThreatRisk->setCurrentIndex(0);
+    onQueryThreats();
+}
+
+void ReportPage::onQueryThreats() {
+    QString kw      = m_edtThreatKw->text().trimmed();
+    int     riskIdx = m_cmbThreatRisk->currentIndex();
+    QStringList riskMap = {"", "高危", "中危", "低危"};
+    QString riskFilter = (riskIdx > 0 && riskIdx < riskMap.size()) ? riskMap[riskIdx] : "";
+
+    QString sql = "SELECT file_name,virus_name,file_type,risk_level,scan_time,conclusion "
+                  "FROM static_scan WHERE 1=1";
+    QVariantList binds;
+    if (!kw.isEmpty()) {
+        sql += " AND (virus_name LIKE ? OR file_name LIKE ? OR file_type LIKE ?)";
+        QString like = "%" + kw + "%";
+        binds << like << like << like;
+    }
+    if (!riskFilter.isEmpty()) {
+        sql += " AND risk_level = ?";
+        binds << riskFilter;
+    }
+    sql += " ORDER BY CASE risk_level WHEN '高危' THEN 0 WHEN '中危' THEN 1 WHEN '低危' THEN 2 ELSE 3 END, scan_time DESC";
+
+    auto rows = DatabaseManager::instance()->execSelect(sql, binds);
+    fillThreats(rows);
+
+    // 处置建议从数据库读取
+    QString advice = DatabaseManager::instance()->getSetting("report_advice", "");
+    if (advice.isEmpty() && m_tblThreats->rowCount() > 0)
+        advice = "请根据检测结果对各威胁文件进行隔离或删除处置，并更新病毒库后重新扫描。";
+    else if (advice.isEmpty())
+        advice = "未检测到威胁，系统安全。";
+    m_txtReport->setPlainText(advice);
+    m_lblStatus->setText("已刷新：" + QDateTime::currentDateTime().toString("HH:mm:ss"));
+}
+
+void ReportPage::fillThreats(const QVariantList &rows) {
     m_tblThreats->setRowCount(0);
     int high = 0, medium = 0, low = 0, isolated = 0;
-
-    QSqlQuery q;
-    q.exec("SELECT file_name, virus_name, file_type, risk_level, scan_time, conclusion FROM static_scan ORDER BY scan_time DESC");
-    while (q.next()) {
-        QString fileName   = q.value(0).toString();
-        QString virusName  = q.value(1).toString();
-        QString fileType   = q.value(2).toString();
-        QString riskLevel  = q.value(3).toString();
-        QString scanTime   = q.value(4).toString();
-        QString conclusion = q.value(5).toString();
+    for (const QVariant &v : rows) {
+        QVariantMap m = v.toMap();
+        QString fileName   = m["file_name"].toString();
+        QString virusName  = m["virus_name"].toString();
+        QString fileType   = m["file_type"].toString();
+        QString riskLevel  = m["risk_level"].toString();
+        QString scanTime   = m["scan_time"].toString();
+        QString conclusion = m["conclusion"].toString();
 
         if (riskLevel == "高危") high++;
         else if (riskLevel == "中危") medium++;
         else if (riskLevel == "低危") low++;
         if (conclusion.contains("隔离")) isolated++;
 
-        int row = m_tblThreats->rowCount();
-        m_tblThreats->insertRow(row);
-
+        int row = m_tblThreats->rowCount(); m_tblThreats->insertRow(row);
         QString threatName = virusName.isEmpty() ? fileName : virusName;
         m_tblThreats->setItem(row, 0, new QTableWidgetItem(threatName));
 
@@ -179,32 +239,18 @@ void ReportPage::refreshData() {
         m_tblThreats->setItem(row, 2, new QTableWidgetItem(fileType));
         m_tblThreats->setItem(row, 3, new QTableWidgetItem(fileName));
         m_tblThreats->setItem(row, 4, new QTableWidgetItem(scanTime));
-
         QString status = conclusion.contains("隔离") ? "已隔离" : "待处理";
         QTableWidgetItem *stItem = new QTableWidgetItem(status);
         stItem->setForeground(status == "已隔离" ? QColor("#389e0d") : QColor("#d46b08"));
         m_tblThreats->setItem(row, 5, stItem);
-
         if (riskLevel == "高危")
             for (int c = 0; c < 6; c++)
                 if (m_tblThreats->item(row,c)) m_tblThreats->item(row,c)->setBackground(QColor("#fff1f0"));
     }
-
     m_lblHigh->setText(QString::number(high));
     m_lblMedium->setText(QString::number(medium));
     m_lblLow->setText(QString::number(low));
     m_lblIsolated->setText(QString::number(isolated));
-
-    // 处置建议：从数据库读取
-    QString advice = DatabaseManager::instance()->getSetting("report_advice", "");
-    if (advice.isEmpty() && m_tblThreats->rowCount() > 0) {
-        advice = "请根据检测结果对各威胁文件进行隔离或删除处置，并更新病毒库后重新扫描。";
-    } else if (advice.isEmpty()) {
-        advice = "未检测到威胁，系统安全。";
-    }
-    m_txtReport->setPlainText(advice);
-
-    m_lblStatus->setText("已刷新：" + QDateTime::currentDateTime().toString("HH:mm:ss"));
 }
 
 void ReportPage::onGenerateReport() {

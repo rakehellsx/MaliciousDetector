@@ -3,9 +3,10 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPushButton>
+#include <QLabel>
 
 AutorunPage::AutorunPage(QWidget *parent)
-    : BasePage("\u81ea\u542f\u52a8\u9879", parent)
+    : BasePage("自启动项", parent)
 {
     setupUi();
     refreshData();
@@ -13,16 +14,49 @@ AutorunPage::AutorunPage(QWidget *parent)
 
 void AutorunPage::setupUi()
 {
+    // ── 查询栏 ──────────────────────────────────────────────────────────────
     QHBoxLayout *toolRow = new QHBoxLayout;
-    QPushButton *btnRefresh = new QPushButton("\u5237\u65b0");
+    toolRow->setSpacing(6);
+
+    m_edtKeyword = new QLineEdit;
+    m_edtKeyword->setPlaceholderText("名称 / 注册表路径 / 命令 / 发布商");
+    m_edtKeyword->setClearButtonEnabled(true);
+    m_edtKeyword->setFixedWidth(260);
+    connect(m_edtKeyword, &QLineEdit::returnPressed, this, &AutorunPage::onQuery);
+
+    m_cmbRisk = new QComboBox;
+    m_cmbRisk->addItems({"全部风险", "高危", "中危", "低危"});
+    connect(m_cmbRisk, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &AutorunPage::onQuery);
+
+    QPushButton *btnQuery   = new QPushButton("查询");
+    btnQuery->setObjectName("btnPrimary");
+    btnQuery->setFixedWidth(70);
+    connect(btnQuery, &QPushButton::clicked, this, &AutorunPage::onQuery);
+
+    QPushButton *btnRefresh = new QPushButton("刷新");
     btnRefresh->setObjectName("btnSecondary");
-    btnRefresh->setFixedWidth(80);
+    btnRefresh->setFixedWidth(70);
     connect(btnRefresh, &QPushButton::clicked, this, &AutorunPage::refreshData);
+
+    toolRow->addWidget(new QLabel("关键字："));
+    toolRow->addWidget(m_edtKeyword);
+    toolRow->addSpacing(8);
+    toolRow->addWidget(new QLabel("风险："));
+    toolRow->addWidget(m_cmbRisk);
+    toolRow->addWidget(btnQuery);
     toolRow->addWidget(btnRefresh);
     toolRow->addStretch();
     m_mainLayout->addLayout(toolRow);
 
+    m_lblStatus = new QLabel;
+    m_lblStatus->setObjectName("statusLabel");
+    m_mainLayout->addWidget(m_lblStatus);
+
+    // ── Tab 控件 ─────────────────────────────────────────────────────────────
     m_tabs = new QTabWidget;
+    m_mainLayout->addWidget(m_tabs, 1);
+
     auto makeTable = [this](QStringList headers) -> QTableWidget* {
         auto *t = new QTableWidget(0, headers.size());
         t->setHorizontalHeaderLabels(headers);
@@ -32,117 +66,114 @@ void AutorunPage::setupUi()
     };
 
     // DB字段: type, name, reg_path, value, cmd, publisher, risk
-    // 注册表启动项: 名称 | 注册表路径 | 值/命令 | 发布商 | 风险
-    m_tblReg    = makeTable({"\u542f\u52a8\u9879\u540d\u79f0", "\u6ce8\u518c\u8868\u8def\u5f84", "\u547d\u4ee4", "\u53d1\u5e03\u5546", "\u98ce\u9669"});
-    // 启动文件夹: 名称 | 命令 | 发布商 | 风险
-    m_tblFolder = makeTable({"\u6587\u4ef6\u540d", "\u547d\u4ee4", "\u53d1\u5e03\u5546", "\u98ce\u9669"});
-    // 右键菜单: 名称 | 命令 | 发布商 | 风险
-    m_tblMenu   = makeTable({"\u83dc\u5355\u9879", "\u547d\u4ee4", "\u53d1\u5e03\u5546", "\u98ce\u9669"});
-    // 系统调试器: 名称 | 注册表路径 | 命令 | 发布商 | 风险
-    m_tblDebug  = makeTable({"\u53ef\u6267\u884c\u6587\u4ef6", "\u6ce8\u518c\u8868\u8def\u5f84", "\u8c03\u8bd5\u5668\u8def\u5f84", "\u53d1\u5e03\u5546", "\u98ce\u9669"});
+    // 注册表启动项 (type=注册表): 名称 | 注册表路径 | 值名 | 命令 | 发布商 | 风险
+    m_tblReg    = makeTable({"启动项名称", "注册表路径", "值名", "命令", "发布商", "风险"});
+    // 启动文件夹 (type=启动文件夹): 文件名 | 命令 | 发布商 | 风险
+    m_tblFolder = makeTable({"文件名", "命令", "发布商", "风险"});
+    // 右键菜单 (type=右键菜单): 菜单项 | 注册表路径 | 命令 | 风险
+    m_tblMenu   = makeTable({"菜单项", "注册表路径", "命令", "风险"});
+    // 调试器劫持 (type=调试器): 目标程序 | 注册表路径 | 调试器命令 | 风险
+    m_tblDebug  = makeTable({"目标程序", "注册表路径", "调试器命令", "风险"});
 
-    m_tabs->addTab(m_tblReg,    "\u6ce8\u518c\u8868\u542f\u52a8\u9879");
-    m_tabs->addTab(m_tblFolder, "\u542f\u52a8\u6587\u4ef6\u5939");
-    m_tabs->addTab(m_tblMenu,   "\u53f3\u952e\u83dc\u5355");
-    m_tabs->addTab(m_tblDebug,  "\u7cfb\u7edf\u8c03\u8bd5\u5668");
-    m_mainLayout->addWidget(m_tabs, 1);
-}
-
-// 通用着色辅助
-static void setRiskColor(QTableWidgetItem *item, const QString &risk)
-{
-    if (risk == "\u9ad8\u5371") item->setForeground(QColor("#ef5350"));
-    else if (risk == "\u4e2d\u5371") item->setForeground(QColor("#ff9800"));
-    else item->setForeground(QColor("#4caf50"));
-    item->setTextAlignment(Qt::AlignCenter);
-}
-
-// 注册表启动项（5列）: 名称 | 注册表路径 | 命令 | 发布商 | 风险
-static void fillRegTable(QTableWidget *tbl, const QVariantList &rows)
-{
-    tbl->setRowCount(0);
-    for (const QVariant &_var : rows) {
-        QVariantMap m = _var.toMap();
-        if (m["type"].toString() != "reg" && m["type"].toString() != "registry") continue;
-        int r = tbl->rowCount(); tbl->insertRow(r);
-        tbl->setItem(r, 0, new QTableWidgetItem(m["name"].toString()));
-        tbl->setItem(r, 1, new QTableWidgetItem(m["reg_path"].toString()));
-        tbl->setItem(r, 2, new QTableWidgetItem(m["cmd"].toString()));
-        tbl->setItem(r, 3, new QTableWidgetItem(m["publisher"].toString()));
-        auto *ri = new QTableWidgetItem(m["risk"].toString());
-        setRiskColor(ri, m["risk"].toString());
-        tbl->setItem(r, 4, ri);
-        if (m["risk"].toString() == "\u9ad8\u5371")
-            for (int c = 0; c < 5; c++) if (tbl->item(r,c)) tbl->item(r,c)->setBackground(QColor("#fff1f0"));
-    }
-}
-
-// 启动文件夹（4列）: 文件名 | 命令 | 发布商 | 风险
-static void fillFolderTable(QTableWidget *tbl, const QVariantList &rows)
-{
-    tbl->setRowCount(0);
-    for (const QVariant &_var : rows) {
-        QVariantMap m = _var.toMap();
-        if (m["type"].toString() != "folder") continue;
-        int r = tbl->rowCount(); tbl->insertRow(r);
-        tbl->setItem(r, 0, new QTableWidgetItem(m["name"].toString()));
-        tbl->setItem(r, 1, new QTableWidgetItem(m["cmd"].toString()));
-        tbl->setItem(r, 2, new QTableWidgetItem(m["publisher"].toString()));
-        auto *ri = new QTableWidgetItem(m["risk"].toString());
-        setRiskColor(ri, m["risk"].toString());
-        tbl->setItem(r, 3, ri);
-        if (m["risk"].toString() == "\u9ad8\u5371")
-            for (int c = 0; c < 4; c++) if (tbl->item(r,c)) tbl->item(r,c)->setBackground(QColor("#fff1f0"));
-    }
-}
-
-// 右键菜单（4列）: 菜单项 | 命令 | 发布商 | 风险
-static void fillMenuTable(QTableWidget *tbl, const QVariantList &rows)
-{
-    tbl->setRowCount(0);
-    for (const QVariant &_var : rows) {
-        QVariantMap m = _var.toMap();
-        if (m["type"].toString() != "menu" && m["type"].toString() != "rightclick") continue;
-        int r = tbl->rowCount(); tbl->insertRow(r);
-        tbl->setItem(r, 0, new QTableWidgetItem(m["name"].toString()));
-        tbl->setItem(r, 1, new QTableWidgetItem(m["cmd"].toString()));
-        tbl->setItem(r, 2, new QTableWidgetItem(m["publisher"].toString()));
-        auto *ri = new QTableWidgetItem(m["risk"].toString());
-        setRiskColor(ri, m["risk"].toString());
-        tbl->setItem(r, 3, ri);
-        if (m["risk"].toString() == "\u9ad8\u5371")
-            for (int c = 0; c < 4; c++) if (tbl->item(r,c)) tbl->item(r,c)->setBackground(QColor("#fff1f0"));
-    }
-}
-
-// 系统调试器（5列）: 可执行文件 | 注册表路径 | 调试器路径 | 发布商 | 风险
-static void fillDebugTable(QTableWidget *tbl, const QVariantList &rows)
-{
-    tbl->setRowCount(0);
-    for (const QVariant &_var : rows) {
-        QVariantMap m = _var.toMap();
-        if (m["type"].toString() != "debugger") continue;
-        int r = tbl->rowCount(); tbl->insertRow(r);
-        tbl->setItem(r, 0, new QTableWidgetItem(m["name"].toString()));
-        tbl->setItem(r, 1, new QTableWidgetItem(m["reg_path"].toString()));
-        tbl->setItem(r, 2, new QTableWidgetItem(m["cmd"].toString()));
-        tbl->setItem(r, 3, new QTableWidgetItem(m["publisher"].toString()));
-        auto *ri = new QTableWidgetItem(m["risk"].toString());
-        setRiskColor(ri, m["risk"].toString());
-        tbl->setItem(r, 4, ri);
-        if (m["risk"].toString() == "\u9ad8\u5371")
-            for (int c = 0; c < 5; c++) if (tbl->item(r,c)) tbl->item(r,c)->setBackground(QColor("#fff1f0"));
-    }
+    m_tabs->addTab(m_tblReg,    "注册表启动项");
+    m_tabs->addTab(m_tblFolder, "启动文件夹");
+    m_tabs->addTab(m_tblMenu,   "右键菜单");
+    m_tabs->addTab(m_tblDebug,  "调试器劫持");
 }
 
 void AutorunPage::refreshData()
 {
-    auto rows = DatabaseManager::instance()->queryAutorunInfo();
-    fillRegTable(m_tblReg,       rows);
-    fillFolderTable(m_tblFolder, rows);
-    fillMenuTable(m_tblMenu,     rows);
-    fillDebugTable(m_tblDebug,   rows);
+    m_edtKeyword->clear();
+    m_cmbRisk->setCurrentIndex(0);
+    onQuery();
+}
+
+void AutorunPage::onQuery()
+{
+    QString kw      = m_edtKeyword->text().trimmed();
+    int     riskIdx = m_cmbRisk->currentIndex();
+    QStringList riskMap = {"", "高危", "中危", "低危"};
+    QString riskFilter = (riskIdx > 0 && riskIdx < riskMap.size()) ? riskMap[riskIdx] : "";
+
+    fillTab(m_tblReg,    "注册表",    kw, riskFilter);
+    fillTab(m_tblFolder, "启动文件夹", kw, riskFilter);
+    fillTab(m_tblMenu,   "右键菜单",  kw, riskFilter);
+    fillTab(m_tblDebug,  "调试器",    kw, riskFilter);
+
     int total = m_tblReg->rowCount() + m_tblFolder->rowCount()
               + m_tblMenu->rowCount() + m_tblDebug->rowCount();
-    m_lblStatus->setText(QString("\u5171 %1 \u4e2a\u81ea\u542f\u52a8\u9879").arg(total));
+    m_lblStatus->setText(QString("共 %1 条自启动记录").arg(total));
+}
+
+void AutorunPage::fillTab(QTableWidget *tbl, const QString &type,
+                          const QString &kw, const QString &risk)
+{
+    tbl->setRowCount(0);
+
+    QString sql = "SELECT name,reg_path,value,cmd,publisher,risk FROM autorun_info WHERE type=?";
+    QVariantList binds;
+    binds << type;
+
+    if (!kw.isEmpty()) {
+        sql += " AND (name LIKE ? OR reg_path LIKE ? OR cmd LIKE ? OR publisher LIKE ?)";
+        QString like = "%" + kw + "%";
+        binds << like << like << like << like;
+    }
+    if (!risk.isEmpty()) {
+        sql += " AND risk = ?";
+        binds << risk;
+    }
+    sql += " ORDER BY risk DESC, id";
+
+    auto rows = DatabaseManager::instance()->execSelect(sql, binds);
+
+    for (const QVariant &v : rows) {
+        QVariantMap m = v.toMap();
+        int r = tbl->rowCount();
+        tbl->insertRow(r);
+        QString riskVal = m["risk"].toString();
+
+        if (type == "注册表") {
+            // 6列: name, reg_path, value, cmd, publisher, risk
+            tbl->setItem(r, 0, new QTableWidgetItem(m["name"].toString()));
+            tbl->setItem(r, 1, new QTableWidgetItem(m["reg_path"].toString()));
+            tbl->setItem(r, 2, new QTableWidgetItem(m["value"].toString()));
+            tbl->setItem(r, 3, new QTableWidgetItem(m["cmd"].toString()));
+            tbl->setItem(r, 4, new QTableWidgetItem(m["publisher"].toString()));
+            auto *ri = new QTableWidgetItem(riskVal);
+            if      (riskVal == "高危") ri->setForeground(QColor("#ef5350"));
+            else if (riskVal == "中危") ri->setForeground(QColor("#ff9800"));
+            else                        ri->setForeground(QColor("#4caf50"));
+            ri->setTextAlignment(Qt::AlignCenter);
+            tbl->setItem(r, 5, ri);
+        } else if (type == "启动文件夹") {
+            // 4列: name, cmd, publisher, risk
+            tbl->setItem(r, 0, new QTableWidgetItem(m["name"].toString()));
+            tbl->setItem(r, 1, new QTableWidgetItem(m["cmd"].toString()));
+            tbl->setItem(r, 2, new QTableWidgetItem(m["publisher"].toString()));
+            auto *ri = new QTableWidgetItem(riskVal);
+            if      (riskVal == "高危") ri->setForeground(QColor("#ef5350"));
+            else if (riskVal == "中危") ri->setForeground(QColor("#ff9800"));
+            else                        ri->setForeground(QColor("#4caf50"));
+            ri->setTextAlignment(Qt::AlignCenter);
+            tbl->setItem(r, 3, ri);
+        } else {
+            // 右键菜单/调试器 4列: name, reg_path, cmd, risk
+            tbl->setItem(r, 0, new QTableWidgetItem(m["name"].toString()));
+            tbl->setItem(r, 1, new QTableWidgetItem(m["reg_path"].toString()));
+            tbl->setItem(r, 2, new QTableWidgetItem(m["cmd"].toString()));
+            auto *ri = new QTableWidgetItem(riskVal);
+            if      (riskVal == "高危") ri->setForeground(QColor("#ef5350"));
+            else if (riskVal == "中危") ri->setForeground(QColor("#ff9800"));
+            else                        ri->setForeground(QColor("#4caf50"));
+            ri->setTextAlignment(Qt::AlignCenter);
+            tbl->setItem(r, 3, ri);
+        }
+
+        if (riskVal == "高危") {
+            int cols = tbl->columnCount();
+            for (int c = 0; c < cols; c++)
+                if (tbl->item(r, c)) tbl->item(r, c)->setBackground(QColor("#fff1f0"));
+        }
+    }
 }

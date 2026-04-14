@@ -1,10 +1,10 @@
 #include "pages/SampleExtractPage.h"
 #include "DatabaseManager.h"
+#include <QSqlDatabase>
+#include <QSqlQuery>
 #include <QHBoxLayout>
 #include <QFileDialog>
 #include <QFileInfo>
-#include <QSqlQuery>
-#include <QSqlDatabase>
 #include <QHeaderView>
 #include <QLabel>
 #include <QFont>
@@ -19,7 +19,7 @@ SampleExtractPage::SampleExtractPage(QWidget *parent)
 
 void SampleExtractPage::setupUi()
 {
-    // 控制栏
+    // ── 文件选择行 ──────────────────────────────────────────────────────────
     QHBoxLayout *fileRow = new QHBoxLayout;
     fileRow->setContentsMargins(0,0,0,8);
     m_editPath = new QLineEdit;
@@ -48,7 +48,47 @@ void SampleExtractPage::setupUi()
     fileRow->addWidget(m_btnExtract);
     m_mainLayout->addLayout(fileRow);
 
-    // 表格
+    // ── 查询栏 ──────────────────────────────────────────────────────────────
+    QHBoxLayout *queryRow = new QHBoxLayout;
+    queryRow->setSpacing(6);
+
+    m_edtKeyword = new QLineEdit;
+    m_edtKeyword->setPlaceholderText("文件名 / MD5 / SHA256 / 来源");
+    m_edtKeyword->setClearButtonEnabled(true);
+    m_edtKeyword->setFixedWidth(240);
+    connect(m_edtKeyword, &QLineEdit::returnPressed, this, &SampleExtractPage::onQuery);
+
+    m_cmbType = new QComboBox;
+    m_cmbType->addItems({"全部类型", "静态", "动态"});
+    connect(m_cmbType, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &SampleExtractPage::onQuery);
+
+    QPushButton *btnQuery   = new QPushButton("查询");
+    btnQuery->setObjectName("btnPrimary");
+    btnQuery->setFixedWidth(70);
+    connect(btnQuery, &QPushButton::clicked, this, &SampleExtractPage::onQuery);
+
+    QPushButton *btnRefresh = new QPushButton("刷新");
+    btnRefresh->setObjectName("btnSecondary");
+    btnRefresh->setFixedWidth(70);
+    connect(btnRefresh, &QPushButton::clicked, this, &SampleExtractPage::refreshData);
+
+    queryRow->addWidget(new QLabel("关键字："));
+    queryRow->addWidget(m_edtKeyword);
+    queryRow->addSpacing(8);
+    queryRow->addWidget(new QLabel("来源："));
+    queryRow->addWidget(m_cmbType);
+    queryRow->addWidget(btnQuery);
+    queryRow->addWidget(btnRefresh);
+    queryRow->addStretch();
+    m_mainLayout->addLayout(queryRow);
+
+    m_lblStatus = new QLabel;
+    m_lblStatus->setObjectName("statusLabel");
+    m_mainLayout->addWidget(m_lblStatus);
+
+    // DB字段: file_name, source_type, file_type, file_size, md5, sha256,
+    //         original_create_time, original_modify_time, extract_time
     m_tbl = new QTableWidget(0, 9);
     m_tbl->setHorizontalHeaderLabels({
         "文件名", "来源", "文件类型", "大小",
@@ -76,73 +116,97 @@ void SampleExtractPage::setupUi()
 
 void SampleExtractPage::refreshData()
 {
-    m_tbl->setRowCount(0);
-    QSqlDatabase db = QSqlDatabase::database("main_conn");
-    bool loaded = false;
+    m_edtKeyword->clear();
+    m_cmbType->setCurrentIndex(0);
+    onQuery();
+}
 
-    if (db.isOpen()) {
-        QSqlQuery q(db);
-        q.exec("SELECT file_name,source_type,file_type,file_size,md5,sha256,"
-               "original_create_time,original_modify_time,extract_time "
-               "FROM sample_extract ORDER BY id DESC LIMIT 100");
-        while (q.next()) {
-            loaded = true;
-            int row = m_tbl->rowCount(); m_tbl->insertRow(row);
-            m_tbl->setItem(row,0,new QTableWidgetItem(q.value(0).toString()));
+void SampleExtractPage::onQuery()
+{
+    QString kw      = m_edtKeyword->text().trimmed();
+    int     typeIdx = m_cmbType->currentIndex();
+    QStringList typeMap = {"", "静态", "动态"};
+    QString typeFilter = (typeIdx > 0 && typeIdx < typeMap.size()) ? typeMap[typeIdx] : "";
 
-            QString src = q.value(1).toString();
-            QTableWidgetItem *srcItem = new QTableWidgetItem(src);
-            srcItem->setForeground(src=="动态"?QColor("#1890ff"):QColor("#52c41a"));
-            QFont sf = srcItem->font(); sf.setBold(true); srcItem->setFont(sf);
-            m_tbl->setItem(row,1,srcItem);
+    QString sql = "SELECT file_name,source_type,file_type,file_size,md5,sha256,"
+                  "original_create_time,original_modify_time,extract_time "
+                  "FROM sample_extract WHERE 1=1";
+    QVariantList binds;
 
-            m_tbl->setItem(row,2,new QTableWidgetItem(q.value(2).toString()));
-            m_tbl->setItem(row,3,new QTableWidgetItem(
-                QString::number(q.value(3).toLongLong()/1024)+" KB"));
-
-            QTableWidgetItem *md5i = new QTableWidgetItem(q.value(4).toString());
-            md5i->setFont(QFont("Consolas",11));
-            m_tbl->setItem(row,4,md5i);
-
-            QTableWidgetItem *sha256i = new QTableWidgetItem(q.value(5).toString());
-            sha256i->setFont(QFont("Consolas",11));
-            m_tbl->setItem(row,5,sha256i);
-
-            m_tbl->setItem(row,6,new QTableWidgetItem(q.value(6).toString()));
-            m_tbl->setItem(row,7,new QTableWidgetItem(q.value(7).toString()));
-            m_tbl->setItem(row,8,new QTableWidgetItem(q.value(8).toString()));
-        }
+    if (!kw.isEmpty()) {
+        sql += " AND (file_name LIKE ? OR md5 LIKE ? OR sha256 LIKE ? OR source_type LIKE ?)";
+        QString like = "%" + kw + "%";
+        binds << like << like << like << like;
     }
+    if (!typeFilter.isEmpty()) {
+        sql += " AND source_type = ?";
+        binds << typeFilter;
+    }
+    sql += " ORDER BY id DESC LIMIT 200";
 
-    // 无数据时显示空表，等待外部入库
-
-    m_lblSummary->setText(QString("共 %1 个样本").arg(m_tbl->rowCount()));
+    auto rows = DatabaseManager::instance()->execSelect(sql, binds);
+    fillTable(rows);
     m_lblStatus->setText("已刷新：" + QDateTime::currentDateTime().toString("HH:mm:ss"));
+}
+
+void SampleExtractPage::fillTable(const QVariantList &rows)
+{
+    m_tbl->setRowCount(0);
+    for (const QVariant &v : rows) {
+        QVariantMap m = v.toMap();
+        int row = m_tbl->rowCount(); m_tbl->insertRow(row);
+        m_tbl->setItem(row, 0, new QTableWidgetItem(m["file_name"].toString()));
+
+        QString src = m["source_type"].toString();
+        QTableWidgetItem *srcItem = new QTableWidgetItem(src);
+        srcItem->setForeground(src=="动态" ? QColor("#1890ff") : QColor("#52c41a"));
+        QFont sf = srcItem->font(); sf.setBold(true); srcItem->setFont(sf);
+        m_tbl->setItem(row, 1, srcItem);
+
+        m_tbl->setItem(row, 2, new QTableWidgetItem(m["file_type"].toString()));
+        m_tbl->setItem(row, 3, new QTableWidgetItem(
+            QString::number(m["file_size"].toLongLong()/1024) + " KB"));
+
+        QTableWidgetItem *md5i = new QTableWidgetItem(m["md5"].toString());
+        md5i->setFont(QFont("Consolas", 11));
+        m_tbl->setItem(row, 4, md5i);
+
+        QTableWidgetItem *sha256i = new QTableWidgetItem(m["sha256"].toString());
+        sha256i->setFont(QFont("Consolas", 11));
+        m_tbl->setItem(row, 5, sha256i);
+
+        m_tbl->setItem(row, 6, new QTableWidgetItem(m["original_create_time"].toString()));
+        m_tbl->setItem(row, 7, new QTableWidgetItem(m["original_modify_time"].toString()));
+        m_tbl->setItem(row, 8, new QTableWidgetItem(m["extract_time"].toString()));
+    }
+    m_lblSummary->setText(QString("共 %1 个样本").arg(rows.size()));
 }
 
 void SampleExtractPage::onExtract()
 {
     QString path = m_editPath->text().trimmed();
     if (path.isEmpty()) { m_lblStatus->setText("请先选择文件"); return; }
-    QSqlDatabase db = QSqlDatabase::database("main_conn");
-    if (db.isOpen()) {
-        QSqlQuery q(db);
-        q.prepare("INSERT INTO sample_extract(file_path,file_name,source_type,file_type,file_size,md5,sha256,"
-                  "original_create_time,original_modify_time,extract_time) VALUES(?,?,?,?,?,?,?,?,?,?)");
-        QFileInfo fi(path);
-        q.addBindValue(path);
-        q.addBindValue(fi.fileName());
-        q.addBindValue("静态");
-        q.addBindValue("PE32");
-        q.addBindValue(fi.size());
-        q.addBindValue("（待计算）");
-        q.addBindValue("（待计算）");
-        q.addBindValue(fi.birthTime().toString("yyyy-MM-dd HH:mm:ss"));
-        q.addBindValue(fi.lastModified().toString("yyyy-MM-dd HH:mm:ss"));
-        q.addBindValue(QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss"));
-        q.exec();
-        DatabaseManager::instance()->writeLog(m_role, m_username, "样本提取", fi.fileName(), "success");
+
+    QFileInfo fi(path);
+    QString sql = "INSERT INTO sample_extract(file_path,file_name,source_type,file_type,file_size,"
+                  "md5,sha256,original_create_time,original_modify_time,extract_time) "
+                  "VALUES(?,?,?,?,?,?,?,?,?,?)";
+    QVariantList binds;
+    binds << path << fi.fileName() << "静态" << "PE32" << fi.size()
+          << "（待计算）" << "（待计算）"
+          << fi.birthTime().toString("yyyy-MM-dd HH:mm:ss")
+          << fi.lastModified().toString("yyyy-MM-dd HH:mm:ss")
+          << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");
+    {
+        QSqlDatabase db = QSqlDatabase::database("main_conn");
+        if (db.isOpen()) {
+            QSqlQuery q(db);
+            q.prepare(sql);
+            for (const QVariant &b : binds) q.addBindValue(b);
+            q.exec();
+        }
     }
+    DatabaseManager::instance()->writeLog(m_role, m_username, "样本提取", fi.fileName(), "success");
     refreshData();
     m_lblStatus->setText("已提取：" + path);
 }
