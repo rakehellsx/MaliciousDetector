@@ -114,44 +114,7 @@ void SampleExtractPage::refreshData()
         }
     }
 
-    if (!loaded) {
-        struct SampleDemo {
-            QString name,src,type,size,md5,sha256,ctime,mtime,etime;
-        };
-        QList<SampleDemo> demo = {
-            {"svchost32.exe","静态","PE32 (x86)","48 KB",
-             "a1b2c3d4e5f67890abcdef1234567890",
-             "abcdef1234567890a1b2c3d4e5f67890abcdef1234567890a1b2c3d4e5f67890",
-             "2025-11-19 08:30","2025-11-19 09:00","2025-11-20 09:41"},
-            {"payload.dll","动态","PE32 DLL","96 KB",
-             "f6e5d4c3b2a10987fedcba9876543210",
-             "fedcba9876543210f6e5d4c3b2a10987fedcba9876543210f6e5d4c3b2a10987",
-             "2025-11-18 14:00","2025-11-19 08:25","2025-11-20 09:42"},
-            {"hiddrv.sys","静态","PE32 SYS","24 KB",
-             "1a2b3c4d5e6f7890abcdef1234567890",
-             "1234567890abcdef1a2b3c4d5e6f78901234567890abcdef1a2b3c4d5e6f7890",
-             "2025-11-18 22:00","2025-11-19 08:30","2025-11-20 09:43"},
-        };
-        for (const auto &d : demo) {
-            int r = m_tbl->rowCount(); m_tbl->insertRow(r);
-            m_tbl->setItem(r,0,new QTableWidgetItem(d.name));
-            QTableWidgetItem *srcItem = new QTableWidgetItem(d.src);
-            srcItem->setForeground(d.src=="动态"?QColor("#1890ff"):QColor("#52c41a"));
-            QFont sf = srcItem->font(); sf.setBold(true); srcItem->setFont(sf);
-            m_tbl->setItem(r,1,srcItem);
-            m_tbl->setItem(r,2,new QTableWidgetItem(d.type));
-            m_tbl->setItem(r,3,new QTableWidgetItem(d.size));
-            QTableWidgetItem *md5i = new QTableWidgetItem(d.md5);
-            md5i->setFont(QFont("Consolas",11));
-            m_tbl->setItem(r,4,md5i);
-            QTableWidgetItem *sha256i = new QTableWidgetItem(d.sha256);
-            sha256i->setFont(QFont("Consolas",11));
-            m_tbl->setItem(r,5,sha256i);
-            m_tbl->setItem(r,6,new QTableWidgetItem(d.ctime));
-            m_tbl->setItem(r,7,new QTableWidgetItem(d.mtime));
-            m_tbl->setItem(r,8,new QTableWidgetItem(d.etime));
-        }
-    }
+    // 无数据时显示空表，等待外部入库
 
     m_lblSummary->setText(QString("共 %1 个样本").arg(m_tbl->rowCount()));
     m_lblStatus->setText("已刷新：" + QDateTime::currentDateTime().toString("HH:mm:ss"));

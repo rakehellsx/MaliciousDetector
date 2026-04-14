@@ -132,7 +132,7 @@ void LogAuditPage::onQuery() {
     if (!userFilter.isEmpty()) sql += " AND username LIKE :user";
     sql += " ORDER BY timestamp DESC LIMIT 500";
 
-    QSqlQuery q;
+    QSqlQuery q(QSqlDatabase::database("main_conn"));
     q.prepare(sql);
     q.bindValue(":from", dateFrom);
     q.bindValue(":to",   dateTo);
@@ -163,7 +163,7 @@ void LogAuditPage::onQuery() {
         m_tbl->setItem(row, 2, new QTableWidgetItem(username));
         m_tbl->setItem(row, 3, new QTableWidgetItem(operation));
         m_tbl->setItem(row, 4, new QTableWidgetItem(detail));
-        m_tbl->setItem(row, 5, new QTableWidgetItem(ip.isEmpty() ? "192.168.1.100" : ip));
+        m_tbl->setItem(row, 5, new QTableWidgetItem(ip));
 
         QTableWidgetItem *resItem = new QTableWidgetItem(result == "success" ? "成功" : "失败");
         resItem->setForeground(result == "success" ? QColor("#389e0d") : QColor("#cf1322"));
@@ -176,41 +176,7 @@ void LogAuditPage::onQuery() {
         count++;
     }
 
-    // 无数据时插入演示数据
-    if (count == 0) {
-        struct Demo { QString ts, role, user, op, detail, ip, result; };
-        QList<Demo> demos = {
-            {"2025-11-20 09:41:23", "系统管理员", "admin",    "登录",     "用户登录系统",                   "192.168.1.100", "成功"},
-            {"2025-11-20 09:42:05", "安全管理员", "secadmin", "登录",     "用户登录系统",                   "192.168.1.101", "成功"},
-            {"2025-11-20 09:43:11", "安全管理员", "secadmin", "扫描",     "发起静态检测：svchost32.exe",    "192.168.1.101", "成功"},
-            {"2025-11-20 09:44:30", "安全管理员", "secadmin", "扫描",     "发起动态行为检测",               "192.168.1.101", "成功"},
-            {"2025-11-20 09:50:17", "安全管理员", "secadmin", "报告",     "生成检测报告",                   "192.168.1.101", "成功"},
-            {"2025-11-20 09:51:02", "安全管理员", "secadmin", "导出",     "导出HTML报告",                   "192.168.1.101", "成功"},
-            {"2025-11-20 10:00:00", "安全审计员", "auditor",  "登录",     "用户登录系统",                   "192.168.1.102", "成功"},
-            {"2025-11-20 10:01:15", "安全审计员", "auditor",  "日志查询", "查询操作日志",                   "192.168.1.102", "成功"},
-            {"2025-11-20 10:05:00", "系统管理员", "admin",    "设置",     "更新病毒库至20251120",           "192.168.1.100", "成功"},
-            {"2025-11-20 10:10:00", "系统管理员", "admin",    "白名单",   "添加白名单路径",                 "192.168.1.100", "成功"},
-            {"2025-11-19 08:30:00", "安全管理员", "secadmin", "登录",     "用户登录系统",                   "192.168.1.101", "失败"},
-            {"2025-11-19 08:31:00", "安全管理员", "secadmin", "登录",     "用户登录系统（重试）",           "192.168.1.101", "成功"},
-        };
-        for (auto &d : demos) {
-            int row = m_tbl->rowCount();
-            m_tbl->insertRow(row);
-            m_tbl->setItem(row, 0, new QTableWidgetItem(d.ts));
-            m_tbl->setItem(row, 1, new QTableWidgetItem(d.role));
-            m_tbl->setItem(row, 2, new QTableWidgetItem(d.user));
-            m_tbl->setItem(row, 3, new QTableWidgetItem(d.op));
-            m_tbl->setItem(row, 4, new QTableWidgetItem(d.detail));
-            m_tbl->setItem(row, 5, new QTableWidgetItem(d.ip));
-            QTableWidgetItem *ri = new QTableWidgetItem(d.result);
-            ri->setForeground(d.result == "成功" ? QColor("#389e0d") : QColor("#cf1322"));
-            ri->setTextAlignment(Qt::AlignCenter);
-            m_tbl->setItem(row, 6, ri);
-            if (d.result == "失败")
-                for (int c=0;c<7;c++) if(m_tbl->item(row,c)) m_tbl->item(row,c)->setBackground(QColor("#fff1f0"));
-            count++;
-        }
-    }
+    // 无数据时显示空表，等待外部入库
 
     m_lblCount->setText(QString("共 %1 条记录").arg(count));
     m_lblStatus->setText("查询完成：" + QDateTime::currentDateTime().toString("HH:mm:ss"));

@@ -1,23 +1,25 @@
 #include "pages/CertScanPage.h"
+#include "DatabaseManager.h"
 #include <QHBoxLayout>
 #include <QSplitter>
 #include <QFileDialog>
 #include <QSqlQuery>
 #include <QSqlDatabase>
 #include <QHeaderView>
+#include <QDateTime>
 
-CertScanPage::CertScanPage(QWidget *parent) : BasePage("数字证书检测", parent) { setupUi(); refreshData(); }
+CertScanPage::CertScanPage(QWidget *parent) : BasePage("\u6570\u5b57\u8bc1\u4e66\u68c0\u6d4b", parent) { setupUi(); refreshData(); }
 
 void CertScanPage::setupUi()
 {
     QHBoxLayout *fileRow = new QHBoxLayout;
     m_editPath = new QLineEdit;
     m_editPath->setObjectName("searchInput");
-    m_editPath->setPlaceholderText("输入文件路径...");
-    m_btnBrowse = new QPushButton("浏 览");
+    m_editPath->setPlaceholderText("\u8f93\u5165\u6587\u4ef6\u8def\u5f84...");
+    m_btnBrowse = new QPushButton("\u6d4f \u89c8");
     m_btnBrowse->setObjectName("btnSecondary");
     m_btnBrowse->setFixedWidth(72);
-    m_btnScan = new QPushButton("验证证书");
+    m_btnScan = new QPushButton("\u9a8c\u8bc1\u8bc1\u4e66");
     m_btnScan->setObjectName("btnPrimary");
     m_btnScan->setFixedWidth(88);
     connect(m_btnBrowse, &QPushButton::clicked, this, &CertScanPage::onBrowseFile);
@@ -28,8 +30,9 @@ void CertScanPage::setupUi()
     m_mainLayout->addLayout(fileRow);
 
     QSplitter *sp = new QSplitter(Qt::Vertical);
+    // DB字段: file_name, signer, issuer, timestamp, sign_status, tamper_status
     m_tblResults = new QTableWidget(0, 6);
-    m_tblResults->setHorizontalHeaderLabels({"文件名","签名者","颁发机构","时间戳","签名状态","篡改检测"});
+    m_tblResults->setHorizontalHeaderLabels({"\u6587\u4ef6\u540d", "\u7b7e\u540d\u8005", "\u989c\u53d1\u673a\u6784", "\u65f6\u95f4\u6233", "\u7b7e\u540d\u72b6\u6001", "\u7bf9\u6539\u68c0\u6d4b"});
     styleTable(m_tblResults);
     m_tblResults->setColumnWidth(0, 160);
     m_tblResults->setColumnWidth(1, 160);
@@ -42,7 +45,7 @@ void CertScanPage::setupUi()
     m_txtDetail = new QTextEdit;
     m_txtDetail->setReadOnly(true);
     m_txtDetail->setObjectName("codeView");
-    m_txtDetail->setPlaceholderText("选择记录查看证书详情...");
+    m_txtDetail->setPlaceholderText("\u9009\u62e9\u8bb0\u5f55\u67e5\u770b\u8bc1\u4e66\u8be6\u60c5...");
     sp->addWidget(m_txtDetail);
     sp->setStretchFactor(0, 2);
     sp->setStretchFactor(1, 1);
@@ -57,61 +60,51 @@ void CertScanPage::refreshData()
         QSqlQuery q(db);
         q.exec("SELECT file_name,signer,issuer,timestamp,sign_status,tamper_status FROM cert_scan ORDER BY id DESC LIMIT 100");
         while (q.next()) {
-            int row = m_tblResults->rowCount(); m_tblResults->insertRow(row);
-            m_tblResults->setItem(row,0,new QTableWidgetItem(q.value(0).toString()));
-            m_tblResults->setItem(row,1,new QTableWidgetItem(q.value(1).toString()));
-            m_tblResults->setItem(row,2,new QTableWidgetItem(q.value(2).toString()));
-            m_tblResults->setItem(row,3,new QTableWidgetItem(q.value(3).toString()));
+            int row = m_tblResults->rowCount();
+            m_tblResults->insertRow(row);
+            m_tblResults->setItem(row, 0, new QTableWidgetItem(q.value(0).toString()));
+            m_tblResults->setItem(row, 1, new QTableWidgetItem(q.value(1).toString()));
+            m_tblResults->setItem(row, 2, new QTableWidgetItem(q.value(2).toString()));
+            m_tblResults->setItem(row, 3, new QTableWidgetItem(q.value(3).toString()));
             QString st = q.value(4).toString();
             QTableWidgetItem *si = new QTableWidgetItem(st);
-            si->setForeground(st=="有效"?QColor("#4caf50"):QColor("#ef5350"));
+            si->setForeground(st == "\u6709\u6548" ? QColor("#4caf50") : QColor("#ef5350"));
             si->setTextAlignment(Qt::AlignCenter);
-            m_tblResults->setItem(row,4,si);
+            m_tblResults->setItem(row, 4, si);
             QString ts = q.value(5).toString();
             QTableWidgetItem *ti = new QTableWidgetItem(ts);
-            ti->setForeground(ts=="未篡改"?QColor("#4caf50"):QColor("#ef5350"));
+            ti->setForeground(ts == "\u672a\u7bf9\u6539" ? QColor("#4caf50") : QColor("#ef5350"));
             ti->setTextAlignment(Qt::AlignCenter);
-            m_tblResults->setItem(row,5,ti);
+            m_tblResults->setItem(row, 5, ti);
+            // 高风险行背景
+            if (st != "\u6709\u6548" || ts != "\u672a\u7bf9\u6539")
+                for (int c = 0; c < 6; c++)
+                    if (m_tblResults->item(row, c)) m_tblResults->item(row, c)->setBackground(QColor("#fff1f0"));
         }
     }
-    if (m_tblResults->rowCount() == 0) {
-        QList<QStringList> demo = {
-            {"svchost32.exe","无签名","--","--","无签名","--"},
-            {"explorer.exe","Microsoft Corporation","Microsoft Root CA","2025-11-01","有效","未篡改"},
-            {"readme.pdf.exe","无签名","--","--","无签名","--"},
-            {"update.exe","Unknown Publisher","--","--","证书过期","疑似篡改"},
-        };
-        for (const QStringList &d : demo) {
-            int r = m_tblResults->rowCount(); m_tblResults->insertRow(r);
-            for (int c = 0; c < d.size(); ++c) {
-                QTableWidgetItem *it = new QTableWidgetItem(d[c]);
-                if (c==4) it->setForeground(d[c]=="有效"?QColor("#4caf50"):QColor("#ef5350"));
-                if (c==5) it->setForeground(d[c]=="未篡改"?QColor("#4caf50"):d[c]=="--"?QColor("#90caf9"):QColor("#ef5350"));
-                it->setTextAlignment(c>=4?Qt::AlignCenter:Qt::AlignLeft|Qt::AlignVCenter);
-                m_tblResults->setItem(r,c,it);
-            }
-        }
-    }
-    m_lblStatus->setText("已刷新：" + QDateTime::currentDateTime().toString("HH:mm:ss"));
+    // 无数据时显示空表，等待外部入库
+    m_lblStatus->setText("\u5df2\u5237\u65b0\uff1a" + QDateTime::currentDateTime().toString("HH:mm:ss"));
 }
 
 void CertScanPage::onBrowseFile() {
-    QString p = QFileDialog::getOpenFileName(this,"选择文件","","所有文件 (*.*)");
+    QString p = QFileDialog::getOpenFileName(this, "\u9009\u62e9\u6587\u4ef6", "", "\u6240\u6709\u6587\u4ef6 (*.*)");
     if (!p.isEmpty()) m_editPath->setText(p);
 }
+
 void CertScanPage::onStartScan() {
-    m_lblStatus->setText("已提交证书验证：" + m_editPath->text());
-    DatabaseManager::instance()->writeLog(m_role, m_username, "数字证书检测", m_editPath->text(), "success");
+    m_lblStatus->setText("\u5df2\u63d0\u4ea4\u8bc1\u4e66\u9a8c\u8bc1\uff1a" + m_editPath->text());
+    DatabaseManager::instance()->writeLog(m_role, m_username, "\u6570\u5b57\u8bc1\u4e66\u68c0\u6d4b", m_editPath->text(), "success");
 }
+
 void CertScanPage::onRowSelected(int row, int) {
     m_txtDetail->setPlainText(
-        "文件名：    " + (m_tblResults->item(row,0)?m_tblResults->item(row,0)->text():"--") + "\n"
-        "签名者：    " + (m_tblResults->item(row,1)?m_tblResults->item(row,1)->text():"--") + "\n"
-        "颁发机构：  " + (m_tblResults->item(row,2)?m_tblResults->item(row,2)->text():"--") + "\n"
-        "时间戳：    " + (m_tblResults->item(row,3)?m_tblResults->item(row,3)->text():"--") + "\n"
-        "签名状态：  " + (m_tblResults->item(row,4)?m_tblResults->item(row,4)->text():"--") + "\n"
-        "篡改检测：  " + (m_tblResults->item(row,5)?m_tblResults->item(row,5)->text():"--") + "\n\n"
-        "详细证书链：（待检测引擎填充）\n"
-        "  根证书 → 中间证书 → 最终证书\n"
+        "\u6587\u4ef6\u540d\uff1a    " + (m_tblResults->item(row,0)?m_tblResults->item(row,0)->text():"--") + "\n"
+        "\u7b7e\u540d\u8005\uff1a    " + (m_tblResults->item(row,1)?m_tblResults->item(row,1)->text():"--") + "\n"
+        "\u989c\u53d1\u673a\u6784\uff1a  " + (m_tblResults->item(row,2)?m_tblResults->item(row,2)->text():"--") + "\n"
+        "\u65f6\u95f4\u6233\uff1a    " + (m_tblResults->item(row,3)?m_tblResults->item(row,3)->text():"--") + "\n"
+        "\u7b7e\u540d\u72b6\u6001\uff1a  " + (m_tblResults->item(row,4)?m_tblResults->item(row,4)->text():"--") + "\n"
+        "\u7bf9\u6539\u68c0\u6d4b\uff1a  " + (m_tblResults->item(row,5)?m_tblResults->item(row,5)->text():"--") + "\n\n"
+        "\u8be6\u7ec6\u8bc1\u4e66\u94fe\uff1a\uff08\u5f85\u68c0\u6d4b\u5f15\u64ce\u586b\u5145\uff09\n"
+        "  \u6839\u8bc1\u4e66 \u2192 \u4e2d\u95f4\u8bc1\u4e66 \u2192 \u6700\u7ec8\u8bc1\u4e66\n"
     );
 }

@@ -1,65 +1,85 @@
 #include "pages/PortInfoPage.h"
-#include <QJsonArray>
-#include <QHeaderView>
+#include "DatabaseManager.h"
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QPushButton>
 
-PortInfoPage::PortInfoPage(QWidget *parent) : BasePage("端口信息", parent) { setupUi(); refreshData(); }
+PortInfoPage::PortInfoPage(QWidget *parent)
+    : BasePage("\u7aef\u53e3\u4fe1\u606f", parent)
+{
+    setupUi();
+    refreshData();
+}
 
 void PortInfoPage::setupUi()
 {
+    QHBoxLayout *toolRow = new QHBoxLayout;
+    m_cmbProto = new QComboBox;
+    m_cmbProto->addItems({"\u5168\u90e8\u534f\u8bae", "TCP", "UDP"});
+    connect(m_cmbProto, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &PortInfoPage::onProtoFilter);
+    QPushButton *btnRefresh = new QPushButton("\u5237\u65b0");
+    btnRefresh->setObjectName("btnSecondary");
+    btnRefresh->setFixedWidth(80);
+    connect(btnRefresh, &QPushButton::clicked, this, &PortInfoPage::refreshData);
+    toolRow->addWidget(new QLabel("\u534f\u8bae:"));
+    toolRow->addWidget(m_cmbProto);
+    toolRow->addWidget(btnRefresh);
+    toolRow->addStretch();
+    m_mainLayout->addLayout(toolRow);
+
+    // DB字段: protocol, local_ip, local_port, remote_ip, remote_port, state, process_name, pid, risk
     m_tbl = new QTableWidget(0, 7);
-    m_tbl->setHorizontalHeaderLabels({"协议","本地地址","本地端口","远程地址","远程端口","状态","关联进程"});
+    m_tbl->setHorizontalHeaderLabels({"\u534f\u8bae", "\u672c\u5730IP", "\u672c\u5730\u7aef\u53e3", "\u8fdc\u7a0b\u5730\u5740:\u7aef\u53e3", "\u72b6\u6001", "\u8fdb\u7a0b", "\u98ce\u9669"});
     styleTable(m_tbl);
-    m_tbl->setColumnWidth(0, 60);
-    m_tbl->setColumnWidth(1, 120);
-    m_tbl->setColumnWidth(2, 80);
-    m_tbl->setColumnWidth(3, 120);
-    m_tbl->setColumnWidth(4, 80);
-    m_tbl->setColumnWidth(5, 100);
-    m_mainLayout->addWidget(m_tbl);
+    m_tbl->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    m_mainLayout->addWidget(m_tbl, 1);
 }
 
 void PortInfoPage::refreshData()
 {
+    m_allRows.clear();
+    auto rows = DatabaseManager::instance()->queryPortInfo();
+    for (const QVariant &_v : rows) m_allRows.append(_v.toMap());
+    onProtoFilter(m_cmbProto->currentIndex());
+    m_lblStatus->setText(QString("\u5171 %1 \u4e2a\u8fde\u63a5").arg(m_allRows.size()));
+}
+
+void PortInfoPage::onProtoFilter(int idx)
+{
     m_tbl->setRowCount(0);
-    QJsonObject data;
-    if (m_loader && m_loader->isLoaded()) {
-        data = m_loader->getPortInfo();
-        DatabaseManager::instance()->saveScanResult("port_info","{}",QJsonDocument(data).toJson());
-    } else {
-        data = loadLatestResult("port_info");
-        if (!data.isEmpty()) data = data.value("result").toObject();
+    QString filter = idx == 1 ? "TCP" : idx == 2 ? "UDP" : "";
+    for (const QVariantMap &m : m_allRows) {
+        if (!filter.isEmpty() && m["protocol"].toString() != filter) continue;
+        int r = m_tbl->rowCount();
+        m_tbl->insertRow(r);
+        m_tbl->setItem(r, 0, new QTableWidgetItem(m["protocol"].toString()));
+        m_tbl->setItem(r, 1, new QTableWidgetItem(m["local_ip"].toString()));
+        m_tbl->setItem(r, 2, new QTableWidgetItem(m["local_port"].toString()));
+        // 远程地址:端口合并显示
+        QString remoteAddr = m["remote_ip"].toString();
+        if (!m["remote_port"].toString().isEmpty() && m["remote_port"].toString() != "0")
+            remoteAddr += ":" + m["remote_port"].toString();
+        m_tbl->setItem(r, 3, new QTableWidgetItem(remoteAddr));
+        // 状态着色
+        QString state = m["state"].toString();
+        auto *st = new QTableWidgetItem(state);
+        if (state == "LISTEN")           st->setForeground(QColor("#4caf50"));
+        else if (state == "ESTABLISHED") st->setForeground(QColor("#42a5f5"));
+        else if (state == "TIME_WAIT")   st->setForeground(QColor("#ff9800"));
+        st->setTextAlignment(Qt::AlignCenter);
+        m_tbl->setItem(r, 4, st);
+        m_tbl->setItem(r, 5, new QTableWidgetItem(m["process_name"].toString()));
+        // 风险着色
+        QString risk = m["risk"].toString();
+        auto *ri = new QTableWidgetItem(risk);
+        if (risk == "\u9ad8\u5371") ri->setForeground(QColor("#ef5350"));
+        else if (risk == "\u4e2d\u5371") ri->setForeground(QColor("#ff9800"));
+        else ri->setForeground(QColor("#4caf50"));
+        ri->setTextAlignment(Qt::AlignCenter);
+        m_tbl->setItem(r, 6, ri);
+        // 高危行背景
+        if (risk == "\u9ad8\u5371")
+            for (int c = 0; c < 7; c++)
+                if (m_tbl->item(r, c)) m_tbl->item(r, c)->setBackground(QColor("#fff1f0"));
     }
-    QJsonArray ports = data.value("ports").toArray();
-    for (const QJsonValue &v : ports) {
-        QJsonObject p = v.toObject();
-        int row = m_tbl->rowCount(); m_tbl->insertRow(row);
-        m_tbl->setItem(row,0,new QTableWidgetItem(p.value("protocol").toString()));
-        m_tbl->setItem(row,1,new QTableWidgetItem(p.value("local_ip").toString()));
-        m_tbl->setItem(row,2,new QTableWidgetItem(QString::number(p.value("local_port").toInt())));
-        m_tbl->setItem(row,3,new QTableWidgetItem(p.value("remote_ip").toString()));
-        m_tbl->setItem(row,4,new QTableWidgetItem(p.value("remote_port").isNull() ? "--" : QString::number(p.value("remote_port").toInt())));
-        QString state = p.value("state").toString();
-        QTableWidgetItem *si = new QTableWidgetItem(state);
-        si->setForeground(state=="LISTENING" ? QColor("#42a5f5") : state=="ESTABLISHED" ? QColor("#4caf50") : QColor("#90caf9"));
-        m_tbl->setItem(row,5,si);
-        m_tbl->setItem(row,6,new QTableWidgetItem(p.value("process_name").toString() + " (" + QString::number(p.value("pid").toInt()) + ")"));
-    }
-    if (m_tbl->rowCount() == 0) {
-        QList<QStringList> demo = {
-            {"TCP","0.0.0.0","135","--","--","LISTENING","svchost.exe (1024)"},
-            {"TCP","0.0.0.0","445","--","--","LISTENING","System (4)"},
-            {"TCP","192.168.1.100","49152","192.168.1.1","80","ESTABLISHED","chrome.exe (3200)"},
-            {"UDP","0.0.0.0","5355","--","--","--","svchost.exe (1024)"},
-        };
-        for (const QStringList &d : demo) {
-            int r = m_tbl->rowCount(); m_tbl->insertRow(r);
-            for (int c = 0; c < d.size(); ++c) {
-                QTableWidgetItem *it = new QTableWidgetItem(d[c]);
-                if (c==5) it->setForeground(d[c]=="LISTENING"?QColor("#42a5f5"):d[c]=="ESTABLISHED"?QColor("#4caf50"):QColor("#90caf9"));
-                m_tbl->setItem(r,c,it);
-            }
-        }
-    }
-    m_lblStatus->setText(QString("共 %1 条  |  已刷新：%2").arg(m_tbl->rowCount())
-                         .arg(QDateTime::currentDateTime().toString("HH:mm:ss")));
 }

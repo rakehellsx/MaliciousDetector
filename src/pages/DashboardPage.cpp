@@ -1,10 +1,8 @@
 #include "pages/DashboardPage.h"
+#include "DatabaseManager.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QGroupBox>
-#include <QSqlQuery>
-#include <QSqlDatabase>
-#include <QJsonArray>
 #include <QScrollArea>
 
 DashboardPage::DashboardPage(QWidget *parent)
@@ -54,10 +52,10 @@ void DashboardPage::setupUi()
         return card;
     };
 
-    cardRow->addWidget(makeCard("高危威胁", "#ef5350", m_lblHighRisk));
-    cardRow->addWidget(makeCard("中危威胁", "#ff9800", m_lblMedRisk));
-    cardRow->addWidget(makeCard("低危威胁", "#42a5f5", m_lblLowRisk));
-    cardRow->addWidget(makeCard("累计保护天数", "#26c6da", m_lblTotalDays));
+    cardRow->addWidget(makeCard("高危威胁",   "#ef5350", m_lblHighRisk));
+    cardRow->addWidget(makeCard("中危威胁",   "#ff9800", m_lblMedRisk));
+    cardRow->addWidget(makeCard("低危威胁",   "#42a5f5", m_lblLowRisk));
+    cardRow->addWidget(makeCard("累计保护天数","#26c6da", m_lblTotalDays));
     cardRow->addWidget(makeCard("病毒库版本", "#66bb6a", m_lblVirusDb));
     m_mainLayout->addLayout(cardRow);
 
@@ -102,12 +100,11 @@ void DashboardPage::setupUi()
     makeKV("上次扫描",   m_lblLastScan);
     sysLay->addStretch();
 
-    // 快捷操作按钮
-    QPushButton *btnScan = new QPushButton("立即扫描");
+    QPushButton *btnScan   = new QPushButton("立即扫描");
     btnScan->setObjectName("btnPrimary");
     QPushButton *btnSysInfo = new QPushButton("查看系统信息");
     btnSysInfo->setObjectName("btnSecondary");
-    QPushButton *btnReport = new QPushButton("生成检测报告");
+    QPushButton *btnReport  = new QPushButton("生成检测报告");
     btnReport->setObjectName("btnSecondary");
     sysLay->addWidget(btnScan);
     sysLay->addWidget(btnSysInfo);
@@ -127,111 +124,64 @@ void DashboardPage::refreshData()
 
 void DashboardPage::updateStatCards()
 {
-    // 从 static_scan 统计风险数量
-    QSqlDatabase db = QSqlDatabase::database("main_conn");
-    if (!db.isOpen()) return;
-
-    QSqlQuery q(db);
-    q.exec("SELECT COUNT(*) FROM static_scan WHERE risk_level='high'");
-    if (q.next()) m_lblHighRisk->setText(q.value(0).toString());
-    q.exec("SELECT COUNT(*) FROM static_scan WHERE risk_level='medium'");
-    if (q.next()) m_lblMedRisk->setText(q.value(0).toString());
-    q.exec("SELECT COUNT(*) FROM static_scan WHERE risk_level='low'");
-    if (q.next()) m_lblLowRisk->setText(q.value(0).toString());
-
-    // 保护天数（从第一条日志到现在）
-    q.exec("SELECT MIN(timestamp) FROM audit_log");
-    if (q.next() && !q.value(0).isNull()) {
-        QDateTime first = QDateTime::fromString(q.value(0).toString(), "yyyy-MM-dd HH:mm:ss");
-        int days = first.daysTo(QDateTime::currentDateTime());
-        m_lblTotalDays->setText(QString::number(days));
-    }
-
-    // 病毒库版本
-    QString ver = DatabaseManager::instance()->getSetting("virus_db_version", "20251120");
-    m_lblVirusDb->setText(ver);
+    auto *db = DatabaseManager::instance();
+    QVariantMap stats = db->queryDashboardStats();
+    m_lblHighRisk->setText(stats.value("high", 0).toString());
+    m_lblMedRisk->setText(stats.value("medium", 0).toString());
+    m_lblLowRisk->setText(stats.value("low", 0).toString());
+    m_lblTotalDays->setText(stats.value("protect_days", 0).toString());
+    m_lblVirusDb->setText(stats.value("db_version", "--").toString());
 }
 
 void DashboardPage::updateRecentAlerts()
 {
-    QSqlDatabase db = QSqlDatabase::database("main_conn");
-    if (!db.isOpen()) return;
-
-    QSqlQuery q(db);
-    q.exec("SELECT scan_time, file_name, risk_level, conclusion FROM static_scan "
-           "WHERE risk_level IN ('high','medium') ORDER BY id DESC LIMIT 20");
+    auto *db = DatabaseManager::instance();
+    QVariantList alerts = db->queryRecentAlerts(20);
 
     m_tblAlerts->setRowCount(0);
-    while (q.next()) {
-        int row = m_tblAlerts->rowCount();
-        m_tblAlerts->insertRow(row);
-        QString timeStr = q.value(0).toString();
-        if (timeStr.length() > 16) timeStr = timeStr.mid(11, 5); // HH:mm
-        m_tblAlerts->setItem(row, 0, new QTableWidgetItem(timeStr));
-        m_tblAlerts->setItem(row, 1, new QTableWidgetItem(q.value(1).toString()));
+    for (const QVariant &v : alerts) {
+        QVariantMap row = v.toMap();
+        int r = m_tblAlerts->rowCount();
+        m_tblAlerts->insertRow(r);
 
-        QString level = q.value(2).toString();
+        QString timeStr = row["time"].toString();
+        if (timeStr.length() > 16) timeStr = timeStr.mid(11, 5);
+        m_tblAlerts->setItem(r, 0, new QTableWidgetItem(timeStr));
+        m_tblAlerts->setItem(r, 1, new QTableWidgetItem(row["name"].toString()));
+
+        QString level = row["risk_level"].toString();
         QTableWidgetItem *lvlItem = new QTableWidgetItem(level == "high" ? "高危" : "中危");
         lvlItem->setForeground(level == "high" ? QColor("#ef5350") : QColor("#ff9800"));
         lvlItem->setTextAlignment(Qt::AlignCenter);
-        m_tblAlerts->setItem(row, 2, lvlItem);
+        m_tblAlerts->setItem(r, 2, lvlItem);
 
-        QTableWidgetItem *stItem = new QTableWidgetItem("待处理");
-        stItem->setForeground(QColor("#ff9800"));
+        QString status = row["status"].toString();
+        QTableWidgetItem *stItem = new QTableWidgetItem(status);
+        stItem->setForeground(status == "已隔离" ? QColor("#4caf50") : QColor("#ff9800"));
         stItem->setTextAlignment(Qt::AlignCenter);
-        m_tblAlerts->setItem(row, 3, stItem);
-    }
-
-    // 若无数据，显示示例行
-    if (m_tblAlerts->rowCount() == 0) {
-        QStringList demo = {
-            "09:41|Trojan.Win32.Agent.abc|high|待处理",
-            "08:15|Backdoor.Generic.Dropper|high|待处理",
-            "昨天|Worm.AutoRun.Spread|high|已隔离",
-            "昨天|Spyware.KeyLogger|medium|待处理"
-        };
-        for (const QString &d : demo) {
-            QStringList parts = d.split("|");
-            int row = m_tblAlerts->rowCount();
-            m_tblAlerts->insertRow(row);
-            m_tblAlerts->setItem(row, 0, new QTableWidgetItem(parts[0]));
-            m_tblAlerts->setItem(row, 1, new QTableWidgetItem(parts[1]));
-            QTableWidgetItem *lvl = new QTableWidgetItem(parts[2] == "high" ? "高危" : "中危");
-            lvl->setForeground(parts[2] == "high" ? QColor("#ef5350") : QColor("#ff9800"));
-            lvl->setTextAlignment(Qt::AlignCenter);
-            m_tblAlerts->setItem(row, 2, lvl);
-            QTableWidgetItem *st = new QTableWidgetItem(parts[3]);
-            st->setForeground(parts[3] == "已隔离" ? QColor("#4caf50") : QColor("#ff9800"));
-            st->setTextAlignment(Qt::AlignCenter);
-            m_tblAlerts->setItem(row, 3, st);
-        }
+        m_tblAlerts->setItem(r, 3, stItem);
     }
 }
 
 void DashboardPage::updateSystemInfo()
 {
-    // 从 detection_results 读取最新 system_info
-    QJsonObject sysData = loadLatestResult("system_info");
-    if (!sysData.isEmpty()) {
-        QJsonObject result = sysData.value("result").toObject();
-        m_lblOS->setText(result.value("os_name").toString("--"));
-        m_lblHost->setText(result.value("computer_name").toString("--"));
-    } else {
-        m_lblOS->setText("Windows 10 专业版 64位");
-        m_lblHost->setText("SECURE-PC-001");
-    }
-    m_lblVersion->setText("V3.0.20251120");
-    m_lblDbVer->setText(DatabaseManager::instance()->getSetting("virus_db_version","20251120") + "（最新）");
-    m_lblAuthStatus->setText("<span style='color:#4caf50;font-weight:bold;'>正式授权</span>");
-    m_lblAuthExpiry->setText("2026-12-31");
+    auto *db = DatabaseManager::instance();
+    QVariantMap stats = db->queryDashboardStats();
 
-    QSqlDatabase db = QSqlDatabase::database("main_conn");
-    if (db.isOpen()) {
-        QSqlQuery q(db);
-        q.exec("SELECT MAX(created_at) FROM detection_results");
-        if (q.next() && !q.value(0).isNull())
-            m_lblLastScan->setText(q.value(0).toString());
-        else
-            m_lblLastScan->setText("尚未扫描");
+    m_lblOS->setText(stats.value("os", "--").toString());
+    m_lblHost->setText(stats.value("hostname", "--").toString());
+    m_lblVersion->setText(stats.value("version", "V3.0.20251120").toString());
+    m_lblDbVer->setText(stats.value("db_version", "--").toString() + "（最新）");
+    m_lblAuthStatus->setText("<span style='color:#4caf50;font-weight:bold;'>正式授权</span>");
+    m_lblAuthExpiry->setText(db->getSetting("auth_expiry", "2026-12-31"));
+
+    // 上次扫描时间：取最新静态检测记录
+    QVariantList files = db->queryStaticScanFiles();
+    if (!files.isEmpty()) {
+        QString lastTime = files.last().toMap().value("scan_time", "--").toString();
+        if (lastTime.length() > 16) lastTime = lastTime.left(16);
+        m_lblLastScan->setText(lastTime);
+    } else {
+        m_lblLastScan->setText("尚未扫描");
     }
 }

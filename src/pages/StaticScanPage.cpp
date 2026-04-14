@@ -255,40 +255,7 @@ void StaticScanPage::populateFileList()
         }
     }
 
-    // 若数据库无数据，显示演示条目
-    if (m_fileList->count() == 0) {
-        struct DemoFile { QString name; QString path; QString risk; };
-        QList<DemoFile> demos = {
-            {"suspicious.exe",
-             "C:\\Users\\admin\\AppData\\Roaming\\suspicious.exe", "high"},
-            {"invoice_2025.pdf.exe",
-             "C:\\Users\\admin\\Desktop\\invoice_2025.pdf.exe",    "high"},
-            {"svch0st.exe",
-             "C:\\Windows\\Temp\\svch0st.exe",                     "medium"},
-            {"chrome.exe",
-             "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", "clean"},
-            {"ntdll.dll",
-             "C:\\Windows\\System32\\ntdll.dll",                   "clean"},
-        };
-        for (const DemoFile &d : demos) {
-            QString riskTag;
-            if      (d.risk == "high")   riskTag = " [高危]";
-            else if (d.risk == "medium") riskTag = " [中危]";
-            else if (d.risk == "clean")  riskTag = " [安全]";
-
-            QListWidgetItem *item = new QListWidgetItem(d.name + riskTag);
-            item->setData(Qt::UserRole,     -1);
-            item->setData(Qt::UserRole + 1, d.path);
-            item->setData(Qt::UserRole + 2, d.risk);
-            item->setToolTip(d.path);
-
-            if      (d.risk == "high")   item->setForeground(QColor("#c62828"));
-            else if (d.risk == "medium") item->setForeground(QColor("#e65100"));
-            else if (d.risk == "clean")  item->setForeground(QColor("#2e7d32"));
-
-            m_fileList->addItem(item);
-        }
-    }
+    // 无数据时显示空表，等待外部入库
 
     m_lblStatus->setText(QString("文件列表：共 %1 个文件").arg(m_fileList->count()));
 }

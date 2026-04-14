@@ -3,26 +3,22 @@
 #define DRIVERINFOPAGE_H
 #include "pages/BasePage.h"
 #include <QTableWidget>
-#include <QLabel>
 #include <QComboBox>
-#include <QJsonArray>
-
+#include <QLabel>
+#include <QVariantMap>
 class DriverInfoPage : public BasePage {
     Q_OBJECT
 public:
-    explicit DriverInfoPage(QWidget *p = nullptr);
+    explicit DriverInfoPage(QWidget *p=nullptr);
     void refreshData() override;
-
 private slots:
-    void filterByType(int index);
-
+    void onTypeFilter(int);
 private:
     void setupUi();
-    void populateTable(const QJsonArray &drivers);
-
-    QTableWidget *m_tbl;
-    QLabel       *m_lblSummary;
-    QComboBox    *m_cmbType;
-    QJsonArray    m_allDrivers;
+    QTableWidget       *m_tbl{nullptr};
+    QComboBox          *m_cmbType{nullptr};
+    QLabel             *m_lblSummary{nullptr};
+    QLabel             *m_lblStatus{nullptr};
+    QList<QVariantMap>  m_allDrivers;
 };
 #endif

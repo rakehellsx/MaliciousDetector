@@ -1,76 +1,67 @@
 #include "pages/ProcessInfoPage.h"
-#include <QJsonArray>
-#include <QHeaderView>
-#include <QLineEdit>
+#include "DatabaseManager.h"
+#include <QVBoxLayout>
 #include <QHBoxLayout>
-
-ProcessInfoPage::ProcessInfoPage(QWidget *parent) : BasePage("进程信息", parent) { setupUi(); refreshData(); }
-
+#include <QPushButton>
+ProcessInfoPage::ProcessInfoPage(QWidget *parent)
+    : BasePage("\u8fdb\u7a0b\u4fe1\u606f", parent)
+{
+    setupUi();
+    refreshData();
+}
 void ProcessInfoPage::setupUi()
 {
-    // 搜索栏
-    QHBoxLayout *searchRow = new QHBoxLayout;
-    QLineEdit *editSearch = new QLineEdit;
-    editSearch->setPlaceholderText("搜索进程名称...");
-    editSearch->setObjectName("searchInput");
-    searchRow->addWidget(editSearch);
-    searchRow->addStretch();
-    m_mainLayout->addLayout(searchRow);
-
+    QHBoxLayout *toolRow = new QHBoxLayout;
+    m_edtSearch = new QLineEdit;
+    m_edtSearch->setPlaceholderText("\u641c\u7d22\u8fdb\u7a0b\u540d...");
+    m_edtSearch->setFixedWidth(200);
+    connect(m_edtSearch, &QLineEdit::textChanged, this, &ProcessInfoPage::filterTable);
+    QPushButton *btnRefresh = new QPushButton("\u5237\u65b0");
+    btnRefresh->setObjectName("btnSecondary");
+    btnRefresh->setFixedWidth(80);
+    connect(btnRefresh, &QPushButton::clicked, this, &ProcessInfoPage::refreshData);
+    toolRow->addWidget(m_edtSearch);
+    toolRow->addWidget(btnRefresh);
+    toolRow->addStretch();
+    m_mainLayout->addLayout(toolRow);
     m_tbl = new QTableWidget(0, 7);
-    m_tbl->setHorizontalHeaderLabels({"PID","进程名称","映像路径","发行商","线程数","内存(KB)","授信状态"});
+    m_tbl->setHorizontalHeaderLabels({"PID", "\u8fdb\u7a0b\u540d", "\u8def\u5f84", "CPU%", "\u5185\u5b58(MB)", "\u7528\u6237", "\u72b6\u6001"});
     styleTable(m_tbl);
+    m_tbl->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     m_tbl->setColumnWidth(0, 60);
-    m_tbl->setColumnWidth(1, 140);
-    m_tbl->setColumnWidth(3, 160);
-    m_tbl->setColumnWidth(4, 60);
-    m_tbl->setColumnWidth(5, 80);
-    m_mainLayout->addWidget(m_tbl);
+    m_tbl->setColumnWidth(3, 60);
+    m_tbl->setColumnWidth(4, 80);
+    m_mainLayout->addWidget(m_tbl, 1);
 }
-
 void ProcessInfoPage::refreshData()
 {
+    m_allRows.clear();
     m_tbl->setRowCount(0);
-    QJsonObject data;
-    if (m_loader && m_loader->isLoaded()) {
-        data = m_loader->getProcessInfo();
-        DatabaseManager::instance()->saveScanResult("process_info","{}",QJsonDocument(data).toJson());
-    } else {
-        data = loadLatestResult("process_info");
-        if (!data.isEmpty()) data = data.value("result").toObject();
+    auto rows = DatabaseManager::instance()->queryProcessInfo();
+    for (const QVariant &_v : rows) m_allRows.append(_v.toMap());
+    filterTable(m_edtSearch->text());
+    m_lblStatus->setText(QString("\u5171 %1 \u4e2a\u8fdb\u7a0b").arg(m_allRows.size()));
+}
+void ProcessInfoPage::filterTable(const QString &kw)
+{
+    m_tbl->setRowCount(0);
+    for (const QVariantMap &m : m_allRows) {
+        if (!kw.isEmpty() && !m["name"].toString().contains(kw, Qt::CaseInsensitive)) continue;
+        int r = m_tbl->rowCount();
+        m_tbl->insertRow(r);
+        m_tbl->setItem(r, 0, new QTableWidgetItem(m["pid"].toString()));
+        auto *nm = new QTableWidgetItem(m["name"].toString());
+        // risk字段：高危进程标红
+        if (m["risk"].toString() == "\u9ad8\u5371") nm->setForeground(QColor("#ef5350"));
+        else if (m["risk"].toString() == "\u4e2d\u5371") nm->setForeground(QColor("#ff9800"));
+        m_tbl->setItem(r, 1, nm);
+        m_tbl->setItem(r, 2, new QTableWidgetItem(m["path"].toString()));
+        m_tbl->setItem(r, 3, new QTableWidgetItem(QString::number(m["cpu_pct"].toDouble(), 'f', 1)));
+        m_tbl->setItem(r, 4, new QTableWidgetItem(QString::number(m["mem_mb"].toDouble(), 'f', 1)));
+        m_tbl->setItem(r, 5, new QTableWidgetItem(m["user"].toString()));
+        auto *st = new QTableWidgetItem(m["status"].toString());
+        st->setForeground(m["status"].toString() == "\u8fd0\u884c\u4e2d" ? QColor("#4caf50") : QColor("#90caf9"));
+        st->setTextAlignment(Qt::AlignCenter);
+        m_tbl->setItem(r, 6, st);
     }
-    QJsonArray procs = data.value("processes").toArray();
-    for (const QJsonValue &v : procs) {
-        QJsonObject p = v.toObject();
-        int row = m_tbl->rowCount(); m_tbl->insertRow(row);
-        m_tbl->setItem(row,0,new QTableWidgetItem(QString::number(p.value("pid").toInt())));
-        m_tbl->setItem(row,1,new QTableWidgetItem(p.value("name").toString()));
-        m_tbl->setItem(row,2,new QTableWidgetItem(p.value("image_path").toString()));
-        m_tbl->setItem(row,3,new QTableWidgetItem(p.value("publisher").toString()));
-        m_tbl->setItem(row,4,new QTableWidgetItem(QString::number(p.value("thread_count").toInt())));
-        m_tbl->setItem(row,5,new QTableWidgetItem(QString::number(p.value("memory_kb").toInt())));
-        bool trusted = p.value("is_trusted").toBool(true);
-        QTableWidgetItem *ti = new QTableWidgetItem(trusted ? "已签名" : "未签名");
-        ti->setForeground(trusted ? QColor("#4caf50") : QColor("#ef5350"));
-        m_tbl->setItem(row,6,ti);
-    }
-    if (m_tbl->rowCount() == 0) {
-        // 示例数据
-        QList<QStringList> demo = {
-            {"4","System","--","Microsoft Corporation","--","--","已签名"},
-            {"1024","svchost.exe","C:\\Windows\\System32\\svchost.exe","Microsoft Corporation","12","8192","已签名"},
-            {"2048","explorer.exe","C:\\Windows\\explorer.exe","Microsoft Corporation","32","45000","已签名"},
-            {"9012","svchost32.exe","C:\\Windows\\Temp\\svchost32.exe","未知","2","4096","未签名"},
-        };
-        for (const QStringList &d : demo) {
-            int r = m_tbl->rowCount(); m_tbl->insertRow(r);
-            for (int c = 0; c < d.size(); ++c) {
-                QTableWidgetItem *it = new QTableWidgetItem(d[c]);
-                if (c == 6) it->setForeground(d[c]=="已签名" ? QColor("#4caf50") : QColor("#ef5350"));
-                m_tbl->setItem(r,c,it);
-            }
-        }
-    }
-    m_lblStatus->setText(QString("共 %1 个进程  |  已刷新：%2").arg(m_tbl->rowCount())
-                         .arg(QDateTime::currentDateTime().toString("HH:mm:ss")));
 }

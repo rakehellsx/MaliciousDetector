@@ -13,6 +13,8 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QDateTime>
+#include <QSqlQuery>
+#include <QSqlDatabase>
 #include "BasicLibLoader.h"
 #include "DatabaseManager.h"
 
@@ -73,10 +75,12 @@ protected:
 
     // 通用：从 detection_results 表读取最新一条指定模块的结果
     QJsonObject loadLatestResult(const QString &moduleName) {
-        auto records = DatabaseManager::instance()->queryScanHistory(moduleName, 1);
-        if (records.isEmpty()) return QJsonObject{};
+        QSqlQuery q(QSqlDatabase::database("main_conn"));
+        q.prepare("SELECT result_json FROM detection_results WHERE module=? ORDER BY id DESC LIMIT 1");
+        q.bindValue(0, moduleName);
+        if (!q.exec() || !q.next()) return QJsonObject{};
         QJsonParseError err;
-        auto doc = QJsonDocument::fromJson(records.first().resultJson.toUtf8(), &err);
+        auto doc = QJsonDocument::fromJson(q.value(0).toString().toUtf8(), &err);
         if (err.error != QJsonParseError::NoError) return QJsonObject{};
         return doc.object();
     }

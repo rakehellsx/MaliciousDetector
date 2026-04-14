@@ -356,21 +356,7 @@ void SystemSettingsPage::loadSettings() {
         m_tblWhitelist->setItem(row, 3, new QTableWidgetItem(wq.value(3).toString()));
         m_tblWhitelist->setItem(row, 4, new QTableWidgetItem("删除"));
     }
-    if (m_tblWhitelist->rowCount() == 0) {
-        struct WlDemo { QString type, val, note, date; };
-        QList<WlDemo> demos = {
-            {"路径", "C:\\Program Files\\Microsoft Office\\", "Office套件",  "2025-01-10"},
-            {"MD5",  "d41d8cd98f00b204e9800998ecf8427e",       "已知安全文件","2025-03-15"},
-        };
-        for (auto &d : demos) {
-            int row = m_tblWhitelist->rowCount(); m_tblWhitelist->insertRow(row);
-            m_tblWhitelist->setItem(row, 0, new QTableWidgetItem(d.type));
-            m_tblWhitelist->setItem(row, 1, new QTableWidgetItem(d.val));
-            m_tblWhitelist->setItem(row, 2, new QTableWidgetItem(d.note));
-            m_tblWhitelist->setItem(row, 3, new QTableWidgetItem(d.date));
-            m_tblWhitelist->setItem(row, 4, new QTableWidgetItem("删除"));
-        }
-    }
+    // 无数据时显示空表，等待外部入库
 
     // 自定义规则
     m_tblRules->setRowCount(0);
@@ -391,44 +377,21 @@ void SystemSettingsPage::loadSettings() {
         ei->setForeground(enabled ? QColor("#389e0d") : QColor("#888"));
         m_tblRules->setItem(row, 5, ei);
     }
-    if (m_tblRules->rowCount() == 0) {
-        struct RuleDemo { QString id, name, type, content, risk, status; };
-        QList<RuleDemo> demos = {
-            {"RULE-0042","Trojan.Win32.Agent",         "特征码",   "4d5a9000...",   "高危","启用"},
-            {"RULE-0118","Suspicious.ProcessInjection","行为规则", "CreateRemoteThread","高危","启用"},
-            {"RULE-0203","Packed.UPX",                 "加壳检测", "UPX0 section",  "中危","启用"},
-        };
-        for (auto &d : demos) {
-            int row = m_tblRules->rowCount(); m_tblRules->insertRow(row);
-            m_tblRules->setItem(row, 0, new QTableWidgetItem(d.id));
-            m_tblRules->setItem(row, 1, new QTableWidgetItem(d.name));
-            m_tblRules->setItem(row, 2, new QTableWidgetItem(d.type));
-            m_tblRules->setItem(row, 3, new QTableWidgetItem(d.content));
-            QTableWidgetItem *ri = new QTableWidgetItem(d.risk);
-            ri->setForeground(d.risk=="高危"?QColor("#cf1322"):QColor("#d46b08"));
-            m_tblRules->setItem(row, 4, ri);
-            QTableWidgetItem *ei = new QTableWidgetItem(d.status);
-            ei->setForeground(QColor("#389e0d"));
-            m_tblRules->setItem(row, 5, ei);
-        }
-    }
+    // 无数据时显示空表，等待外部入库
 
-    // 用户管理
+    // 用户管理：从数据库读取
     m_tblUsers->setRowCount(0);
-    struct UserDemo { QString name, role, status, lastLogin; };
-    QList<UserDemo> users = {
-        {"admin",    "系统管理员", "启用", "2025-11-20 09:00"},
-        {"secadmin", "安全管理员", "启用", "2025-11-20 08:30"},
-        {"auditor",  "安全审计员", "启用", "2025-11-19 17:00"},
-    };
-    for (auto &u : users) {
+    QSqlQuery uq(QSqlDatabase::database("main_conn"));
+    uq.exec("SELECT username, role, status, last_login FROM users ORDER BY id");
+    while (uq.next()) {
         int row = m_tblUsers->rowCount(); m_tblUsers->insertRow(row);
-        m_tblUsers->setItem(row, 0, new QTableWidgetItem(u.name));
-        m_tblUsers->setItem(row, 1, new QTableWidgetItem(u.role));
-        QTableWidgetItem *si = new QTableWidgetItem(u.status);
+        m_tblUsers->setItem(row, 0, new QTableWidgetItem(uq.value(0).toString()));
+        m_tblUsers->setItem(row, 1, new QTableWidgetItem(uq.value(1).toString()));
+        QString status = uq.value(2).toString();
+        QTableWidgetItem *si = new QTableWidgetItem(status.isEmpty() ? "启用" : status);
         si->setForeground(QColor("#389e0d"));
         m_tblUsers->setItem(row, 2, si);
-        m_tblUsers->setItem(row, 3, new QTableWidgetItem(u.lastLogin));
+        m_tblUsers->setItem(row, 3, new QTableWidgetItem(uq.value(3).toString()));
         m_tblUsers->setItem(row, 4, new QTableWidgetItem("修改密码"));
     }
 }
@@ -481,47 +444,70 @@ void SystemSettingsPage::onUpdateVirusDb() {
 }
 
 void SystemSettingsPage::onAddWhitelist() {
-    QString val = QInputDialog::getText(this, "添加白名单", "请输入文件路径或MD5：");
+    QString val = QInputDialog::getText(this, "\u6dfb\u52a0\u767d\u540d\u5355", "\u8bf7\u8f93\u5165\u6587\u4ef6\u8def\u5f84\u6216MD5\uff1a");
     if (val.isEmpty()) return;
-    int row = m_tblWhitelist->rowCount();
-    m_tblWhitelist->insertRow(row);
-    QString type = (val.length() == 32 && !val.contains("\\") && !val.contains("/")) ? "MD5" : "路径";
-    m_tblWhitelist->setItem(row, 0, new QTableWidgetItem(type));
-    m_tblWhitelist->setItem(row, 1, new QTableWidgetItem(val));
-    m_tblWhitelist->setItem(row, 2, new QTableWidgetItem("手动添加"));
-    m_tblWhitelist->setItem(row, 3, new QTableWidgetItem(QDate::currentDate().toString("yyyy-MM-dd")));
-    m_tblWhitelist->setItem(row, 4, new QTableWidgetItem("删除"));
-    DatabaseManager::instance()->writeLog(m_role, m_username, "白名单", "添加白名单：" + val, "success");
+    // \u6301\u4e45\u5316\u5230\u6570\u636e\u5e93
+    QSqlDatabase db = QSqlDatabase::database("main_conn");
+    if (db.isOpen()) {
+        QSqlQuery q(db);
+        bool isMd5 = (val.length() == 32 && !val.contains("\\") && !val.contains("/"));
+        if (isMd5) {
+            q.prepare("INSERT INTO whitelist(path, md5, note, added_by) VALUES('', ?, '\u624b\u52a8\u6dfb\u52a0', ?)");
+            q.addBindValue(val);
+        } else {
+            q.prepare("INSERT INTO whitelist(path, md5, note, added_by) VALUES(?, '', '\u624b\u52a8\u6dfb\u52a0', ?)");
+            q.addBindValue(val);
+        }
+        q.addBindValue(m_username);
+        q.exec();
+    }
+    DatabaseManager::instance()->writeLog(m_role, m_username, "\u767d\u540d\u5355", "\u6dfb\u52a0\u767d\u540d\u5355\uff1a" + val, "success");
+    loadSettings(); // \u91cd\u65b0\u4ece\u6570\u636e\u5e93\u52a0\u8f7d
 }
 
 void SystemSettingsPage::onDelWhitelist() {
     int row = m_tblWhitelist->currentRow();
-    if (row < 0) { QMessageBox::warning(this, "提示", "请先选择要删除的条目。"); return; }
-    m_tblWhitelist->removeRow(row);
-    DatabaseManager::instance()->writeLog(m_role, m_username, "白名单", "删除白名单条目", "success");
+    if (row < 0) { QMessageBox::warning(this, "\u63d0\u793a", "\u8bf7\u5148\u9009\u62e9\u8981\u5220\u9664\u7684\u6761\u76ee\u3002"); return; }
+    // \u6839\u636e\u503c\u5220\u9664\u6570\u636e\u5e93\u8bb0\u5f55
+    QString val = m_tblWhitelist->item(row, 1) ? m_tblWhitelist->item(row, 1)->text() : "";
+    QSqlDatabase db = QSqlDatabase::database("main_conn");
+    if (db.isOpen() && !val.isEmpty()) {
+        QSqlQuery q(db);
+        q.prepare("DELETE FROM whitelist WHERE path=? OR md5=?");
+        q.addBindValue(val); q.addBindValue(val);
+        q.exec();
+    }
+    DatabaseManager::instance()->writeLog(m_role, m_username, "\u767d\u540d\u5355", "\u5220\u9664\u767d\u540d\u5355\uff1a" + val, "success");
+    loadSettings();
 }
 
 void SystemSettingsPage::onAddRule() {
-    QString name = QInputDialog::getText(this, "新增规则", "请输入规则名称：");
+    QString name = QInputDialog::getText(this, "\u65b0\u589e\u89c4\u5219", "\u8bf7\u8f93\u5165\u89c4\u5219\u540d\u79f0\uff1a");
     if (name.isEmpty()) return;
-    int row = m_tblRules->rowCount();
-    m_tblRules->insertRow(row);
-    m_tblRules->setItem(row, 0, new QTableWidgetItem(QString("RULE-%1").arg(row + 100, 4, 10, QChar('0'))));
-    m_tblRules->setItem(row, 1, new QTableWidgetItem(name));
-    m_tblRules->setItem(row, 2, new QTableWidgetItem("特征码"));
-    m_tblRules->setItem(row, 3, new QTableWidgetItem(""));
-    QTableWidgetItem *ri = new QTableWidgetItem("中危");
-    ri->setForeground(QColor("#d46b08"));
-    m_tblRules->setItem(row, 4, ri);
-    QTableWidgetItem *ei = new QTableWidgetItem("启用");
-    ei->setForeground(QColor("#389e0d"));
-    m_tblRules->setItem(row, 5, ei);
-    DatabaseManager::instance()->writeLog(m_role, m_username, "规则", "新增规则：" + name, "success");
+    // \u6301\u4e45\u5316\u5230\u6570\u636e\u5e93
+    QSqlDatabase db = QSqlDatabase::database("main_conn");
+    if (db.isOpen()) {
+        QSqlQuery q(db);
+        q.prepare("INSERT INTO custom_rules(name, rule_type, pattern, description, enabled) VALUES(?, '\u7279\u5f81\u7801', '', '', 1)");
+        q.addBindValue(name);
+        q.exec();
+    }
+    DatabaseManager::instance()->writeLog(m_role, m_username, "\u89c4\u5219", "\u65b0\u589e\u89c4\u5219\uff1a" + name, "success");
+    loadSettings(); // \u91cd\u65b0\u4ece\u6570\u636e\u5e93\u52a0\u8f7d
 }
 
 void SystemSettingsPage::onDelRule() {
     int row = m_tblRules->currentRow();
-    if (row < 0) { QMessageBox::warning(this, "提示", "请先选择要删除的规则。"); return; }
-    m_tblRules->removeRow(row);
-    DatabaseManager::instance()->writeLog(m_role, m_username, "规则", "删除规则", "success");
+    if (row < 0) { QMessageBox::warning(this, "\u63d0\u793a", "\u8bf7\u5148\u9009\u62e9\u8981\u5220\u9664\u7684\u89c4\u5219\u3002"); return; }
+    // \u6839\u636e\u89c4\u5219\u540d\u5220\u9664\u6570\u636e\u5e93\u8bb0\u5f55
+    QString ruleName = m_tblRules->item(row, 1) ? m_tblRules->item(row, 1)->text() : "";
+    QSqlDatabase db = QSqlDatabase::database("main_conn");
+    if (db.isOpen() && !ruleName.isEmpty()) {
+        QSqlQuery q(db);
+        q.prepare("DELETE FROM custom_rules WHERE name=?");
+        q.addBindValue(ruleName);
+        q.exec();
+    }
+    DatabaseManager::instance()->writeLog(m_role, m_username, "\u89c4\u5219", "\u5220\u9664\u89c4\u5219\uff1a" + ruleName, "success");
+    loadSettings();
 }

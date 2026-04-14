@@ -92,58 +92,7 @@ void FileAssocPage::refreshData()
         }
     }
 
-    if (!loaded) {
-        struct AssocDemo { QString ext,prog,normal,current,risk; };
-        QList<AssocDemo> demo = {
-            {".exe","应用程序",
-             "exefile\\shell\\open\\command: \"%1\" %*",
-             "exefile\\shell\\open\\command: \"C:\\Windows\\Temp\\svchost32.exe\" \"%1\" %*",
-             "high"},
-            {".txt","记事本",
-             "txtfile\\shell\\open\\command: notepad.exe %1",
-             "txtfile\\shell\\open\\command: notepad.exe %1",
-             "low"},
-            {".html","Chrome",
-             "htmlfile\\shell\\open\\command: chrome.exe \"%1\"",
-             "htmlfile\\shell\\open\\command: C:\\Windows\\Temp\\browser.exe \"%1\"",
-             "medium"},
-            {".pdf","Adobe Reader",
-             "AcroExch.Document\\shell\\open\\command: AcroRd32.exe \"%1\"",
-             "AcroExch.Document\\shell\\open\\command: AcroRd32.exe \"%1\"",
-             "low"},
-            {".doc","Word",
-             "Word.Document.12\\shell\\Open\\command: WINWORD.EXE /n \"%1\"",
-             "Word.Document.12\\shell\\Open\\command: C:\\Windows\\Temp\\payload.exe \"%1\"",
-             "high"},
-        };
-        for (const auto &d : demo) {
-            int r = m_tbl->rowCount(); m_tbl->insertRow(r);
-            m_tbl->setItem(r,0,new QTableWidgetItem(d.ext));
-            m_tbl->setItem(r,1,new QTableWidgetItem(d.prog));
-            QTableWidgetItem *ni = new QTableWidgetItem(d.normal);
-            ni->setFont(QFont("Consolas",11));
-            m_tbl->setItem(r,2,ni);
-            QTableWidgetItem *ci = new QTableWidgetItem(d.current);
-            ci->setFont(QFont("Consolas",11));
-            m_tbl->setItem(r,3,ci);
-            QString riskText = (d.risk=="high")?"高危（已篡改）":(d.risk=="medium")?"注意":"正常";
-            QTableWidgetItem *ri = new QTableWidgetItem(riskText);
-            QFont rf = ri->font(); rf.setBold(true); ri->setFont(rf);
-            if (d.risk=="high") {
-                ri->setForeground(QColor("#f5222d"));
-                highCount++;
-                for (int c=0;c<5;c++) if(m_tbl->item(r,c)) m_tbl->item(r,c)->setBackground(QColor("#fff1f0"));
-                if (d.normal != d.current) ci->setForeground(QColor("#f5222d"));
-            } else if (d.risk=="medium") {
-                ri->setForeground(QColor("#fa8c16"));
-                midCount++;
-                for (int c=0;c<5;c++) if(m_tbl->item(r,c)) m_tbl->item(r,c)->setBackground(QColor("#fffbe6"));
-            } else {
-                ri->setForeground(QColor("#52c41a"));
-            }
-            m_tbl->setItem(r,4,ri);
-        }
-    }
+    // 无数据时显示空表，等待外部入库
 
     QString summary = QString("共 %1 条").arg(m_tbl->rowCount());
     if (highCount > 0) summary += QString(" ｜ %1 条高危（已篡改）").arg(highCount);

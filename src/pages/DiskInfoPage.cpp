@@ -1,54 +1,55 @@
 #include "pages/DiskInfoPage.h"
-#include <QJsonArray>
-#include <QHeaderView>
+#include "DatabaseManager.h"
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QPushButton>
 
-DiskInfoPage::DiskInfoPage(QWidget *parent) : BasePage("硬盘信息", parent) { setupUi(); refreshData(); }
+DiskInfoPage::DiskInfoPage(QWidget *parent)
+    : BasePage("\u786c\u76d8\u4fe1\u606f", parent)
+{
+    setupUi();
+    refreshData();
+}
 
 void DiskInfoPage::setupUi()
 {
+    QHBoxLayout *toolRow = new QHBoxLayout;
+    QPushButton *btnRefresh = new QPushButton("\u5237\u65b0");
+    btnRefresh->setObjectName("btnSecondary");
+    btnRefresh->setFixedWidth(80);
+    connect(btnRefresh, &QPushButton::clicked, this, &DiskInfoPage::refreshData);
+    toolRow->addWidget(btnRefresh);
+    toolRow->addStretch();
+    m_mainLayout->addLayout(toolRow);
+
+    // DB字段: drive, type, filesystem, total_gb, free_gb, used_pct, serial
     m_tbl = new QTableWidget(0, 7);
-    m_tbl->setHorizontalHeaderLabels({"厂商","型号","序列号","总容量","分区","启动次数","累计使用时间"});
+    m_tbl->setHorizontalHeaderLabels({"\u76d8\u7b26", "\u7c7b\u578b", "\u6587\u4ef6\u7cfb\u7edf", "\u603b\u5927\u5c0f(GB)", "\u53ef\u7528(GB)", "\u4f7f\u7528\u7387", "\u5e8f\u5217\u53f7"});
     styleTable(m_tbl);
-    m_mainLayout->addWidget(m_tbl);
+    m_tbl->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    m_mainLayout->addWidget(m_tbl, 1);
 }
 
 void DiskInfoPage::refreshData()
 {
     m_tbl->setRowCount(0);
-    QJsonObject data;
-    if (m_loader && m_loader->isLoaded()) {
-        data = m_loader->getDiskInfo();
-        DatabaseManager::instance()->saveScanResult("disk_info","{}",QJsonDocument(data).toJson());
-    } else {
-        data = loadLatestResult("disk_info");
-        if (!data.isEmpty()) data = data.value("result").toObject();
+    auto rows = DatabaseManager::instance()->queryDiskInfo();
+    for (const QVariant &_var : rows) {
+        QVariantMap m = _var.toMap();
+        int r = m_tbl->rowCount();
+        m_tbl->insertRow(r);
+        m_tbl->setItem(r, 0, new QTableWidgetItem(m["drive"].toString()));
+        m_tbl->setItem(r, 1, new QTableWidgetItem(m["type"].toString()));
+        m_tbl->setItem(r, 2, new QTableWidgetItem(m["filesystem"].toString()));
+        m_tbl->setItem(r, 3, new QTableWidgetItem(QString::number(m["total_gb"].toDouble(), 'f', 1)));
+        m_tbl->setItem(r, 4, new QTableWidgetItem(QString::number(m["free_gb"].toDouble(), 'f', 1)));
+        double pct = m["used_pct"].toDouble();
+        auto *usage = new QTableWidgetItem(QString::number(pct, 'f', 1) + "%");
+        if (pct > 90) usage->setForeground(QColor("#ef5350"));
+        else if (pct > 70) usage->setForeground(QColor("#ff9800"));
+        else usage->setForeground(QColor("#4caf50"));
+        m_tbl->setItem(r, 5, usage);
+        m_tbl->setItem(r, 6, new QTableWidgetItem(m["serial"].toString()));
     }
-    QJsonArray disks = data.value("disks").toArray();
-    for (const QJsonValue &v : disks) {
-        QJsonObject d = v.toObject();
-        int row = m_tbl->rowCount(); m_tbl->insertRow(row);
-        m_tbl->setItem(row,0,new QTableWidgetItem(d.value("vendor").toString()));
-        m_tbl->setItem(row,1,new QTableWidgetItem(d.value("model").toString()));
-        m_tbl->setItem(row,2,new QTableWidgetItem(d.value("serial_number").toString()));
-        m_tbl->setItem(row,3,new QTableWidgetItem(d.value("total_size").toString()));
-        // 分区列表
-        QJsonArray parts = d.value("partitions").toArray();
-        QStringList partStrs;
-        for (const QJsonValue &p : parts)
-            partStrs << p.toObject().value("drive_letter").toString() + "(" + p.toObject().value("size").toString() + ")";
-        m_tbl->setItem(row,4,new QTableWidgetItem(partStrs.join("  ")));
-        m_tbl->setItem(row,5,new QTableWidgetItem(d.value("power_on_count").toString()));
-        m_tbl->setItem(row,6,new QTableWidgetItem(d.value("power_on_hours").toString()));
-    }
-    if (m_tbl->rowCount() == 0) {
-        int r = m_tbl->rowCount(); m_tbl->insertRow(r);
-        m_tbl->setItem(r,0,new QTableWidgetItem("Samsung"));
-        m_tbl->setItem(r,1,new QTableWidgetItem("SSD 860 EVO 500GB"));
-        m_tbl->setItem(r,2,new QTableWidgetItem("S3EVNX0K123456"));
-        m_tbl->setItem(r,3,new QTableWidgetItem("500 GB"));
-        m_tbl->setItem(r,4,new QTableWidgetItem("C:(120GB)  D:(380GB)"));
-        m_tbl->setItem(r,5,new QTableWidgetItem("1024"));
-        m_tbl->setItem(r,6,new QTableWidgetItem("8760 小时"));
-    }
-    m_lblStatus->setText("已刷新：" + QDateTime::currentDateTime().toString("HH:mm:ss"));
+    m_lblStatus->setText(QString("\u5171 %1 \u4e2a\u5206\u533a").arg(m_tbl->rowCount()));
 }

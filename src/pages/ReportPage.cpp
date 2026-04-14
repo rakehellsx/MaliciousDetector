@@ -190,47 +190,19 @@ void ReportPage::refreshData() {
                 if (m_tblThreats->item(row,c)) m_tblThreats->item(row,c)->setBackground(QColor("#fff1f0"));
     }
 
-    // 无数据时插入演示数据
-    if (m_tblThreats->rowCount() == 0) {
-        struct Demo { QString name, level, type, path, time, status; };
-        QList<Demo> demos = {
-            {"Trojan.Win32.Agent.abc",    "高危", "木马",    "C:\\Windows\\Temp\\svchost32.exe",                    "2025-11-20 09:41", "待处理"},
-            {"Backdoor.Generic.Dropper",  "高危", "后门",    "D:\\Downloads\\update.dll",                           "2025-11-20 08:15", "待处理"},
-            {"Rootkit.Hidden.Process",    "中危", "Rootkit", "C:\\Windows\\System32\\drivers\\hiddrv.sys",           "2025-11-18 16:45", "待处理"},
-        };
-        for (auto &d : demos) {
-            if (d.level == "高危") high++;
-            else if (d.level == "中危") medium++;
-            else low++;
-            int row = m_tblThreats->rowCount();
-            m_tblThreats->insertRow(row);
-            m_tblThreats->setItem(row, 0, new QTableWidgetItem(d.name));
-            QTableWidgetItem *li = new QTableWidgetItem(d.level);
-            li->setForeground(d.level=="高危" ? QColor("#cf1322") : QColor("#d46b08"));
-            m_tblThreats->setItem(row, 1, li);
-            m_tblThreats->setItem(row, 2, new QTableWidgetItem(d.type));
-            m_tblThreats->setItem(row, 3, new QTableWidgetItem(d.path));
-            m_tblThreats->setItem(row, 4, new QTableWidgetItem(d.time));
-            QTableWidgetItem *si = new QTableWidgetItem(d.status);
-            si->setForeground(QColor("#d46b08"));
-            m_tblThreats->setItem(row, 5, si);
-            for (int c=0;c<6;c++) if(m_tblThreats->item(row,c)) m_tblThreats->item(row,c)->setBackground(QColor("#fff1f0"));
-        }
-    }
-
     m_lblHigh->setText(QString::number(high));
     m_lblMedium->setText(QString::number(medium));
     m_lblLow->setText(QString::number(low));
     m_lblIsolated->setText(QString::number(isolated));
 
-    // 处置建议
-    m_txtReport->setPlainText(
-        "1. 立即隔离 C:\\Windows\\Temp\\svchost32.exe 及其衍生文件 payload.dll，防止进一步感染。\n\n"
-        "2. 删除恶意注册表自启动项 HKCU\\...\\Run\\WindowsUpdate，恢复文件关联。\n\n"
-        "3. 检查并删除可疑计划任务 UpdateTask，终止相关进程（PID: 9012）。\n\n"
-        "4. 卸载可疑浏览器扩展，恢复 hosts 文件及 DNS 配置。\n\n"
-        "5. 建议全盘扫描并更新系统补丁，修复被利用的系统漏洞。"
-    );
+    // 处置建议：从数据库读取
+    QString advice = DatabaseManager::instance()->getSetting("report_advice", "");
+    if (advice.isEmpty() && m_tblThreats->rowCount() > 0) {
+        advice = "请根据检测结果对各威胁文件进行隔离或删除处置，并更新病毒库后重新扫描。";
+    } else if (advice.isEmpty()) {
+        advice = "未检测到威胁，系统安全。";
+    }
+    m_txtReport->setPlainText(advice);
 
     m_lblStatus->setText("已刷新：" + QDateTime::currentDateTime().toString("HH:mm:ss"));
 }
