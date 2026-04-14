@@ -42,7 +42,7 @@ static void highlightRow(QTableWidget *t, int row, const QString &risk) {
 }
 
 static QTableWidgetItem* riskItem(const QString &risk) {
-    QString text = (risk == "high") ? "高危" : (risk == "medium") ? "注意" : "正常";
+    QString text = (risk == "high") ? "高危" : (risk == "medium") ? "中危" : "低危";
     QTableWidgetItem *item = new QTableWidgetItem(text);
     QFont f = item->font(); f.setBold(true); item->setFont(f);
     if (risk == "high") item->setForeground(QColor("#f5222d"));
@@ -104,7 +104,7 @@ void DynamicScanPage::setupUi()
     m_edtBehaviorKw->setFixedWidth(220);
     connect(m_edtBehaviorKw, &QLineEdit::returnPressed, this, &DynamicScanPage::onQueryBehavior);
     m_cmbBehaviorRisk = new QComboBox;
-    m_cmbBehaviorRisk->addItems({"全部风险", "高危(high)", "注意(medium)", "正常(low)"});
+    m_cmbBehaviorRisk->addItems({"全部风险", "高危(high)", "中危(medium)", "低危(low)"});
     connect(m_cmbBehaviorRisk, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &DynamicScanPage::onQueryBehavior);
     QPushButton *btnBehaviorQuery = new QPushButton("查询");
@@ -270,7 +270,7 @@ void DynamicScanPage::loadBehaviorData(const QString &/*type*/)
             child->setText(2, q.value(1).toString());
             QString risk = q.value(5).toString();
             child->setForeground(0, risk=="high"?QColor("#f5222d"):QColor("#fa8c16"));
-            child->setText(3, risk=="high"?"高危":"注意");
+            child->setText(3, risk=="high"?"高危":"中危");
 
             int row = m_tblProcessDetail->rowCount(); m_tblProcessDetail->insertRow(row);
             m_tblProcessDetail->setItem(row,0,new QTableWidgetItem(q.value(0).toString().mid(11,8)));

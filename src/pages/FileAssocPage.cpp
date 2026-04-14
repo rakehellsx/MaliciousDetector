@@ -33,7 +33,7 @@ void FileAssocPage::setupUi()
     connect(m_edtKeyword, &QLineEdit::returnPressed, this, &FileAssocPage::onQuery);
 
     m_cmbRisk = new QComboBox;
-    m_cmbRisk->addItems({"全部风险", "高危(high)", "注意(medium)", "正常(low)"});
+    m_cmbRisk->addItems({"全部风险", "高危(high)", "中危(medium)", "低危(low)"});
     connect(m_cmbRisk, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &FileAssocPage::onQuery);
 
@@ -133,7 +133,7 @@ void FileAssocPage::fillTable(const QVariantList &rows)
         QString risk = m["risk_level"].toString();
         if (risk == "high") highCount++;
         else if (risk == "medium") midCount++;
-        QString riskText = (risk=="high") ? "高危（已篡改）" : (risk=="medium") ? "注意" : "正常";
+        QString riskText = (risk=="high") ? "高危（已篡改）" : (risk=="medium") ? "中危" : "低危";
         QTableWidgetItem *ri = new QTableWidgetItem(riskText);
         QFont rf = ri->font(); rf.setBold(true); ri->setFont(rf);
         if (risk == "high") {
@@ -154,6 +154,6 @@ void FileAssocPage::fillTable(const QVariantList &rows)
 
     QString summary = QString("共 %1 条").arg(rows.size());
     if (highCount > 0) summary += QString(" ｜ %1 条高危（已篡改）").arg(highCount);
-    if (midCount > 0)  summary += QString(" ｜ %1 条注意").arg(midCount);
+    if (midCount > 0)  summary += QString(" ｜ %1 条中危").arg(midCount);
     m_lblSummary->setText(summary);
 }
