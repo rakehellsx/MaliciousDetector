@@ -12,6 +12,7 @@ BrowserPluginPage::BrowserPluginPage(QWidget *parent)
 {
     ui = new Ui::BrowserPluginPage();
     ui->setupUi(this);
+    postSetupUi();
     m_tbl = ui->m_tbl;
     m_edtKeyword = ui->m_edtKeyword;
     m_cmbBrowser = ui->m_cmbBrowser;

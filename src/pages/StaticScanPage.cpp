@@ -45,6 +45,7 @@ StaticScanPage::StaticScanPage(QWidget *parent)
 {
     ui = new Ui::StaticScanPage();
     ui->setupUi(this);
+    postSetupUi();
     m_fileList = ui->m_fileList;
     m_btnAddFile = ui->m_btnAddFile;
     m_btnRemoveFile = ui->m_btnRemoveFile;

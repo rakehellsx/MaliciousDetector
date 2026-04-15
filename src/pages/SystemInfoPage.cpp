@@ -10,6 +10,7 @@ SystemInfoPage::SystemInfoPage(QWidget *parent)
 {
     ui = new Ui::SystemInfoPage();
     ui->setupUi(this);
+    postSetupUi();
     m_tbl = ui->m_tbl;
     refreshData();
 }

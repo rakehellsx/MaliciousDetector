@@ -13,6 +13,7 @@ FileAssocPage::FileAssocPage(QWidget *parent)
 {
     ui = new Ui::FileAssocPage();
     ui->setupUi(this);
+    postSetupUi();
     m_tbl = ui->m_tbl;
     m_btnScan = ui->m_btnScan;
     m_edtKeyword = ui->m_edtKeyword;

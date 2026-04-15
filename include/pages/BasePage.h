@@ -31,10 +31,16 @@ public:
     explicit BasePage(const QString &title, QWidget *parent = nullptr)
         : QWidget(parent), m_title(title)
     {
-        m_mainLayout = new QVBoxLayout(this);
-        m_mainLayout->setContentsMargins(12, 8, 12, 8);
-        m_mainLayout->setSpacing(8);
-        setupHeader();
+        // 布局由子类 setupUi(this) 负责创建，BasePage 不在 this 上创建布局
+        // 子类在 setupUi(this) 之后调用 postSetupUi() 绑定 m_lblStatus/m_btnRefresh
+    }
+
+    // 子类在 ui->setupUi(this) 之后调用，绑定 m_lblStatus 和 m_btnRefresh
+    void postSetupUi() {
+        m_lblStatus  = findChild<QLabel*>("m_lblStatus");
+        m_btnRefresh = findChild<QPushButton*>("m_btnRefresh");
+        if (m_btnRefresh)
+            connect(m_btnRefresh, &QPushButton::clicked, this, &BasePage::refreshData);
     }
 
     virtual ~BasePage() = default;
@@ -50,28 +56,7 @@ signals:
     void statusMessage(const QString &msg);
 
 protected:
-    void setupHeader() {
-        QHBoxLayout *hdr = new QHBoxLayout;
-        QLabel *titleLbl = new QLabel(m_title);
-        titleLbl->setObjectName("pageTitle");
-        m_lblStatus = new QLabel("就绪");
-        m_lblStatus->setObjectName("pageStatus");
-        m_btnRefresh = new QPushButton("刷 新");
-        m_btnRefresh->setObjectName("btnRefresh");
-        m_btnRefresh->setFixedWidth(72);
-        connect(m_btnRefresh, &QPushButton::clicked, this, &BasePage::refreshData);
-        hdr->addWidget(titleLbl);
-        hdr->addStretch();
-        hdr->addWidget(m_lblStatus);
-        hdr->addWidget(m_btnRefresh);
-        m_mainLayout->addLayout(hdr);
-
-        // 分割线
-        QFrame *line = new QFrame;
-        line->setFrameShape(QFrame::HLine);
-        line->setObjectName("divider");
-        m_mainLayout->addWidget(line);
-    }
+    // setupHeader() 已废弃，由 postSetupUi() 替代
 
     // 通用：从 detection_results 表读取最新一条指定模块的结果
     QJsonObject loadLatestResult(const QString &moduleName) {
@@ -110,7 +95,6 @@ protected:
         return lbl;
     }
 
-    QVBoxLayout    *m_mainLayout;
     QLabel         *m_lblStatus  = nullptr;
     QPushButton    *m_btnRefresh = nullptr;
     BasicLibLoader *m_loader     = nullptr;

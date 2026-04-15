@@ -12,6 +12,7 @@ ProcessInfoPage::ProcessInfoPage(QWidget *parent)
 {
     ui = new Ui::ProcessInfoPage();
     ui->setupUi(this);
+    postSetupUi();
     m_tbl = ui->m_tbl;
     m_edtKeyword = ui->m_edtKeyword;
     m_cmbRisk = ui->m_cmbRisk;

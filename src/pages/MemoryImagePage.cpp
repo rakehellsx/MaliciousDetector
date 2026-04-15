@@ -19,6 +19,7 @@ MemoryImagePage::MemoryImagePage(QWidget *parent)
 {
     ui = new Ui::MemoryImagePage();
     ui->setupUi(this);
+    postSetupUi();
     m_tblStatus = ui->m_tblStatus;
     m_tblKernel = ui->m_tblKernel;
     m_edtKernelKw = ui->m_edtKernelKw;

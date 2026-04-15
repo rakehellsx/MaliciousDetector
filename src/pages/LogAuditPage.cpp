@@ -15,6 +15,7 @@
 LogAuditPage::LogAuditPage(QWidget *parent) : BasePage("日志审计", parent) {
     ui = new Ui::LogAuditPage();
     ui->setupUi(this);
+    postSetupUi();
     m_cmbRole = ui->m_cmbRole;
     m_cmbType = ui->m_cmbType;
     m_edtUser = ui->m_edtUser;

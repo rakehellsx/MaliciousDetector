@@ -12,6 +12,7 @@ ScheduledTaskPage::ScheduledTaskPage(QWidget *parent)
 {
     ui = new Ui::ScheduledTaskPage();
     ui->setupUi(this);
+    postSetupUi();
     m_tbl = ui->m_tbl;
     m_edtKeyword = ui->m_edtKeyword;
     m_cmbRisk = ui->m_cmbRisk;

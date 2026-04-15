@@ -9,6 +9,7 @@
 CertScanPage::CertScanPage(QWidget *parent) : BasePage("数字证书检测", parent) {
     ui = new Ui::CertScanPage();
     ui->setupUi(this);
+    postSetupUi();
     m_edtKeyword    = ui->m_edtKeyword;
     m_cmbCertStatus = ui->m_cmbCertStatus;
     m_tbl           = ui->m_tbl;

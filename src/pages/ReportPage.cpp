@@ -98,6 +98,7 @@ ReportPage::ReportPage(QWidget *parent)
     connect(m_timer, &QTimer::timeout, this, &ReportPage::onTimerFired);
     ui = new Ui::ReportPage();
     ui->setupUi(this);
+    postSetupUi();
     m_lblReportId = ui->m_lblReportId;
     m_lblReportTime = ui->m_lblReportTime;
     m_lblHostname = ui->m_lblHostname;

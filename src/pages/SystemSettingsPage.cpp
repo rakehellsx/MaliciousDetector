@@ -21,6 +21,7 @@
 SystemSettingsPage::SystemSettingsPage(QWidget *parent) : BasePage("系统设置", parent) {
     ui = new Ui::SystemSettingsPage();
     ui->setupUi(this);
+    postSetupUi();
     m_navList = ui->m_navList;
     m_stack = ui->m_stack;
     m_editDllPath = ui->m_editDllPath;
@@ -75,7 +76,7 @@ void SystemSettingsPage::loadSettings() {
 
     // 白名单
     m_tblWhitelist->setRowCount(0);
-    QSqlQuery wq;
+    QSqlQuery wq(QSqlDatabase::database("main_conn"));
     wq.exec("SELECT CASE WHEN md5 != '' THEN 'MD5' ELSE '路径' END, COALESCE(NULLIF(path,''), md5, ''), COALESCE(note,''), added_at FROM whitelist ORDER BY id");
     while (wq.next()) {
         int row = m_tblWhitelist->rowCount(); m_tblWhitelist->insertRow(row);
@@ -89,7 +90,7 @@ void SystemSettingsPage::loadSettings() {
 
     // 自定义规则
     m_tblRules->setRowCount(0);
-    QSqlQuery rq;
+    QSqlQuery rq(QSqlDatabase::database("main_conn"));
     rq.exec("SELECT id, name, rule_type, COALESCE(description,'') as description, pattern, enabled FROM custom_rules ORDER BY id");
     while (rq.next()) {
         int row = m_tblRules->rowCount(); m_tblRules->insertRow(row);

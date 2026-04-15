@@ -17,6 +17,7 @@ SampleExtractPage::SampleExtractPage(QWidget *parent)
 {
     ui = new Ui::SampleExtractPage();
     ui->setupUi(this);
+    postSetupUi();
     m_editPath = ui->m_editPath;
     m_btnBrowse = ui->m_btnBrowse;
     m_btnExtract = ui->m_btnExtract;

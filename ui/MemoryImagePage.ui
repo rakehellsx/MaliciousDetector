@@ -121,6 +121,16 @@
     </widget>
   </item>
 </layout></item>
-</layout>
+   <item>
+    <widget class="QLabel" name="m_lblStatus">
+     <property name="text">
+      <string>就绪</string>
+     </property>
+     <property name="styleSheet">
+      <string>color:#8c8c8c;font-size:11px;padding:2px 0;</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
  </widget>
 </ui>

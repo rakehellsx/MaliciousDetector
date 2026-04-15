@@ -12,6 +12,7 @@ DriverInfoPage::DriverInfoPage(QWidget *parent)
 {
     ui = new Ui::DriverInfoPage();
     ui->setupUi(this);
+    postSetupUi();
     m_tbl = ui->m_tbl;
     m_edtKeyword = ui->m_edtKeyword;
     m_cmbType = findChild<QComboBox*>("m_cmbType");

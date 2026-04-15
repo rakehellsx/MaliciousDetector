@@ -12,6 +12,7 @@ DashboardPage::DashboardPage(QWidget *parent)
 {
     ui = new Ui::DashboardPage();
     ui->setupUi(this);
+    postSetupUi();
     m_lblHighRisk = findChild<QLabel*>("m_lblHighRisk");
     m_lblMedRisk = findChild<QLabel*>("m_lblMedRisk");
     m_lblLowRisk = findChild<QLabel*>("m_lblLowRisk");

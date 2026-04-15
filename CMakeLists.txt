@@ -203,3 +203,48 @@ message(STATUS "Project:   ${PROJECT_NAME} ${PROJECT_VERSION}")
 message(STATUS "Qt5 dir:   ${Qt5_DIR}")
 message(STATUS "Build dir: ${CMAKE_BINARY_DIR}")
 message(STATUS "Platform:  ${CMAKE_SYSTEM_NAME}")
+
+# ─────────────────────────────────────────────
+# 测试目标（cmake -DBUILD_TEST=ON 启用）
+# ─────────────────────────────────────────────
+option(BUILD_TEST "Build page test executable" OFF)
+if(BUILD_TEST)
+    set(TEST_SOURCES
+        ${CMAKE_SOURCE_DIR}/test_pages.cpp
+        src/MainWindow.cpp
+        src/LoginDialog.cpp
+        src/DatabaseManager.cpp
+        src/BasicLibLoader.cpp
+        src/pages/DashboardPage.cpp
+        src/pages/SystemInfoPage.cpp
+        src/pages/NetworkInfoPage.cpp
+        src/pages/DiskInfoPage.cpp
+        src/pages/ProcessInfoPage.cpp
+        src/pages/PortInfoPage.cpp
+        src/pages/AutorunPage.cpp
+        src/pages/ScheduledTaskPage.cpp
+        src/pages/DriverInfoPage.cpp
+        src/pages/SharedResourcePage.cpp
+        src/pages/BrowserPluginPage.cpp
+        src/pages/MemoryImagePage.cpp
+        src/pages/StaticScanPage.cpp
+        src/pages/DynamicScanPage.cpp
+        src/pages/FileAssocPage.cpp
+        src/pages/SampleExtractPage.cpp
+        src/pages/ReportPage.cpp
+        src/pages/LogAuditPage.cpp
+        src/pages/SystemSettingsPage.cpp
+        src/pages/CertScanPage.cpp
+    )
+    add_executable(test_pages ${TEST_SOURCES} ${HEADERS} ${UI_FILES})
+    target_include_directories(test_pages PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/include/pages
+        ${CMAKE_SOURCE_DIR}/third_party/basic
+    )
+    target_link_libraries(test_pages PRIVATE
+        Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Sql Qt5::PrintSupport
+    )
+    target_compile_definitions(test_pages PRIVATE QT_DEPRECATED_WARNINGS)
+    message(STATUS "Test target: test_pages")
+endif()

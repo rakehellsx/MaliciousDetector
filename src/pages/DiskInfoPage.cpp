@@ -12,6 +12,7 @@ DiskInfoPage::DiskInfoPage(QWidget *parent)
 {
     ui = new Ui::DiskInfoPage();
     ui->setupUi(this);
+    postSetupUi();
     m_tbl = ui->m_tbl;
     m_edtKeyword = ui->m_edtKeyword;
     m_cmbType = ui->m_cmbType;

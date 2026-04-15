@@ -11,6 +11,7 @@ PortInfoPage::PortInfoPage(QWidget *parent)
 {
     ui = new Ui::PortInfoPage();
     ui->setupUi(this);
+    postSetupUi();
     m_tbl = ui->m_tbl;
     m_edtKeyword = ui->m_edtKeyword;
     m_cmbProto = ui->m_cmbProto;
