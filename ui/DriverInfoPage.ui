@@ -26,6 +26,17 @@
        </widget>
      </item>
      <item>
+      <widget class="QLabel" name=""><property name="text"><string>类型：</string></property></widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="m_cmbType">
+        <item><property name="text"><string>全部类型</string></property></item>
+        <item><property name="text"><string>内核驱动</string></property></item>
+        <item><property name="text"><string>设备驱动</string></property></item>
+        <item><property name="text"><string>第三方</string></property></item>
+       </widget>
+     </item>
+     <item>
       <widget class="QLabel" name="">
         <property name="text"><string>签名：</string></property>
        </widget>
@@ -35,6 +46,17 @@
         <item><property name="text"><string>全部</string></property></item>
         <item><property name="text"><string>已签名</string></property></item>
         <item><property name="text"><string>未签名</string></property></item>
+       </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name=""><property name="text"><string>风险：</string></property></widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="m_cmbRisk">
+        <item><property name="text"><string>全部风险</string></property></item>
+        <item><property name="text"><string>高危</string></property></item>
+        <item><property name="text"><string>中危</string></property></item>
+        <item><property name="text"><string>低危</string></property></item>
        </widget>
      </item>
      <item>

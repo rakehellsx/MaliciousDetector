@@ -13,19 +13,19 @@
  </widget></item>
  <item>
   <layout class="QHBoxLayout" name="cardRow">
-   <item><widget class="QLabel" name="m_cardHigh">
+   <item><widget class="QLabel" name="m_lblHighRisk">
   <property name="text"><string>高危: 0</string></property>
   <property name="styleSheet"><string>background:#fff1f0;border:1px solid #ffa39e;border-radius:8px;padding:16px;font-size:20px;font-weight:700;color:#cf1322;</string></property>
  </widget></item>
-   <item><widget class="QLabel" name="m_cardMedium">
+   <item><widget class="QLabel" name="m_lblMedRisk">
   <property name="text"><string>中危: 0</string></property>
   <property name="styleSheet"><string>background:#fff7e6;border:1px solid #ffd591;border-radius:8px;padding:16px;font-size:20px;font-weight:700;color:#d46b08;</string></property>
  </widget></item>
-   <item><widget class="QLabel" name="m_cardLow">
+   <item><widget class="QLabel" name="m_lblLowRisk">
   <property name="text"><string>低危: 0</string></property>
   <property name="styleSheet"><string>background:#e6f7ff;border:1px solid #91d5ff;border-radius:8px;padding:16px;font-size:20px;font-weight:700;color:#096dd9;</string></property>
  </widget></item>
-   <item><widget class="QLabel" name="m_cardClean">
+   <item><widget class="QLabel" name="m_lblTotalDays">
   <property name="text"><string>安全: 0</string></property>
   <property name="styleSheet"><string>background:#f6ffed;border:1px solid #b7eb8f;border-radius:8px;padding:16px;font-size:20px;font-weight:700;color:#389e0d;</string></property>
  </widget></item>
@@ -49,14 +49,16 @@
    <item>
     <layout class="QVBoxLayout" name="rightCol">
      <item><widget class="QLabel" name="lblStats">
-  <property name="text"><string>模块统计</string></property>
+  <property name="text"><string>系统信息</string></property>
   <property name="styleSheet"><string>font-size:14px;font-weight:600;</string></property>
  </widget></item>
-     <item><widget class="QTableWidget" name="m_tblStats">
-  <property name="columnCount"><number>5</number></property>
-  <attribute name="horizontalHeaderDefaultSectionSize"><number>120</number></attribute>
-  <column><property name="text"><string>模块</string></property></column><column><property name="text"><string>高危</string></property></column><column><property name="text"><string>中危</string></property></column><column><property name="text"><string>低危</string></property></column><column><property name="text"><string>安全</string></property></column>
- </widget></item>
+     <item><widget class="QLabel" name="m_lblVirusDb"><property name="text"><string>病毒库: --</string></property><property name="styleSheet"><string>font-size:12px;</string></property></widget></item>
+     <item><widget class="QLabel" name="m_lblOS"><property name="text"><string>操作系统: --</string></property><property name="styleSheet"><string>font-size:12px;</string></property></widget></item>
+     <item><widget class="QLabel" name="m_lblHost"><property name="text"><string>主机名: --</string></property><property name="styleSheet"><string>font-size:12px;</string></property></widget></item>
+     <item><widget class="QLabel" name="m_lblVersion"><property name="text"><string>软件版本: --</string></property><property name="styleSheet"><string>font-size:12px;</string></property></widget></item>
+     <item><widget class="QLabel" name="m_lblDbVer"><property name="text"><string>病毒库版本: --</string></property><property name="styleSheet"><string>font-size:12px;</string></property></widget></item>
+     <item><widget class="QLabel" name="m_lblAuthStatus"><property name="text"><string>授权状态: --</string></property><property name="styleSheet"><string>font-size:12px;</string></property></widget></item>
+     <item><widget class="QLabel" name="m_lblAuthExpiry"><property name="text"><string>授权到期: --</string></property><property name="styleSheet"><string>font-size:12px;</string></property></widget></item>
     </layout>
    </item>
   </layout>

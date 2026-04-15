@@ -71,6 +71,11 @@
     </widget>
   </item>
   <item>
+   <widget class="QLabel" name="m_lblSummary">
+     <property name="text"><string></string></property>
+    </widget>
+  </item>
+  <item>
    <widget class="QLabel" name="m_lblStatus">
      <property name="text"><string></string></property>
     </widget>

@@ -93,7 +93,6 @@ DynamicScanPage::DynamicScanPage(QWidget *parent)
     m_scrollCards = ui->m_scrollCards;
     m_cardContainer = ui->m_cardContainer;
     m_chainTree = ui->m_chainTree;
-    m_chainBehavior = findChild<QTableWidget*>("m_chainBehavior");
     m_lblChainBehaviorTitle = ui->m_lblChainBehaviorTitle;
     m_btnRefreshChain = ui->m_btnRefreshChain;
     refreshData();

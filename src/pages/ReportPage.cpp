@@ -126,7 +126,6 @@ ReportPage::ReportPage(QWidget *parent)
     m_spnTimerMinute = ui->m_spnTimerMinute;
     m_lblNextTime = ui->m_lblNextTime;
     m_lblTimerStatus = ui->m_lblTimerStatus;
-    m_timer = findChild<QTimer*>("m_timer");
     m_tblHistory = ui->m_tblHistory;
     m_btnExportHistHtml = ui->m_btnExportHistHtml;
     m_btnExportHistDoc = ui->m_btnExportHistDoc;
