@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>StaticScanPage</class>
+ <widget class="QWidget" name="StaticScanPage">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>1100</width><height>750</height></rect>
+  </property>
+  <property name="windowTitle">
+   <string>StaticScanPage</string>
+  </property>
+
+ <layout class="QHBoxLayout" name="mainLayout">
+  <item>
+   <widget class="QWidget" name="leftPanel">
+    <property name="minimumSize"><size><width>200</width><height>0</height></size></property>
+    <property name="maximumSize"><size><width>260</width><height>16777215</height></size></property>
+    <layout class="QVBoxLayout" name="leftLayout">
+     <item>
+      <widget class="QLabel" name="lblFileListTitle">
+       <property name="text"><string>待检测文件</string></property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout">
+       <item><widget class="QLineEdit" name="m_edtFileKw"><property name="placeholderText"><string>文件名/MD5</string></property></widget></item>
+       <item>
+        <widget class="QComboBox" name="m_cmbFileRisk">
+         <item><property name="text"><string>全部</string></property></item>
+         <item><property name="text"><string>高危</string></property></item>
+         <item><property name="text"><string>中危</string></property></item>
+         <item><property name="text"><string>低危</string></property></item>
+         <item><property name="text"><string>正常</string></property></item>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QListWidget" name="m_fileList"/>
+     </item>
+     <item>
+      <layout class="QGridLayout">
+       <item row="0" column="0">
+        <widget class="QPushButton" name="m_btnAddFile"><property name="text"><string>添加文件</string></property></widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QPushButton" name="m_btnRemoveFile"><property name="text"><string>移除</string></property></widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QPushButton" name="m_btnScanSelected"><property name="text"><string>检测选中</string></property></widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QPushButton" name="m_btnScanAll"><property name="text"><string>全部检测</string></property></widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </widget>
+  </item>
+  <item>
+   <widget class="QWidget" name="rightPanel">
+    <layout class="QVBoxLayout" name="rightLayout">
+     <item>
+      <widget class="QGroupBox" name="grpFileAttr">
+       <property name="title"><string>文件属性</string></property>
+       <layout class="QFormLayout">
+        <item row="0" column="0"><widget class="QLabel"><property name="text"><string>文件名：</string></property></widget></item>
+        <item row="0" column="1"><widget class="QLabel" name="m_attrFileName"><property name="text"><string>—</string></property></widget></item>
+        <item row="1" column="0"><widget class="QLabel"><property name="text"><string>路径：</string></property></widget></item>
+        <item row="1" column="1"><widget class="QLabel" name="m_attrFilePath"><property name="text"><string>—</string></property></widget></item>
+        <item row="2" column="0"><widget class="QLabel"><property name="text"><string>大小：</string></property></widget></item>
+        <item row="2" column="1"><widget class="QLabel" name="m_attrFileSize"><property name="text"><string>—</string></property></widget></item>
+        <item row="3" column="0"><widget class="QLabel"><property name="text"><string>类型：</string></property></widget></item>
+        <item row="3" column="1"><widget class="QLabel" name="m_attrFileType"><property name="text"><string>—</string></property></widget></item>
+        <item row="4" column="0"><widget class="QLabel"><property name="text"><string>MD5：</string></property></widget></item>
+        <item row="4" column="1"><widget class="QLabel" name="m_attrMd5"><property name="text"><string>—</string></property></widget></item>
+        <item row="5" column="0"><widget class="QLabel"><property name="text"><string>SHA256：</string></property></widget></item>
+        <item row="5" column="1"><widget class="QLabel" name="m_attrSha256"><property name="text"><string>—</string></property></widget></item>
+        <item row="6" column="0"><widget class="QLabel"><property name="text"><string>检测时间：</string></property></widget></item>
+        <item row="6" column="1"><widget class="QLabel" name="m_attrScanTime"><property name="text"><string>—</string></property></widget></item>
+        <item row="7" column="0"><widget class="QLabel"><property name="text"><string>风险等级：</string></property></widget></item>
+        <item row="7" column="1"><widget class="QLabel" name="m_attrRiskLevel"><property name="text"><string>—</string></property></widget></item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QTabWidget" name="m_tabDetail">
+       <widget class="QWidget" name="tabPE">
+        <attribute name="title"><string>PE结构</string></attribute>
+        <layout class="QVBoxLayout">
+         <item><widget class="QTreeWidget" name="m_treePE">
+          <column><property name="text"><string>字段</string></property></column>
+          <column><property name="text"><string>值</string></property></column>
+         </widget></item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tabStrings">
+        <attribute name="title"><string>字符串提取</string></attribute>
+        <layout class="QVBoxLayout">
+         <item>
+          <layout class="QHBoxLayout">
+           <item><widget class="QLineEdit" name="m_edtStringKw"><property name="placeholderText"><string>字符串内容</string></property></widget></item>
+           <item>
+            <widget class="QComboBox" name="m_cmbStringType">
+             <item><property name="text"><string>全部类型</string></property></item>
+             <item><property name="text"><string>URL</string></property></item>
+             <item><property name="text"><string>IP</string></property></item>
+             <item><property name="text"><string>API</string></property></item>
+             <item><property name="text"><string>路径</string></property></item>
+             <item><property name="text"><string>命令</string></property></item>
+             <item><property name="text"><string>其他</string></property></item>
+            </widget>
+           </item>
+           <item><widget class="QPushButton" name="btnQueryStrings"><property name="text"><string>过滤</string></property></widget></item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QTableWidget" name="m_tblStrings">
+           <property name="alternatingRowColors"><bool>true</bool></property>
+           <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
+           <property name="selectionBehavior"><enum>QAbstractItemView::SelectRows</enum></property>
+           <column><property name="text"><string>偏移量</string></property></column>
+           <column><property name="text"><string>类型</string></property></column>
+           <column><property name="text"><string>字符串内容</string></property></column>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tabRules">
+        <attribute name="title"><string>规则命中</string></attribute>
+        <layout class="QVBoxLayout">
+         <item>
+          <layout class="QHBoxLayout">
+           <item><widget class="QLineEdit" name="m_edtRuleKw"><property name="placeholderText"><string>规则名 / 命中内容</string></property></widget></item>
+           <item>
+            <widget class="QComboBox" name="m_cmbRuleRisk">
+             <item><property name="text"><string>全部风险</string></property></item>
+             <item><property name="text"><string>高危(high)</string></property></item>
+             <item><property name="text"><string>中危(medium)</string></property></item>
+             <item><property name="text"><string>低危(low)</string></property></item>
+            </widget>
+           </item>
+           <item><widget class="QPushButton" name="btnQueryRules"><property name="text"><string>过滤</string></property></widget></item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QTableWidget" name="m_tblRules">
+           <property name="alternatingRowColors"><bool>true</bool></property>
+           <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
+           <property name="selectionBehavior"><enum>QAbstractItemView::SelectRows</enum></property>
+           <column><property name="text"><string>规则名</string></property></column>
+           <column><property name="text"><string>类型</string></property></column>
+           <column><property name="text"><string>命中内容</string></property></column>
+           <column><property name="text"><string>风险等级</string></property></column>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tabCert">
+        <attribute name="title"><string>数字证书</string></attribute>
+        <layout class="QVBoxLayout">
+         <item>
+          <layout class="QHBoxLayout">
+           <item><widget class="QLineEdit" name="m_edtCertKw"><property name="placeholderText"><string>文件路径 / 主题 / 颁发者</string></property></widget></item>
+           <item>
+            <widget class="QComboBox" name="m_cmbCertStatus">
+             <item><property name="text"><string>全部状态</string></property></item>
+             <item><property name="text"><string>已签名</string></property></item>
+             <item><property name="text"><string>未签名</string></property></item>
+             <item><property name="text"><string>证书有效</string></property></item>
+             <item><property name="text"><string>证书过期</string></property></item>
+             <item><property name="text"><string>文件被篡改</string></property></item>
+            </widget>
+           </item>
+           <item><widget class="QPushButton" name="btnQueryCert"><property name="text"><string>查询</string></property></widget></item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QWidget" name="certCardArea">
+           <layout class="QHBoxLayout">
+            <item><widget class="QFrame" name="cardSig"><layout class="QVBoxLayout"><item><widget class="QLabel" name="m_certCardSig"><property name="text"><string>签名状态</string></property></widget></item></layout></widget></item>
+            <item><widget class="QFrame" name="cardValid"><layout class="QVBoxLayout"><item><widget class="QLabel" name="m_certCardValid"><property name="text"><string>有效期</string></property></widget></item></layout></widget></item>
+            <item><widget class="QFrame" name="cardTamper"><layout class="QVBoxLayout"><item><widget class="QLabel" name="m_certCardTamper"><property name="text"><string>完整性</string></property></widget></item></layout></widget></item>
+            <item><widget class="QFrame" name="cardConclusion"><layout class="QVBoxLayout"><item><widget class="QLabel" name="m_certCardConclusion"><property name="text"><string>验证结论</string></property></widget></item></layout></widget></item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTableWidget" name="m_tblCert">
+           <property name="alternatingRowColors"><bool>true</bool></property>
+           <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
+           <property name="selectionBehavior"><enum>QAbstractItemView::SelectRows</enum></property>
+           <column><property name="text"><string>文件路径</string></property></column>
+           <column><property name="text"><string>签名状态</string></property></column>
+           <column><property name="text"><string>证书有效期</string></property></column>
+           <column><property name="text"><string>完整性</string></property></column>
+           <column><property name="text"><string>主题</string></property></column>
+           <column><property name="text"><string>颁发者</string></property></column>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tabConclusion">
+        <attribute name="title"><string>综合结论</string></attribute>
+        <layout class="QVBoxLayout">
+         <item>
+          <widget class="QFrame" name="m_conclusionCard">
+           <layout class="QVBoxLayout">
+            <item><widget class="QLabel" name="m_lblRiskBadge"><property name="text"><string>— 待检测 —</string></property></widget></item>
+            <item><widget class="QLabel" name="m_lblConclusionText"><property name="text"><string>请先选择文件并执行检测</string></property></widget></item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </item>
+ </layout>
+
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+    <ui version="4.0">
+     <class>SystemSettingsPage</class>
+     <widget class="QWidget" name="SystemSettingsPage">
+      <property name="geometry">
+       <rect><x>0</x><y>0</y><width>800</width><height>600</height></rect>
+      </property>
+      <property name="windowTitle">
+       <string>SystemSettingsPage</string>
+      </property>
+
+     <layout class="QHBoxLayout" name="mainLayout">
+      <item>
+       <widget class="QListWidget" name="m_navList">
+        <property name="minimumSize"><size><width>150</width><height>0</height></size></property>
+        <property name="maximumSize"><size><width>180</width><height>16777215</height></size></property>
+        <item><property name="text"><string>基本配置</string></property></item>
+        <item><property name="text"><string>更新配置</string></property></item>
+        <item><property name="text"><string>扫描配置</string></property></item>
+        <item><property name="text"><string>白名单管理</string></property></item>
+        <item><property name="text"><string>自定义规则</string></property></item>
+        <item><property name="text"><string>关于</string></property></item>
+       </widget>
+      </item>
+      <item>
+       <widget class="QStackedWidget" name="m_stack">
+        <widget class="QWidget" name="pageBasic">
+         <layout class="QFormLayout">
+          <item row="0" column="0"><widget class="QLabel"><property name="text"><string>引擎 DLL 路径：</string></property></widget></item>
+          <item row="0" column="1"><widget class="QLineEdit" name="m_editDllPath"/></item>
+          <item row="1" column="0"><widget class="QLabel"><property name="text"><string>数据库路径：</string></property></widget></item>
+          <item row="1" column="1"><widget class="QLineEdit" name="m_editDbPath"/></item>
+          <item row="2" column="0"><widget class="QLabel"><property name="text"><string>报告目录：</string></property></widget></item>
+          <item row="2" column="1"><widget class="QLineEdit" name="m_editReportDir"/></item>
+          <item row="3" column="0"><widget class="QLabel"><property name="text"><string>病毒库版本：</string></property></widget></item>
+          <item row="3" column="1"><widget class="QLabel" name="m_lblDbVer"><property name="text"><string>—</string></property></widget></item>
+          <item row="4" column="0"><widget class="QLabel"><property name="text"><string>病毒库日期：</string></property></widget></item>
+          <item row="4" column="1"><widget class="QLabel" name="m_lblDbDate"><property name="text"><string>—</string></property></widget></item>
+          <item row="5" column="0"><widget class="QLabel"><property name="text"><string>数据库状态：</string></property></widget></item>
+          <item row="5" column="1"><widget class="QLabel" name="m_lblDbStatus"><property name="text"><string>—</string></property></widget></item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="pageUpdate">
+         <layout class="QVBoxLayout">
+          <item>
+           <widget class="QCheckBox" name="m_chkAutoUpdate"><property name="text"><string>启用自动更新</string></property></widget>
+          </item>
+          <item>
+           <layout class="QFormLayout">
+            <item row="0" column="0"><widget class="QLabel"><property name="text"><string>更新频率：</string></property></widget></item>
+            <item row="0" column="1">
+             <widget class="QComboBox" name="m_cmbUpdateFreq">
+              <item><property name="text"><string>每天</string></property></item>
+              <item><property name="text"><string>每周</string></property></item>
+              <item><property name="text"><string>每月</string></property></item>
+             </widget>
+            </item>
+            <item row="1" column="0"><widget class="QLabel"><property name="text"><string>更新源：</string></property></widget></item>
+            <item row="1" column="1"><widget class="QLineEdit" name="m_edtUpdateSource"/></item>
+           </layout>
+          </item>
+          <item><widget class="QPushButton" name="m_btnUpdate"><property name="text"><string>立即更新</string></property></widget></item>
+          <item><widget class="QProgressBar" name="m_progressUpdate"/></item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="pageScan">
+         <layout class="QVBoxLayout">
+          <item><widget class="QCheckBox" name="m_chkAutoScan"><property name="text"><string>启用自动扫描</string></property></widget></item>
+          <item><widget class="QCheckBox" name="m_chkStartupScan"><property name="text"><string>启动时自动扫描</string></property></widget></item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="pageWhitelist">
+         <layout class="QVBoxLayout">
+          <item>
+           <layout class="QHBoxLayout">
+            <item><widget class="QLineEdit" name="m_edtWhitelistInput"><property name="placeholderText"><string>输入文件路径或 MD5</string></property></widget></item>
+            <item><widget class="QPushButton" name="m_btnAddWhitelist"><property name="text"><string>添加</string></property></widget></item>
+            <item><widget class="QPushButton" name="m_btnDelWhitelist"><property name="text"><string>删除</string></property></widget></item>
+           </layout>
+          </item>
+          <item><widget class="QListWidget" name="m_listWhitelist"/></item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="pageRules">
+         <layout class="QVBoxLayout">
+          <item>
+           <layout class="QHBoxLayout">
+            <item><widget class="QLineEdit" name="m_edtRuleInput"><property name="placeholderText"><string>输入规则名称</string></property></widget></item>
+            <item><widget class="QPushButton" name="m_btnAddRule"><property name="text"><string>添加</string></property></widget></item>
+            <item><widget class="QPushButton" name="m_btnDelRule"><property name="text"><string>删除</string></property></widget></item>
+           </layout>
+          </item>
+          <item><widget class="QListWidget" name="m_listRules"/></item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="pageAbout">
+         <layout class="QVBoxLayout">
+          <item><widget class="QLabel" name="lblAbout"><property name="text"><string>恶意代码辅助检测系统
+版本：1.0.0</string></property></widget></item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+     </layout>
+
+     </widget>
+     <resources/>
+     <connections/>
+    </ui>

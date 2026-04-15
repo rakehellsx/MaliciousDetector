@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AutorunPage</class>
+ <widget class="QWidget" name="AutorunPage">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>900</width><height>600</height></rect>
+  </property>
+  <property name="windowTitle">
+   <string>AutorunPage</string>
+  </property>
+
+ <layout class="QVBoxLayout" name="mainLayout">
+  <item>
+   <widget class="QLabel" name="lblPageTitle">
+    <property name="text"><string>自启动项</string></property>
+   </widget>
+  </item>
+  <item>
+   <layout class="QHBoxLayout" name="toolbarRow">
+    <item><widget class="QLabel"><property name="text"><string>关键字：</string></property></widget></item>
+    <item>
+     <widget class="QLineEdit" name="m_edtKeyword">
+      <property name="placeholderText"><string>名称 / 命令 / 注册表路径</string></property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="btnQuery"><property name="text"><string>查询</string></property></widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="btnRefresh"><property name="text"><string>刷新</string></property></widget>
+    </item>
+    <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item>
+    <item><widget class="QLabel" name="m_lblStatus"><property name="text"><string></string></property></widget></item>
+   </layout>
+  </item>
+  <item>
+   <widget class="QTabWidget" name="m_tabWidget">
+    <widget class="QWidget" name="tabReg">
+     <attribute name="title"><string>注册表启动项</string></attribute>
+     <layout class="QVBoxLayout">
+      <item>
+       <widget class="QTableWidget" name="m_tblReg">
+        <property name="alternatingRowColors"><bool>true</bool></property>
+        <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
+        <property name="selectionBehavior"><enum>QAbstractItemView::SelectRows</enum></property>
+        <column><property name="text"><string>名称</string></property></column>
+        <column><property name="text"><string>注册表路径</string></property></column>
+        <column><property name="text"><string>命令</string></property></column>
+        <column><property name="text"><string>发布者</string></property></column>
+        <column><property name="text"><string>风险</string></property></column>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="tabFolder">
+     <attribute name="title"><string>启动文件夹</string></attribute>
+     <layout class="QVBoxLayout">
+      <item>
+       <widget class="QTableWidget" name="m_tblFolder">
+        <property name="alternatingRowColors"><bool>true</bool></property>
+        <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
+        <property name="selectionBehavior"><enum>QAbstractItemView::SelectRows</enum></property>
+        <column><property name="text"><string>名称</string></property></column>
+        <column><property name="text"><string>文件路径</string></property></column>
+        <column><property name="text"><string>发布者</string></property></column>
+        <column><property name="text"><string>风险</string></property></column>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="tabMenu">
+     <attribute name="title"><string>右键菜单项</string></attribute>
+     <layout class="QVBoxLayout">
+      <item>
+       <widget class="QTableWidget" name="m_tblMenu">
+        <property name="alternatingRowColors"><bool>true</bool></property>
+        <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
+        <property name="selectionBehavior"><enum>QAbstractItemView::SelectRows</enum></property>
+        <column><property name="text"><string>名称</string></property></column>
+        <column><property name="text"><string>命令</string></property></column>
+        <column><property name="text"><string>发布者</string></property></column>
+        <column><property name="text"><string>风险</string></property></column>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="tabDebug">
+     <attribute name="title"><string>调试器劫持</string></attribute>
+     <layout class="QVBoxLayout">
+      <item>
+       <widget class="QTableWidget" name="m_tblDebug">
+        <property name="alternatingRowColors"><bool>true</bool></property>
+        <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
+        <property name="selectionBehavior"><enum>QAbstractItemView::SelectRows</enum></property>
+        <column><property name="text"><string>目标程序</string></property></column>
+        <column><property name="text"><string>调试器命令</string></property></column>
+        <column><property name="text"><string>风险</string></property></column>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+  </item>
+ </layout>
+
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

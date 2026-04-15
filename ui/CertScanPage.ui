@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>CertScanPage</class>
+ <widget class="QWidget" name="CertScanPage">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>900</width><height>650</height></rect>
+  </property>
+  <property name="windowTitle">
+   <string>CertScanPage</string>
+  </property>
+
+ <layout class="QVBoxLayout" name="mainLayout">
+  <item>
+   <widget class="QLabel" name="lblPageTitle"><property name="text"><string>数字证书扫描</string></property></widget>
+  </item>
+  <item>
+   <layout class="QHBoxLayout" name="ctrlRow">
+    <item><widget class="QLineEdit" name="m_editPath"><property name="placeholderText"><string>输入扫描目录路径...</string></property></widget></item>
+    <item><widget class="QPushButton" name="m_btnBrowse"><property name="text"><string>浏览</string></property></widget></item>
+    <item><widget class="QPushButton" name="m_btnScan"><property name="text"><string>开始扫描</string></property></widget></item>
+   </layout>
+  </item>
+  <item>
+   <widget class="QSplitter" name="splitter">
+    <property name="orientation"><enum>Qt::Vertical</enum></property>
+    <widget class="QTableWidget" name="m_tblResults">
+     <property name="alternatingRowColors"><bool>true</bool></property>
+     <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
+     <property name="selectionBehavior"><enum>QAbstractItemView::SelectRows</enum></property>
+     <column><property name="text"><string>文件路径</string></property></column>
+     <column><property name="text"><string>签名状态</string></property></column>
+     <column><property name="text"><string>证书有效期</string></property></column>
+     <column><property name="text"><string>完整性</string></property></column>
+     <column><property name="text"><string>主题</string></property></column>
+     <column><property name="text"><string>颁发者</string></property></column>
+    </widget>
+    <widget class="QTextEdit" name="m_txtDetail">
+     <property name="readOnly"><bool>true</bool></property>
+    </widget>
+   </widget>
+  </item>
+ </layout>
+
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
