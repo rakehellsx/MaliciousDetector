@@ -8,6 +8,41 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ─────────────────────────────────────────────
+# 编译器专用选项
+# ─────────────────────────────────────────────
+if(MSVC)
+    # /utf-8      : 源文件和执行字符集均使用 UTF-8，解决中文注释 C4819 警告
+    # /MP         : 并行编译（多核加速）
+    # /W3         : 警告级别 3
+    # /wd4819     : 抑制 C4819（代码页字符警告，已由 /utf-8 解决）
+    # /wd4251     : 抑制 DLL 接口导出警告（Qt 内部常见）
+    # /EHsc       : 标准 C++ 异常处理
+    # /DNOMINMAX  : 禁用 Windows.h 中的 min/max 宏，避免与 std::min/max 冲突
+    add_compile_options(
+        /utf-8
+        /MP
+        /W3
+        /wd4819
+        /wd4251
+        /EHsc
+    )
+    add_compile_definitions(
+        NOMINMAX
+        WIN32_LEAN_AND_MEAN
+        _CRT_SECURE_NO_WARNINGS
+        UNICODE
+        _UNICODE
+    )
+else()
+    # GCC / Clang
+    add_compile_options(
+        -Wall
+        -Wextra
+        -Wno-unused-parameter
+    )
+endif()
+
+# ─────────────────────────────────────────────
 # Qt5 自动化工具（MOC / UIC / RCC）
 # ─────────────────────────────────────────────
 set(CMAKE_AUTOMOC ON)   # 自动处理 Q_OBJECT 宏
