@@ -3,112 +3,124 @@
  <class>MemoryImagePage</class>
  <widget class="QWidget" name="MemoryImagePage">
   <property name="geometry">
-   <rect><x>0</x><y>0</y><width>900</width><height>650</height></rect>
+   <rect><x>0</x><y>0</y><width>1000</width><height>700</height></rect>
   </property>
-  <property name="windowTitle">
-   <string>MemoryImagePage</string>
-  </property>
-
- <layout class="QVBoxLayout" name="mainLayout">
-  <item>
-   <widget class="QLabel" name="lblPageTitle">
-    <property name="text"><string>内存镜像分析</string></property>
-   </widget>
-  </item>
-  <item>
-   <widget class="QTabWidget" name="tabWidget">
-    <widget class="QWidget" name="tabStatus">
-     <attribute name="title"><string>内存状态</string></attribute>
-     <layout class="QVBoxLayout">
-      <item>
-       <widget class="QTableWidget" name="m_tblStatus">
-        <property name="alternatingRowColors"><bool>true</bool></property>
-        <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
-        <column><property name="text"><string>属性</string></property></column>
-        <column><property name="text"><string>值</string></property></column>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-    <widget class="QWidget" name="tabKernel">
-     <attribute name="title"><string>内核模块</string></attribute>
-     <layout class="QVBoxLayout">
-      <item>
-       <layout class="QHBoxLayout">
-        <item><widget class="QLabel"><property name="text"><string>关键字：</string></property></widget></item>
-        <item><widget class="QLineEdit" name="m_edtKernelKw"><property name="placeholderText"><string>模块名 / 路径</string></property></widget></item>
-        <item><widget class="QLabel"><property name="text"><string>可信状态：</string></property></widget></item>
-        <item>
-         <widget class="QComboBox" name="m_cmbKernelTrusted">
-          <item><property name="text"><string>全部</string></property></item>
-          <item><property name="text"><string>可信</string></property></item>
-          <item><property name="text"><string>不可信</string></property></item>
-         </widget>
-        </item>
-        <item><widget class="QPushButton" name="btnQueryKernel"><property name="text"><string>查询</string></property></widget></item>
-        <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item>
-        <item><widget class="QLabel" name="m_lblKernelSummary"><property name="text"><string></string></property></widget></item>
-       </layout>
-      </item>
-      <item>
-       <widget class="QTableWidget" name="m_tblKernel">
-        <property name="alternatingRowColors"><bool>true</bool></property>
-        <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
-        <property name="selectionBehavior"><enum>QAbstractItemView::SelectRows</enum></property>
-        <column><property name="text"><string>模块名</string></property></column>
-        <column><property name="text"><string>基地址</string></property></column>
-        <column><property name="text"><string>大小</string></property></column>
-        <column><property name="text"><string>路径</string></property></column>
-        <column><property name="text"><string>可信状态</string></property></column>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-    <widget class="QWidget" name="tabProc">
-     <attribute name="title"><string>进程内存</string></attribute>
-     <layout class="QVBoxLayout">
-      <item>
-       <layout class="QHBoxLayout">
-        <item><widget class="QLabel"><property name="text"><string>关键字：</string></property></widget></item>
-        <item><widget class="QLineEdit" name="m_edtProcKw"><property name="placeholderText"><string>进程名 / 路径</string></property></widget></item>
-        <item><widget class="QLabel"><property name="text"><string>注入状态：</string></property></widget></item>
-        <item>
-         <widget class="QComboBox" name="m_cmbProcSuspect">
-          <item><property name="text"><string>全部</string></property></item>
-          <item><property name="text"><string>可疑注入</string></property></item>
-          <item><property name="text"><string>正常</string></property></item>
-         </widget>
-        </item>
-        <item><widget class="QPushButton" name="btnQueryProc"><property name="text"><string>查询</string></property></widget></item>
-        <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item>
-        <item><widget class="QLabel" name="m_lblProcSummary"><property name="text"><string></string></property></widget></item>
-       </layout>
-      </item>
-      <item>
-       <widget class="QTableWidget" name="m_tblProc">
-        <property name="alternatingRowColors"><bool>true</bool></property>
-        <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
-        <property name="selectionBehavior"><enum>QAbstractItemView::SelectRows</enum></property>
-        <column><property name="text"><string>PID</string></property></column>
-        <column><property name="text"><string>进程名</string></property></column>
-        <column><property name="text"><string>内存大小</string></property></column>
-        <column><property name="text"><string>可疑注入</string></property></column>
-        <column><property name="text"><string>注入模块</string></property></column>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </widget>
-  </item>
-  <item>
-   <layout class="QHBoxLayout">
-    <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item>
-    <item><widget class="QPushButton" name="m_btnSave"><property name="text"><string>导出报告</string></property></widget></item>
-   </layout>
-  </item>
- </layout>
-
+  <property name="windowTitle"><string>MemoryImagePage</string></property>
+<layout class="QVBoxLayout" name="mainLayout">
+ <item><widget class="QLabel" name="lblTitle">
+  <property name="text"><string>内存镜像</string></property>
+  <property name="styleSheet"><string>font-size:16px;font-weight:600;</string></property>
+ </widget></item>
+ <item><widget class="QTabWidget" name="m_tabMemory">
+  <widget class="QWidget" name="tabStatus">
+   <attribute name="title"><string>内存状态</string></attribute>
+   <widget class="QTableWidget" name="m_tblStatus">
+  <property name="columnCount"><number>2</number></property>
+  <attribute name="horizontalHeaderDefaultSectionSize"><number>120</number></attribute>
+  <column><property name="text"><string>项目</string></property></column><column><property name="text"><string>值</string></property></column>
  </widget>
- <resources/>
- <connections/>
+  </widget>
+  <widget class="QWidget" name="tabKernel">
+ <attribute name="title"><string>内核模块</string></attribute>
+ <layout class="QVBoxLayout" name="vKernel">
+  <item><layout class="QHBoxLayout" name="hKernelBar">
+  <item>
+   <widget class="QLabel" name="">
+     <property name="text"><string>关键字：</string></property>
+    </widget>
+  </item>
+  <item>
+   <widget class="QLineEdit" name="m_edtKernelKw">
+     <property name="placeholderText"><string>模块名</string></property>
+    </widget>
+  </item>
+  <item>
+   <widget class="QLabel" name="">
+     <property name="text"><string>可信：</string></property>
+    </widget>
+  </item>
+  <item>
+   <widget class="QComboBox" name="m_cmbKernelTrusted">
+     <item><property name="text"><string>全部</string></property></item>
+     <item><property name="text"><string>可信</string></property></item>
+     <item><property name="text"><string>不可信</string></property></item>
+    </widget>
+  </item>
+  <item>
+   <spacer><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer>
+  </item>
+  <item>
+   <widget class="QPushButton" name="btnQueryKernel">
+     <property name="text"><string>查询</string></property>
+    </widget>
+  </item>
+</layout></item>
+  <item><widget class="QTableWidget" name="m_tblKernel">
+  <property name="columnCount"><number>5</number></property>
+  <attribute name="horizontalHeaderDefaultSectionSize"><number>120</number></attribute>
+  <column><property name="text"><string>模块名</string></property></column><column><property name="text"><string>路径</string></property></column><column><property name="text"><string>基址</string></property></column><column><property name="text"><string>大小</string></property></column><column><property name="text"><string>可信状态</string></property></column>
+ </widget></item>
+  <item><widget class="QLabel" name="m_lblKernelSummary">
+  <property name="text"><string></string></property>
+ </widget></item>
+ </layout>
+</widget>
+  <widget class="QWidget" name="tabProc">
+ <attribute name="title"><string>进程内存</string></attribute>
+ <layout class="QVBoxLayout" name="vProc">
+  <item><layout class="QHBoxLayout" name="hProcBar">
+  <item>
+   <widget class="QLabel" name="">
+     <property name="text"><string>关键字：</string></property>
+    </widget>
+  </item>
+  <item>
+   <widget class="QLineEdit" name="m_edtProcKw">
+     <property name="placeholderText"><string>进程名</string></property>
+    </widget>
+  </item>
+  <item>
+   <widget class="QLabel" name="">
+     <property name="text"><string>注入：</string></property>
+    </widget>
+  </item>
+  <item>
+   <widget class="QComboBox" name="m_cmbProcSuspect">
+     <item><property name="text"><string>全部</string></property></item>
+     <item><property name="text"><string>可疑注入</string></property></item>
+     <item><property name="text"><string>正常</string></property></item>
+    </widget>
+  </item>
+  <item>
+   <spacer><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer>
+  </item>
+  <item>
+   <widget class="QPushButton" name="btnQueryProc">
+     <property name="text"><string>查询</string></property>
+    </widget>
+  </item>
+</layout></item>
+  <item><widget class="QTableWidget" name="m_tblProc">
+  <property name="columnCount"><number>6</number></property>
+  <attribute name="horizontalHeaderDefaultSectionSize"><number>120</number></attribute>
+  <column><property name="text"><string>PID</string></property></column><column><property name="text"><string>进程名</string></property></column><column><property name="text"><string>基址</string></property></column><column><property name="text"><string>大小</string></property></column><column><property name="text"><string>权限</string></property></column><column><property name="text"><string>疑似注入</string></property></column>
+ </widget></item>
+  <item><widget class="QLabel" name="m_lblProcSummary">
+  <property name="text"><string></string></property>
+ </widget></item>
+ </layout>
+</widget>
+ </widget></item>
+ <item><layout class="QHBoxLayout" name="btnRow">
+  <item>
+   <spacer><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer>
+  </item>
+  <item>
+   <widget class="QPushButton" name="m_btnSave">
+     <property name="text"><string>保存报告</string></property>
+    </widget>
+  </item>
+</layout></item>
+</layout>
+ </widget>
 </ui>

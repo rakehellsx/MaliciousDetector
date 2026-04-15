@@ -8,6 +8,8 @@
 #include <QPushButton>
 #include <QLabel>
 
+namespace Ui { class FileAssocPage; }
+
 class FileAssocPage : public BasePage {
     Q_OBJECT
 public:
@@ -16,6 +18,7 @@ public:
 private slots:
     void onQuery();
 private:
+    Ui::FileAssocPage *ui{nullptr};
     void setupUi();
     void fillTable(const QVariantList &rows);
     QTableWidget *m_tbl{nullptr};

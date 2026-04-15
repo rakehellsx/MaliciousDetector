@@ -1,4 +1,6 @@
 #include "pages/ProcessInfoPage.h"
+#include "ui_ProcessInfoPage.h"
+
 #include "DatabaseManager.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -8,67 +10,14 @@
 ProcessInfoPage::ProcessInfoPage(QWidget *parent)
     : BasePage("进程信息", parent)
 {
-    setupUi();
+    ui = new Ui::ProcessInfoPage();
+    ui->setupUi(this);
+    m_tbl = ui->m_tbl;
+    m_edtKeyword = ui->m_edtKeyword;
+    m_cmbRisk = ui->m_cmbRisk;
+    m_cmbStatus = ui->m_cmbStatus;
+    m_lblStatus = ui->m_lblStatus;
     refreshData();
-}
-
-void ProcessInfoPage::setupUi()
-{
-    QHBoxLayout *toolRow = new QHBoxLayout;
-    toolRow->setSpacing(6);
-
-    m_edtKeyword = new QLineEdit;
-    m_edtKeyword->setPlaceholderText("进程名 / 路径 / 用户");
-    m_edtKeyword->setClearButtonEnabled(true);
-    m_edtKeyword->setFixedWidth(220);
-    connect(m_edtKeyword, &QLineEdit::returnPressed, this, &ProcessInfoPage::onQuery);
-
-    m_cmbRisk = new QComboBox;
-    m_cmbRisk->addItems({"全部风险", "高危", "中危", "低危"});
-    connect(m_cmbRisk, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &ProcessInfoPage::onQuery);
-
-    m_cmbStatus = new QComboBox;
-    m_cmbStatus->addItems({"全部状态", "运行中", "已停止", "挂起"});
-    connect(m_cmbStatus, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &ProcessInfoPage::onQuery);
-
-    QPushButton *btnQuery   = new QPushButton("查询");
-    btnQuery->setObjectName("btnPrimary");
-    btnQuery->setFixedWidth(70);
-    connect(btnQuery, &QPushButton::clicked, this, &ProcessInfoPage::onQuery);
-
-    QPushButton *btnRefresh = new QPushButton("刷新");
-    btnRefresh->setObjectName("btnSecondary");
-    btnRefresh->setFixedWidth(70);
-    connect(btnRefresh, &QPushButton::clicked, this, &ProcessInfoPage::refreshData);
-
-    toolRow->addWidget(new QLabel("关键字："));
-    toolRow->addWidget(m_edtKeyword);
-    toolRow->addSpacing(8);
-    toolRow->addWidget(new QLabel("风险："));
-    toolRow->addWidget(m_cmbRisk);
-    toolRow->addSpacing(8);
-    toolRow->addWidget(new QLabel("状态："));
-    toolRow->addWidget(m_cmbStatus);
-    toolRow->addWidget(btnQuery);
-    toolRow->addWidget(btnRefresh);
-    toolRow->addStretch();
-    m_mainLayout->addLayout(toolRow);
-
-    m_lblStatus = new QLabel;
-    m_lblStatus->setObjectName("statusLabel");
-    m_mainLayout->addWidget(m_lblStatus);
-
-    // DB字段: pid, name, path, user, cpu_pct, mem_mb, status, risk
-    m_tbl = new QTableWidget(0, 8);
-    m_tbl->setHorizontalHeaderLabels({"PID", "进程名", "路径", "CPU%", "内存(MB)", "用户", "状态", "风险"});
-    styleTable(m_tbl);
-    m_tbl->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    m_tbl->setColumnWidth(0, 60);
-    m_tbl->setColumnWidth(3, 60);
-    m_tbl->setColumnWidth(4, 80);
-    m_mainLayout->addWidget(m_tbl, 1);
 }
 
 void ProcessInfoPage::refreshData()

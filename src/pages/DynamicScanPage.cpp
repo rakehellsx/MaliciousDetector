@@ -1,4 +1,6 @@
 #include "pages/DynamicScanPage.h"
+#include "ui_DynamicScanPage.h"
+
 #include "DatabaseManager.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -68,24 +70,33 @@ static QTableWidgetItem* riskItem(const QString &risk) {
 DynamicScanPage::DynamicScanPage(QWidget *parent)
     : BasePage("动态行为检测", parent)
 {
-    setupUi();
+    ui = new Ui::DynamicScanPage();
+    ui->setupUi(this);
+    m_tabOuter = findChild<QTabWidget*>("m_tabOuter");
+    m_editPath = ui->m_editPath;
+    m_btnBrowse = ui->m_btnBrowse;
+    m_btnStart = ui->m_btnStart;
+    m_btnStop = ui->m_btnStop;
+    m_lblMonitorStatus = ui->m_lblMonitorStatus;
+    m_lblStatus = ui->m_lblStatus;
+    m_edtBehaviorKw = ui->m_edtBehaviorKw;
+    m_cmbBehaviorRisk = ui->m_cmbBehaviorRisk;
+    m_tabBehavior = ui->m_tabBehavior;
+    m_tblRegistry = ui->m_tblRegistry;
+    m_tblFile = ui->m_tblFile;
+    m_tblNetwork = ui->m_tblNetwork;
+    m_tblSsdt = ui->m_tblSsdt;
+    m_tblAutorun = ui->m_tblAutorun;
+    m_tblTask = ui->m_tblTask;
+    m_tblBrowserPlugin = ui->m_tblBrowserPlugin;
+    m_tblProcessDetail = ui->m_tblProcessDetail;
+    m_scrollCards = ui->m_scrollCards;
+    m_cardContainer = ui->m_cardContainer;
+    m_chainTree = ui->m_chainTree;
+    m_chainBehavior = findChild<QTableWidget*>("m_chainBehavior");
+    m_lblChainBehaviorTitle = ui->m_lblChainBehaviorTitle;
+    m_btnRefreshChain = ui->m_btnRefreshChain;
     refreshData();
-}
-
-void DynamicScanPage::setupUi() {
-    // 外层双 Tab
-    m_tabOuter = new QTabWidget;
-    m_tabOuter->setStyleSheet(
-        "QTabWidget::pane{border:1px solid #d0d7e3;background:#fff;}"
-        "QTabBar::tab{padding:8px 22px;font-size:13px;font-weight:600;"
-        "  background:#f0f3fa;border:1px solid #d0d7e3;}"
-        "QTabBar::tab:selected{background:#fff;color:#1a3a6a;"
-        "  border-bottom:2px solid #1a3a6a;}");
-
-    m_tabOuter->addTab(buildGlobalTab(), "全局行为监测");
-    m_tabOuter->addTab(buildChainTab(),  "进程链行为分析");
-
-    m_mainLayout->addWidget(m_tabOuter, 1);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -1,4 +1,6 @@
 #include "pages/ReportPage.h"
+#include "ui_ReportPage.h"
+
 #include "DatabaseManager.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -94,7 +96,49 @@ ReportPage::ReportPage(QWidget *parent)
     , m_timer(new QTimer(this))
 {
     connect(m_timer, &QTimer::timeout, this, &ReportPage::onTimerFired);
-    setupUi();
+    ui = new Ui::ReportPage();
+    ui->setupUi(this);
+    m_lblReportId = ui->m_lblReportId;
+    m_lblReportTime = ui->m_lblReportTime;
+    m_lblHostname = ui->m_lblHostname;
+    m_lblOs = ui->m_lblOs;
+    m_lblIp = ui->m_lblIp;
+    m_lblCollectTime = ui->m_lblCollectTime;
+    m_cardHighCount = ui->m_cardHighCount;
+    m_cardMediumCount = ui->m_cardMediumCount;
+    m_cardLowCount = ui->m_cardLowCount;
+    m_cardCleanCount = ui->m_cardCleanCount;
+    m_tblModuleStat = ui->m_tblModuleStat;
+    m_edtThreatKw = ui->m_edtThreatKw;
+    m_cmbThreatRisk = ui->m_cmbThreatRisk;
+    m_cmbThreatCat = ui->m_cmbThreatCat;
+    m_lblThreatCount = ui->m_lblThreatCount;
+    m_tblThreats = ui->m_tblThreats;
+    m_tblSysInfo = ui->m_tblSysInfo;
+    m_tblNetInfo = ui->m_tblNetInfo;
+    m_tblDiskInfo = ui->m_tblDiskInfo;
+    m_tblProcRisk = ui->m_tblProcRisk;
+    m_tblPortRisk = ui->m_tblPortRisk;
+    m_txtPreview = ui->m_txtPreview;
+    m_chkTimerEnable = ui->m_chkTimerEnable;
+    m_cmbTimerMode = ui->m_cmbTimerMode;
+    m_spnTimerHour = ui->m_spnTimerHour;
+    m_spnTimerMinute = ui->m_spnTimerMinute;
+    m_lblNextTime = ui->m_lblNextTime;
+    m_lblTimerStatus = ui->m_lblTimerStatus;
+    m_timer = findChild<QTimer*>("m_timer");
+    m_tblHistory = ui->m_tblHistory;
+    m_btnExportHistHtml = ui->m_btnExportHistHtml;
+    m_btnExportHistDoc = ui->m_btnExportHistDoc;
+    m_btnExportHistPdf = ui->m_btnExportHistPdf;
+    m_btnDeleteHist = ui->m_btnDeleteHist;
+    m_lblHistDetail = ui->m_lblHistDetail;
+    m_btnGenerate = ui->m_btnGenerate;
+    m_btnExportDoc = ui->m_btnExportDoc;
+    m_btnExportPdf = ui->m_btnExportPdf;
+    m_btnExportHtml = ui->m_btnExportHtml;
+    m_lblStatus = ui->m_lblStatus;
+    m_tabMain = ui->m_tabMain;
     refreshData();
 }
 
@@ -103,68 +147,6 @@ ReportPage::~ReportPage() {}
 // ─────────────────────────────────────────────────────────────────────────────
 // UI 构建
 // ─────────────────────────────────────────────────────────────────────────────
-void ReportPage::setupUi()
-{
-    // ── 顶部工具栏 ────────────────────────────────────────────────────────
-    auto makeBtn = [](const QString &text, const QString &bg) -> QPushButton* {
-        QPushButton *b = new QPushButton(text);
-        b->setFixedHeight(30);
-        b->setStyleSheet(QString(
-            "QPushButton{background:%1;color:#fff;border:none;border-radius:3px;"
-            "padding:5px 14px;font-size:12px;font-weight:600;}"
-            "QPushButton:hover{background:%1;opacity:0.85;}").arg(bg));
-        return b;
-    };
-
-    m_btnGenerate   = makeBtn("生成报告",  "#1a3a6a");
-    m_btnExportHtml = makeBtn("导出 HTML", "#0050b3");
-    m_btnExportPdf  = makeBtn("导出 PDF",  "#003a8c");
-    m_btnExportDoc  = makeBtn("导出 DOC",  "#434343");
-    m_lblStatus = new QLabel;
-    m_lblStatus->setStyleSheet("font-size:11px;color:#8c8c8c;padding:0 8px;");
-
-    connect(m_btnGenerate,   &QPushButton::clicked, this, &ReportPage::onGenerateReport);
-    connect(m_btnExportHtml, &QPushButton::clicked, this, &ReportPage::onExportHtml);
-    connect(m_btnExportPdf,  &QPushButton::clicked, this, &ReportPage::onExportPdf);
-    connect(m_btnExportDoc,  &QPushButton::clicked, this, &ReportPage::onExportDoc);
-
-    QHBoxLayout *toolbar = new QHBoxLayout;
-    toolbar->setSpacing(8);
-    toolbar->setContentsMargins(0, 0, 0, 8);
-    toolbar->addWidget(m_btnGenerate);
-    toolbar->addSpacing(4);
-    toolbar->addWidget(m_btnExportHtml);
-    toolbar->addWidget(m_btnExportPdf);
-    toolbar->addWidget(m_btnExportDoc);
-    toolbar->addWidget(m_lblStatus);
-    toolbar->addStretch();
-    m_mainLayout->addLayout(toolbar);
-
-    // ── 主 Tab ────────────────────────────────────────────────────────────
-    m_tabMain = new QTabWidget;
-    m_tabMain->setStyleSheet(
-        "QTabWidget::pane{border:1px solid #d0d7e3;}"
-        "QTabBar::tab{padding:7px 18px;font-size:12px;background:#f0f3fa;"
-        "border:1px solid #d0d7e3;}"
-        "QTabBar::tab:selected{background:#fff;color:#1a3a6a;font-weight:700;"
-        "border-bottom:2px solid #1a3a6a;}");
-
-    QWidget *tabOverview = new QWidget; m_tabMain->addTab(tabOverview, "概览");
-    QWidget *tabThreat   = new QWidget; m_tabMain->addTab(tabThreat,   "威胁详情");
-    QWidget *tabHost     = new QWidget; m_tabMain->addTab(tabHost,     "主机信息");
-    QWidget *tabPreview  = new QWidget; m_tabMain->addTab(tabPreview,  "报告预览");
-    QWidget *tabSchedule = new QWidget; m_tabMain->addTab(tabSchedule, "定时生成");
-    QWidget *tabHistory  = new QWidget; m_tabMain->addTab(tabHistory,  "报告历史");
-
-    setupOverviewTab(tabOverview);
-    setupThreatTab(tabThreat);
-    setupHostTab(tabHost);
-    setupPreviewTab(tabPreview);
-    setupScheduleTab(tabSchedule);
-    setupHistoryTab(tabHistory);
-
-    m_mainLayout->addWidget(m_tabMain, 1);
-}
 
 // ── 概览 Tab ─────────────────────────────────────────────────────────────────
 void ReportPage::setupOverviewTab(QWidget *tab)

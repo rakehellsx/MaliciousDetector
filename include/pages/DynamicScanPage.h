@@ -14,6 +14,8 @@
 #include <QFrame>
 #include <QScrollArea>
 
+namespace Ui { class DynamicScanPage; }
+
 class DynamicScanPage : public BasePage {
     Q_OBJECT
 public:
@@ -31,6 +33,7 @@ private slots:
     void onProcessTreeItemClicked(QTreeWidgetItem *item, int col);
 
 private:
+    Ui::DynamicScanPage *ui{nullptr};
     void setupUi();
     bool eventFilter(QObject *obj, QEvent *event) override;
     // ── 全局行为监测 Tab ─────────────────────────────────────────────────────

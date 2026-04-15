@@ -8,6 +8,8 @@
 #include <QLineEdit>
 #include <QLabel>
 
+namespace Ui { class SampleExtractPage; }
+
 class SampleExtractPage : public BasePage {
     Q_OBJECT
 public:
@@ -19,6 +21,7 @@ private slots:
     void onQuery();
 
 private:
+    Ui::SampleExtractPage *ui{nullptr};
     void setupUi();
     void fillTable(const QVariantList &rows);
     QLineEdit    *m_editPath{nullptr};

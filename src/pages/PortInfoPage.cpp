@@ -1,4 +1,6 @@
 #include "pages/PortInfoPage.h"
+#include "ui_PortInfoPage.h"
+
 #include "DatabaseManager.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -7,63 +9,14 @@
 PortInfoPage::PortInfoPage(QWidget *parent)
     : BasePage("端口信息", parent)
 {
-    setupUi();
+    ui = new Ui::PortInfoPage();
+    ui->setupUi(this);
+    m_tbl = ui->m_tbl;
+    m_edtKeyword = ui->m_edtKeyword;
+    m_cmbProto = ui->m_cmbProto;
+    m_cmbRisk = ui->m_cmbRisk;
+    m_lblStatus = ui->m_lblStatus;
     refreshData();
-}
-
-void PortInfoPage::setupUi()
-{
-    QHBoxLayout *toolRow = new QHBoxLayout;
-    toolRow->setSpacing(6);
-
-    m_edtKeyword = new QLineEdit;
-    m_edtKeyword->setPlaceholderText("本地IP / 端口 / 远程地址 / 进程名");
-    m_edtKeyword->setClearButtonEnabled(true);
-    m_edtKeyword->setFixedWidth(240);
-    connect(m_edtKeyword, &QLineEdit::returnPressed, this, &PortInfoPage::onQuery);
-
-    m_cmbProto = new QComboBox;
-    m_cmbProto->addItems({"全部协议", "TCP", "UDP"});
-    connect(m_cmbProto, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &PortInfoPage::onQuery);
-
-    m_cmbRisk = new QComboBox;
-    m_cmbRisk->addItems({"全部风险", "高危", "中危", "低危"});
-    connect(m_cmbRisk, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &PortInfoPage::onQuery);
-
-    QPushButton *btnQuery   = new QPushButton("查询");
-    btnQuery->setObjectName("btnPrimary");
-    btnQuery->setFixedWidth(70);
-    connect(btnQuery, &QPushButton::clicked, this, &PortInfoPage::onQuery);
-
-    QPushButton *btnRefresh = new QPushButton("刷新");
-    btnRefresh->setObjectName("btnSecondary");
-    btnRefresh->setFixedWidth(70);
-    connect(btnRefresh, &QPushButton::clicked, this, &PortInfoPage::refreshData);
-
-    toolRow->addWidget(new QLabel("关键字："));
-    toolRow->addWidget(m_edtKeyword);
-    toolRow->addSpacing(8);
-    toolRow->addWidget(new QLabel("协议："));
-    toolRow->addWidget(m_cmbProto);
-    toolRow->addSpacing(8);
-    toolRow->addWidget(new QLabel("风险："));
-    toolRow->addWidget(m_cmbRisk);
-    toolRow->addWidget(btnQuery);
-    toolRow->addWidget(btnRefresh);
-    toolRow->addStretch();
-    m_mainLayout->addLayout(toolRow);
-
-    m_lblStatus = new QLabel;
-    m_lblStatus->setObjectName("statusLabel");
-    m_mainLayout->addWidget(m_lblStatus);
-
-    m_tbl = new QTableWidget(0, 7);
-    m_tbl->setHorizontalHeaderLabels({"协议", "本地IP", "本地端口", "远程地址:端口", "状态", "进程", "风险"});
-    styleTable(m_tbl);
-    m_tbl->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    m_mainLayout->addWidget(m_tbl, 1);
 }
 
 void PortInfoPage::refreshData()

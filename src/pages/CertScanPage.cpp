@@ -1,4 +1,6 @@
 #include "pages/CertScanPage.h"
+#include "ui_CertScanPage.h"
+
 #include "DatabaseManager.h"
 #include <QHBoxLayout>
 #include <QSplitter>
@@ -8,49 +10,13 @@
 #include <QHeaderView>
 #include <QDateTime>
 
-CertScanPage::CertScanPage(QWidget *parent) : BasePage("\u6570\u5b57\u8bc1\u4e66\u68c0\u6d4b", parent) { setupUi(); refreshData(); }
-
-void CertScanPage::setupUi()
-{
-    QHBoxLayout *fileRow = new QHBoxLayout;
-    m_editPath = new QLineEdit;
-    m_editPath->setObjectName("searchInput");
-    m_editPath->setPlaceholderText("\u8f93\u5165\u6587\u4ef6\u8def\u5f84...");
-    m_btnBrowse = new QPushButton("\u6d4f \u89c8");
-    m_btnBrowse->setObjectName("btnSecondary");
-    m_btnBrowse->setFixedWidth(72);
-    m_btnScan = new QPushButton("\u9a8c\u8bc1\u8bc1\u4e66");
-    m_btnScan->setObjectName("btnPrimary");
-    m_btnScan->setFixedWidth(88);
-    connect(m_btnBrowse, &QPushButton::clicked, this, &CertScanPage::onBrowseFile);
-    connect(m_btnScan,   &QPushButton::clicked, this, &CertScanPage::onStartScan);
-    fileRow->addWidget(m_editPath, 1);
-    fileRow->addWidget(m_btnBrowse);
-    fileRow->addWidget(m_btnScan);
-    m_mainLayout->addLayout(fileRow);
-
-    QSplitter *sp = new QSplitter(Qt::Vertical);
-    // DB字段: file_name, signer, issuer, timestamp, sign_status, tamper_status
-    m_tblResults = new QTableWidget(0, 6);
-    m_tblResults->setHorizontalHeaderLabels({"\u6587\u4ef6\u540d", "\u7b7e\u540d\u8005", "\u989c\u53d1\u673a\u6784", "\u65f6\u95f4\u6233", "\u7b7e\u540d\u72b6\u6001", "\u7bf9\u6539\u68c0\u6d4b"});
-    styleTable(m_tblResults);
-    m_tblResults->setColumnWidth(0, 160);
-    m_tblResults->setColumnWidth(1, 160);
-    m_tblResults->setColumnWidth(2, 160);
-    m_tblResults->setColumnWidth(3, 120);
-    m_tblResults->setColumnWidth(4, 80);
-    connect(m_tblResults, &QTableWidget::cellClicked, this, &CertScanPage::onRowSelected);
-    sp->addWidget(m_tblResults);
-
-    m_txtDetail = new QTextEdit;
-    m_txtDetail->setReadOnly(true);
-    m_txtDetail->setObjectName("codeView");
-    m_txtDetail->setPlaceholderText("\u9009\u62e9\u8bb0\u5f55\u67e5\u770b\u8bc1\u4e66\u8be6\u60c5...");
-    sp->addWidget(m_txtDetail);
-    sp->setStretchFactor(0, 2);
-    sp->setStretchFactor(1, 1);
-    m_mainLayout->addWidget(sp, 1);
-}
+CertScanPage::CertScanPage(QWidget *parent) : BasePage("\u6570\u5b57\u8bc1\u4e66\u68c0\u6d4b", parent) { ui = new Ui::CertScanPage();
+    ui->setupUi(this);
+    m_editPath = findChild<QLineEdit*>("m_editPath");
+    m_btnBrowse = findChild<QPushButton*>("m_btnBrowse");
+    m_btnScan = findChild<QPushButton*>("m_btnScan");
+    m_tblResults = findChild<QTableWidget*>("m_tblResults");
+    m_txtDetail = findChild<QTextEdit*>("m_txtDetail"); refreshData(); }
 
 void CertScanPage::refreshData()
 {

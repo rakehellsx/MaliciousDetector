@@ -1,5 +1,11 @@
 # Qt 编译产物
 build/
+build_cmake/
+build-cmake/
+build-*/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
 *.o
 *.obj
 *.moc

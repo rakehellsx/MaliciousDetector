@@ -1,4 +1,6 @@
 #include "pages/SharedResourcePage.h"
+#include "ui_SharedResourcePage.h"
+
 #include "DatabaseManager.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -8,56 +10,13 @@
 SharedResourcePage::SharedResourcePage(QWidget *parent)
     : BasePage("共享资源", parent)
 {
-    setupUi();
+    ui = new Ui::SharedResourcePage();
+    ui->setupUi(this);
+    m_tbl = ui->m_tbl;
+    m_edtKeyword = ui->m_edtKeyword;
+    m_cmbRisk = ui->m_cmbRisk;
+    m_lblStatus = ui->m_lblStatus;
     refreshData();
-}
-
-void SharedResourcePage::setupUi()
-{
-    QHBoxLayout *toolRow = new QHBoxLayout;
-    toolRow->setSpacing(6);
-
-    m_edtKeyword = new QLineEdit;
-    m_edtKeyword->setPlaceholderText("共享名 / 本地路径 / 权限");
-    m_edtKeyword->setClearButtonEnabled(true);
-    m_edtKeyword->setFixedWidth(220);
-    connect(m_edtKeyword, &QLineEdit::returnPressed, this, &SharedResourcePage::onQuery);
-
-    m_cmbRisk = new QComboBox;
-    m_cmbRisk->addItems({"全部风险", "高危", "中危", "低危"});
-    connect(m_cmbRisk, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &SharedResourcePage::onQuery);
-
-    QPushButton *btnQuery   = new QPushButton("查询");
-    btnQuery->setObjectName("btnPrimary");
-    btnQuery->setFixedWidth(70);
-    connect(btnQuery, &QPushButton::clicked, this, &SharedResourcePage::onQuery);
-
-    QPushButton *btnRefresh = new QPushButton("刷新");
-    btnRefresh->setObjectName("btnSecondary");
-    btnRefresh->setFixedWidth(70);
-    connect(btnRefresh, &QPushButton::clicked, this, &SharedResourcePage::refreshData);
-
-    toolRow->addWidget(new QLabel("关键字："));
-    toolRow->addWidget(m_edtKeyword);
-    toolRow->addSpacing(8);
-    toolRow->addWidget(new QLabel("风险："));
-    toolRow->addWidget(m_cmbRisk);
-    toolRow->addWidget(btnQuery);
-    toolRow->addWidget(btnRefresh);
-    toolRow->addStretch();
-    m_mainLayout->addLayout(toolRow);
-
-    m_lblStatus = new QLabel;
-    m_lblStatus->setObjectName("statusLabel");
-    m_mainLayout->addWidget(m_lblStatus);
-
-    // DB字段: name, path, type, permission, connected, risk
-    m_tbl = new QTableWidget(0, 6);
-    m_tbl->setHorizontalHeaderLabels({"共享名", "本地路径", "类型", "权限", "已连接", "风险"});
-    styleTable(m_tbl);
-    m_tbl->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    m_mainLayout->addWidget(m_tbl, 1);
 }
 
 void SharedResourcePage::refreshData()

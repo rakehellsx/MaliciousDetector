@@ -1,4 +1,6 @@
 #include "pages/MemoryImagePage.h"
+#include "ui_MemoryImagePage.h"
+
 #include "DatabaseManager.h"
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -15,156 +17,19 @@
 MemoryImagePage::MemoryImagePage(QWidget *parent)
     : BasePage("内存映像（系统）", parent)
 {
-    setupUi();
+    ui = new Ui::MemoryImagePage();
+    ui->setupUi(this);
+    m_tblStatus = ui->m_tblStatus;
+    m_tblKernel = ui->m_tblKernel;
+    m_edtKernelKw = ui->m_edtKernelKw;
+    m_cmbKernelTrusted = ui->m_cmbKernelTrusted;
+    m_tblProc = ui->m_tblProc;
+    m_edtProcKw = ui->m_edtProcKw;
+    m_cmbProcSuspect = ui->m_cmbProcSuspect;
+    m_lblKernelSummary = ui->m_lblKernelSummary;
+    m_lblProcSummary = ui->m_lblProcSummary;
+    m_btnSave = ui->m_btnSave;
     refreshData();
-}
-
-void MemoryImagePage::setupUi()
-{
-    // 顶部工具栏：保存内存映像按钮
-    m_btnSave = new QPushButton("保存内存映像");
-    m_btnSave->setFixedWidth(120);
-    m_btnSave->setStyleSheet(
-        "QPushButton{background:#1a3a6a;color:#fff;border:none;border-radius:3px;padding:4px 10px;font-size:12px;}"
-        "QPushButton:hover{background:#1e4a8a;}");
-    connect(m_btnSave, &QPushButton::clicked, this, [this](){
-        QMessageBox::information(this, "保存内存映像", "内存映像已保存至：C:\\MemDump\\memdump_" +
-            QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss") + ".dmp");
-    });
-    // 工具栏行
-    QHBoxLayout *toolRow = new QHBoxLayout;
-    toolRow->setContentsMargins(0,0,0,4);
-    toolRow->addWidget(m_btnSave);
-    toolRow->addStretch();
-    m_mainLayout->addLayout(toolRow);
-
-    // 上半部分：左=内存运行状态，右=内核模块列表（水平分割）
-    QSplitter *topSplitter = new QSplitter(Qt::Horizontal);
-
-    // 内存运行状态 GroupBox
-    QGroupBox *gbStatus = new QGroupBox("内存运行状态");
-    gbStatus->setStyleSheet("QGroupBox{font-size:12px;font-weight:600;color:#1a3a6a;"
-                            "border:1px solid #d0d7e3;border-radius:4px;margin-top:6px;padding-top:4px;}"
-                            "QGroupBox::title{subcontrol-origin:margin;left:8px;}");
-    QVBoxLayout *statusLayout = new QVBoxLayout(gbStatus);
-    statusLayout->setContentsMargins(6,14,6,6);
-
-    m_tblStatus = new QTableWidget(0, 2);
-    m_tblStatus->setHorizontalHeaderLabels({"项目", "值"});
-    m_tblStatus->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
-    m_tblStatus->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
-    m_tblStatus->setColumnWidth(0, 130);
-    m_tblStatus->verticalHeader()->setVisible(false);
-    m_tblStatus->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_tblStatus->setSelectionBehavior(QAbstractItemView::SelectRows);
-    m_tblStatus->setAlternatingRowColors(true);
-    m_tblStatus->setStyleSheet(
-        "QTableWidget{border:1px solid #d0d7e3;font-size:12px;}"
-        "QHeaderView::section{background:#e8ecf4;padding:5px 8px;font-weight:600;border:1px solid #d0d7e3;}"
-        "QTableWidget::item{padding:5px 8px;}"
-        "QTableWidget::item:alternate{background:#fafbfd;}");
-    statusLayout->addWidget(m_tblStatus);
-    topSplitter->addWidget(gbStatus);
-
-    // 内核模块列表 GroupBox
-    QGroupBox *gbKernel = new QGroupBox("内核模块列表");
-    gbKernel->setStyleSheet(gbStatus->styleSheet());
-    QVBoxLayout *kernelLayout = new QVBoxLayout(gbKernel);
-    kernelLayout->setContentsMargins(6,14,6,6);
-
-    // 内核模块查询栏
-    QHBoxLayout *kernelQueryRow = new QHBoxLayout;
-    kernelQueryRow->setSpacing(6);
-    m_edtKernelKw = new QLineEdit;
-    m_edtKernelKw->setPlaceholderText("模块名 / 路径");
-    m_edtKernelKw->setClearButtonEnabled(true);
-    m_edtKernelKw->setFixedWidth(160);
-    connect(m_edtKernelKw, &QLineEdit::returnPressed, this, &MemoryImagePage::onQueryKernel);
-    m_cmbKernelTrusted = new QComboBox;
-    m_cmbKernelTrusted->addItems({"全部", "已签名", "未签名"});
-    connect(m_cmbKernelTrusted, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &MemoryImagePage::onQueryKernel);
-    QPushButton *btnKernelQuery = new QPushButton("查询");
-    btnKernelQuery->setFixedWidth(55);
-    connect(btnKernelQuery, &QPushButton::clicked, this, &MemoryImagePage::onQueryKernel);
-    kernelQueryRow->addWidget(new QLabel("关键字："));
-    kernelQueryRow->addWidget(m_edtKernelKw);
-    kernelQueryRow->addWidget(new QLabel("签名："));
-    kernelQueryRow->addWidget(m_cmbKernelTrusted);
-    kernelQueryRow->addWidget(btnKernelQuery);
-    kernelQueryRow->addStretch();
-    kernelLayout->addLayout(kernelQueryRow);
-
-    m_tblKernel = new QTableWidget(0, 7);
-    m_tblKernel->setHorizontalHeaderLabels({"模块名", "基址", "映像大小", "标志", "序号", "路径", "授信"});
-    m_tblKernel->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    m_tblKernel->horizontalHeader()->setSectionResizeMode(5, QHeaderView::Stretch);
-    m_tblKernel->verticalHeader()->setVisible(false);
-    m_tblKernel->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_tblKernel->setSelectionBehavior(QAbstractItemView::SelectRows);
-    m_tblKernel->setAlternatingRowColors(true);
-    m_tblKernel->setStyleSheet(m_tblStatus->styleSheet());
-    kernelLayout->addWidget(m_tblKernel);
-
-    m_lblKernelSummary = new QLabel();
-    m_lblKernelSummary->setStyleSheet("font-size:11px;color:#8c8c8c;padding:3px 2px;");
-    kernelLayout->addWidget(m_lblKernelSummary);
-    topSplitter->addWidget(gbKernel);
-    topSplitter->setStretchFactor(0, 1);
-    topSplitter->setStretchFactor(1, 2);
-
-    // 下半部分：进程内存映射
-    QGroupBox *gbProc = new QGroupBox("进程内存映射");
-    gbProc->setStyleSheet(gbStatus->styleSheet());
-    QVBoxLayout *procLayout = new QVBoxLayout(gbProc);
-    procLayout->setContentsMargins(6,14,6,6);
-
-    // 进程内存查询栏
-    QHBoxLayout *procQueryRow = new QHBoxLayout;
-    procQueryRow->setSpacing(6);
-    m_edtProcKw = new QLineEdit;
-    m_edtProcKw->setPlaceholderText("进程名 / PID");
-    m_edtProcKw->setClearButtonEnabled(true);
-    m_edtProcKw->setFixedWidth(160);
-    connect(m_edtProcKw, &QLineEdit::returnPressed, this, &MemoryImagePage::onQueryProc);
-    m_cmbProcSuspect = new QComboBox;
-    m_cmbProcSuspect->addItems({"全部", "可疑注入", "正常"});
-    connect(m_cmbProcSuspect, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &MemoryImagePage::onQueryProc);
-    QPushButton *btnProcQuery = new QPushButton("查询");
-    btnProcQuery->setFixedWidth(55);
-    connect(btnProcQuery, &QPushButton::clicked, this, &MemoryImagePage::onQueryProc);
-    procQueryRow->addWidget(new QLabel("关键字："));
-    procQueryRow->addWidget(m_edtProcKw);
-    procQueryRow->addWidget(new QLabel("状态："));
-    procQueryRow->addWidget(m_cmbProcSuspect);
-    procQueryRow->addWidget(btnProcQuery);
-    procQueryRow->addStretch();
-    procLayout->addLayout(procQueryRow);
-
-    m_tblProc = new QTableWidget(0, 6);
-    m_tblProc->setHorizontalHeaderLabels({"进程名", "PID", "私有内存", "工作集", "虚拟内存", "可疑注入"});
-    m_tblProc->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    m_tblProc->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
-    m_tblProc->verticalHeader()->setVisible(false);
-    m_tblProc->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_tblProc->setSelectionBehavior(QAbstractItemView::SelectRows);
-    m_tblProc->setAlternatingRowColors(true);
-    m_tblProc->setStyleSheet(m_tblStatus->styleSheet());
-    procLayout->addWidget(m_tblProc);
-
-    m_lblProcSummary = new QLabel();
-    m_lblProcSummary->setStyleSheet("font-size:11px;color:#8c8c8c;padding:3px 2px;");
-    procLayout->addWidget(m_lblProcSummary);
-
-    // 垂直分割：上(topSplitter) + 下(gbProc)
-    QSplitter *mainSplitter = new QSplitter(Qt::Vertical);
-    mainSplitter->addWidget(topSplitter);
-    mainSplitter->addWidget(gbProc);
-    mainSplitter->setStretchFactor(0, 3);
-    mainSplitter->setStretchFactor(1, 2);
-
-    m_mainLayout->addWidget(mainSplitter);
 }
 
 void MemoryImagePage::refreshData()

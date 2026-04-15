@@ -17,6 +17,8 @@
 #include <QSpinBox>
 #include <QCheckBox>
 
+namespace Ui { class ReportPage; }
+
 class ReportPage : public BasePage {
     Q_OBJECT
 public:
@@ -41,6 +43,7 @@ private slots:
     void refreshHistory();
 
 private:
+    Ui::ReportPage *ui{nullptr};
     void setupUi();
     void setupOverviewTab(QWidget *tab);
     void setupThreatTab(QWidget *tab);

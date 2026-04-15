@@ -6,6 +6,8 @@
 #include <QComboBox>
 #include <QLineEdit>
 #include <QLabel>
+namespace Ui { class PortInfoPage; }
+
 class PortInfoPage : public BasePage {
     Q_OBJECT
 public:
@@ -14,6 +16,7 @@ public:
 private slots:
     void onQuery();
 private:
+    Ui::PortInfoPage *ui{nullptr};
     void setupUi();
     void fillTable(const QVariantList &rows);
     QTableWidget *m_tbl{nullptr};

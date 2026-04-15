@@ -34,6 +34,8 @@
  *       Tab4 数字证书   → 卡片式表单 + 状态徽章
  *       Tab5 综合结论   → 风险评级卡片 + 结论文本
  */
+namespace Ui { class StaticScanPage; }
+
 class StaticScanPage : public BasePage {
     Q_OBJECT
 public:
@@ -53,6 +55,7 @@ private slots:
     void onQueryCert();
 
 private:
+    Ui::StaticScanPage *ui{nullptr};
     void setupUi();
     void setupAttrPanel(QWidget *parent);
 

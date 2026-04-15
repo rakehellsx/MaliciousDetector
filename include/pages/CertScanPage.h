@@ -6,6 +6,8 @@
 #include <QTableWidget>
 #include <QTextEdit>
 #include <QPushButton>
+namespace Ui { class CertScanPage; }
+
 class CertScanPage : public BasePage {
     Q_OBJECT
 public:
@@ -16,6 +18,7 @@ private slots:
     void onStartScan();
     void onRowSelected(int row, int col);
 private:
+    Ui::CertScanPage *ui{nullptr};
     void setupUi();
     QLineEdit    *m_editPath;
     QPushButton  *m_btnBrowse;

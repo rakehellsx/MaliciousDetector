@@ -6,6 +6,8 @@
 #include <QLineEdit>
 #include <QComboBox>
 #include <QLabel>
+namespace Ui { class NetworkInfoPage; }
+
 class NetworkInfoPage : public BasePage {
     Q_OBJECT
 public:
@@ -14,6 +16,7 @@ public:
 private slots:
     void onQuery();
 private:
+    Ui::NetworkInfoPage *ui{nullptr};
     void setupUi();
     void fillTable(const QVariantList &rows);
     QTableWidget *m_tbl{nullptr};

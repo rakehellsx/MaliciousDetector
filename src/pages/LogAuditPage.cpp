@@ -1,4 +1,6 @@
 #include "pages/LogAuditPage.h"
+#include "ui_LogAuditPage.h"
+
 #include "DatabaseManager.h"
 #include <QHBoxLayout>
 #include <QLabel>
@@ -11,93 +13,18 @@
 #include <QDateTime>
 
 LogAuditPage::LogAuditPage(QWidget *parent) : BasePage("日志审计", parent) {
-    setupUi();
+    ui = new Ui::LogAuditPage();
+    ui->setupUi(this);
+    m_cmbRole = ui->m_cmbRole;
+    m_cmbType = ui->m_cmbType;
+    m_edtUser = ui->m_edtUser;
+    m_dateFrom = ui->m_dateFrom;
+    m_dateTo = ui->m_dateTo;
+    m_btnQuery = ui->m_btnQuery;
+    m_btnExport = ui->m_btnExport;
+    m_tbl = ui->m_tbl;
+    m_lblCount = ui->m_lblCount;
     refreshData();
-}
-
-void LogAuditPage::setupUi() {
-    // 筛选工具栏
-    QHBoxLayout *filterRow = new QHBoxLayout;
-
-    QLabel *lblRole = new QLabel("角色：");
-    lblRole->setObjectName("fieldLabel");
-    m_cmbRole = new QComboBox;
-    m_cmbRole->setObjectName("comboBox");
-    m_cmbRole->addItems({"全部角色", "系统管理员", "安全管理员", "安全审计员"});
-    m_cmbRole->setFixedWidth(110);
-
-    QLabel *lblType = new QLabel("类型：");
-    lblType->setObjectName("fieldLabel");
-    m_cmbType = new QComboBox;
-    m_cmbType->setObjectName("comboBox");
-    m_cmbType->addItems({"全部类型", "登录", "登出", "扫描", "导出", "设置", "规则", "白名单", "报告"});
-    m_cmbType->setFixedWidth(100);
-
-    QLabel *lblUser = new QLabel("用户：");
-    lblUser->setObjectName("fieldLabel");
-    m_edtUser = new QLineEdit;
-    m_edtUser->setPlaceholderText("用户名");
-    m_edtUser->setFixedWidth(90);
-
-    QLabel *lblFrom = new QLabel("开始：");
-    lblFrom->setObjectName("fieldLabel");
-    m_dateFrom = new QDateEdit(QDate::currentDate().addDays(-30));
-    m_dateFrom->setCalendarPopup(true);
-    m_dateFrom->setDisplayFormat("yyyy-MM-dd");
-
-    QLabel *lblTo = new QLabel("结束：");
-    lblTo->setObjectName("fieldLabel");
-    m_dateTo = new QDateEdit(QDate::currentDate());
-    m_dateTo->setCalendarPopup(true);
-    m_dateTo->setDisplayFormat("yyyy-MM-dd");
-
-    m_btnQuery  = new QPushButton("查询");
-    m_btnExport = new QPushButton("导出");
-    m_btnQuery->setObjectName("btnPrimary");
-    m_btnExport->setObjectName("btnSecondary");
-    m_btnQuery->setFixedWidth(70);
-    m_btnExport->setFixedWidth(70);
-
-    connect(m_btnQuery,  &QPushButton::clicked, this, &LogAuditPage::onQuery);
-    connect(m_btnExport, &QPushButton::clicked, this, &LogAuditPage::onExport);
-
-    filterRow->addWidget(lblRole);
-    filterRow->addWidget(m_cmbRole);
-    filterRow->addSpacing(6);
-    filterRow->addWidget(lblType);
-    filterRow->addWidget(m_cmbType);
-    filterRow->addSpacing(6);
-    filterRow->addWidget(lblUser);
-    filterRow->addWidget(m_edtUser);
-    filterRow->addSpacing(6);
-    filterRow->addWidget(lblFrom);
-    filterRow->addWidget(m_dateFrom);
-    filterRow->addSpacing(4);
-    filterRow->addWidget(lblTo);
-    filterRow->addWidget(m_dateTo);
-    filterRow->addSpacing(6);
-    filterRow->addWidget(m_btnQuery);
-    filterRow->addWidget(m_btnExport);
-    filterRow->addStretch();
-    m_mainLayout->addLayout(filterRow);
-
-    // 记录数统计
-    m_lblCount = new QLabel("共 0 条记录");
-    m_lblCount->setStyleSheet("color:#888;font-size:11px;margin:2px 0;");
-    m_mainLayout->addWidget(m_lblCount);
-
-    // 日志表格（7列，含IP地址）
-    m_tbl = new QTableWidget(0, 7);
-    m_tbl->setHorizontalHeaderLabels({"时间", "角色", "用户名", "操作类型", "操作详情", "IP地址", "结果"});
-    styleTable(m_tbl);
-    m_tbl->horizontalHeader()->setSectionResizeMode(4, QHeaderView::Stretch);
-    m_tbl->setColumnWidth(0, 150);
-    m_tbl->setColumnWidth(1, 90);
-    m_tbl->setColumnWidth(2, 80);
-    m_tbl->setColumnWidth(3, 90);
-    m_tbl->setColumnWidth(5, 110);
-    m_tbl->setColumnWidth(6, 70);
-    m_mainLayout->addWidget(m_tbl, 1);
 }
 
 void LogAuditPage::refreshData() { onQuery(); }

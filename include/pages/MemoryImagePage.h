@@ -12,6 +12,8 @@
 #include <QVariantMap>
 #include <QVariantList>
 
+namespace Ui { class MemoryImagePage; }
+
 class MemoryImagePage : public BasePage {
     Q_OBJECT
 public:
@@ -23,6 +25,7 @@ private slots:
     void onQueryProc();
 
 private:
+    Ui::MemoryImagePage *ui{nullptr};
     void setupUi();
     void populateMemoryStatus(const QJsonObject &data);
     void populateKernelModules(const QJsonObject &data);

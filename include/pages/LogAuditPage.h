@@ -9,6 +9,8 @@
 #include <QPushButton>
 #include <QLabel>
 
+namespace Ui { class LogAuditPage; }
+
 class LogAuditPage : public BasePage {
     Q_OBJECT
 public:
@@ -20,6 +22,7 @@ private slots:
     void onExport();
 
 private:
+    Ui::LogAuditPage *ui{nullptr};
     void setupUi();
 
     QComboBox    *m_cmbRole;

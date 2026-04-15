@@ -14,6 +14,8 @@
 #include <QLabel>
 #include <QProgressBar>
 
+namespace Ui { class SystemSettingsPage; }
+
 class SystemSettingsPage : public BasePage {
     Q_OBJECT
 public:
@@ -30,6 +32,7 @@ private slots:
     void onDelRule();
 
 private:
+    Ui::SystemSettingsPage *ui{nullptr};
     void setupUi();
     void loadSettings();
 

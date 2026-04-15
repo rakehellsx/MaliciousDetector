@@ -6,6 +6,8 @@
 #include <QComboBox>
 #include <QLineEdit>
 #include <QLabel>
+namespace Ui { class BrowserPluginPage; }
+
 class BrowserPluginPage : public BasePage {
     Q_OBJECT
 public:
@@ -14,6 +16,7 @@ public:
 private slots:
     void onQuery();
 private:
+    Ui::BrowserPluginPage *ui{nullptr};
     void setupUi();
     void fillTable(const QVariantList &rows);
     QTableWidget *m_tbl{nullptr};

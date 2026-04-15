@@ -1,4 +1,6 @@
 #include "pages/StaticScanPage.h"
+#include "ui_StaticScanPage.h"
+
 #include "DatabaseManager.h"
 #include <QSqlDatabase>
 #include <QSqlQuery>
@@ -41,106 +43,56 @@ QLabel *StaticScanPage::makeBadge(const QString &text, const QString &bg,
 StaticScanPage::StaticScanPage(QWidget *parent)
     : BasePage("静态检测", parent)
 {
-    setupUi();
+    ui = new Ui::StaticScanPage();
+    ui->setupUi(this);
+    m_fileList = ui->m_fileList;
+    m_btnAddFile = ui->m_btnAddFile;
+    m_btnRemoveFile = ui->m_btnRemoveFile;
+    m_btnScanSelected = ui->m_btnScanSelected;
+    m_btnScanAll = ui->m_btnScanAll;
+    m_edtFileKw = ui->m_edtFileKw;
+    m_cmbFileRisk = ui->m_cmbFileRisk;
+    m_attrFileName = ui->m_attrFileName;
+    m_attrFilePath = ui->m_attrFilePath;
+    m_attrFileSize = ui->m_attrFileSize;
+    m_attrFileType = ui->m_attrFileType;
+    m_attrMd5 = ui->m_attrMd5;
+    m_attrSha256 = ui->m_attrSha256;
+    m_attrScanTime = ui->m_attrScanTime;
+    m_attrRiskLevel = ui->m_attrRiskLevel;
+    m_attrVirusStatus = ui->m_attrVirusStatus;
+    m_attrVirusName = ui->m_attrVirusName;
+    m_tabDetail = ui->m_tabDetail;
+    m_treePe = ui->m_treePe;
+    m_edtStrKw = ui->m_edtStrKw;
+    m_cmbStrType = ui->m_cmbStrType;
+    m_tblStrings = ui->m_tblStrings;
+    m_edtRuleKw = ui->m_edtRuleKw;
+    m_cmbRuleRisk = ui->m_cmbRuleRisk;
+    m_tblRules = ui->m_tblRules;
+    m_edtCertKw = ui->m_edtCertKw;
+    m_cmbCertStatus = ui->m_cmbCertStatus;
+    m_certStatusBadge = ui->m_certStatusBadge;
+    m_certSignedBadge = ui->m_certSignedBadge;
+    m_certExpiredBadge = ui->m_certExpiredBadge;
+    m_certTamperedBadge = ui->m_certTamperedBadge;
+    m_certSubject = ui->m_certSubject;
+    m_certIssuer = ui->m_certIssuer;
+    m_certSerial = ui->m_certSerial;
+    m_certNotBefore = ui->m_certNotBefore;
+    m_certNotAfter = ui->m_certNotAfter;
+    m_certHashAlg = ui->m_certHashAlg;
+    m_certThumbprint = ui->m_certThumbprint;
+    m_certVerifyResult = ui->m_certVerifyResult;
+    m_concRiskCard = ui->m_concRiskCard;
+    m_concRiskIcon = ui->m_concRiskIcon;
+    m_concRiskText = ui->m_concRiskText;
+    m_concVirusName = ui->m_concVirusName;
+    m_concText = ui->m_concText;
     populateFileList();
 }
 
 void StaticScanPage::refreshData() { populateFileList(); }
-
-void StaticScanPage::setupUi()
-{
-    QSplitter *hSplitter = new QSplitter(Qt::Horizontal);
-    hSplitter->setChildrenCollapsible(false);
-
-    // 左侧文件列表
-    QWidget *leftPanel = new QWidget;
-    QVBoxLayout *leftLayout = new QVBoxLayout(leftPanel);
-    leftLayout->setContentsMargins(0, 0, 4, 0);
-    leftLayout->setSpacing(4);
-
-    QLabel *lblList = new QLabel("检测文件列表");
-    lblList->setStyleSheet("font-weight:bold; font-size:13px; padding:4px 0;");
-    leftLayout->addWidget(lblList);
-
-    // 文件列表查询栏
-    QHBoxLayout *fileQueryRow = new QHBoxLayout;
-    fileQueryRow->setSpacing(4);
-    m_edtFileKw = new QLineEdit;
-    m_edtFileKw->setPlaceholderText("文件名 / MD5 关键字");
-    m_edtFileKw->setClearButtonEnabled(true);
-    connect(m_edtFileKw, &QLineEdit::returnPressed, this, &StaticScanPage::onQueryFileList);
-    m_cmbFileRisk = new QComboBox;
-    m_cmbFileRisk->addItems({"全部", "高危", "中危", "低危", "安全"});
-    connect(m_cmbFileRisk, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &StaticScanPage::onQueryFileList);
-    QPushButton *btnFileQuery = new QPushButton("搜索");
-    btnFileQuery->setObjectName("btnPrimary");
-    btnFileQuery->setFixedWidth(55);
-    connect(btnFileQuery, &QPushButton::clicked, this, &StaticScanPage::onQueryFileList);
-    fileQueryRow->addWidget(m_edtFileKw, 1);
-    fileQueryRow->addWidget(m_cmbFileRisk);
-    fileQueryRow->addWidget(btnFileQuery);
-    leftLayout->addLayout(fileQueryRow);
-
-    m_fileList = new QListWidget;
-    m_fileList->setAlternatingRowColors(true);
-    m_fileList->setStyleSheet(
-        "QListWidget { border:1px solid #ddd; border-radius:4px; font-size:12px; }"
-        "QListWidget::item { padding:5px 8px; border-bottom:1px solid #ececec; }"
-        "QListWidget::item:selected { background:#1565c0; color:#fff; }"
-        "QListWidget::item:hover { background:#e3f2fd; }");
-    connect(m_fileList, &QListWidget::itemClicked,
-            this, &StaticScanPage::onFileItemClicked);
-    leftLayout->addWidget(m_fileList, 1);
-
-    QHBoxLayout *listBtnRow = new QHBoxLayout;
-    listBtnRow->setSpacing(4);
-    m_btnAddFile      = new QPushButton("添加文件");
-    m_btnAddFile->setObjectName("btnPrimary");
-    m_btnRemoveFile   = new QPushButton("移除");
-    m_btnRemoveFile->setObjectName("btnSecondary");
-    m_btnScanSelected = new QPushButton("检测选中");
-    m_btnScanSelected->setObjectName("btnPrimary");
-    m_btnScanAll      = new QPushButton("全部检测");
-    m_btnScanAll->setObjectName("btnSecondary");
-    listBtnRow->addWidget(m_btnAddFile);
-    listBtnRow->addWidget(m_btnRemoveFile);
-    listBtnRow->addStretch();
-    listBtnRow->addWidget(m_btnScanSelected);
-    listBtnRow->addWidget(m_btnScanAll);
-    leftLayout->addLayout(listBtnRow);
-
-    connect(m_btnAddFile,      &QPushButton::clicked, this, &StaticScanPage::onAddFile);
-    connect(m_btnRemoveFile,   &QPushButton::clicked, this, &StaticScanPage::onRemoveFile);
-    connect(m_btnScanSelected, &QPushButton::clicked, this, &StaticScanPage::onScanSelected);
-    connect(m_btnScanAll,      &QPushButton::clicked, this, &StaticScanPage::onScanAll);
-    hSplitter->addWidget(leftPanel);
-
-    // 右侧垂直 Splitter
-    QSplitter *vSplitter = new QSplitter(Qt::Vertical);
-    vSplitter->setChildrenCollapsible(false);
-
-    QGroupBox *attrBox = new QGroupBox("基本属性");
-    attrBox->setStyleSheet("QGroupBox { font-weight:bold; font-size:13px; }");
-    setupAttrPanel(attrBox);
-    vSplitter->addWidget(attrBox);
-
-    m_tabDetail = new QTabWidget;
-    m_tabDetail->setObjectName("detailTab");
-    m_tabDetail->addTab(buildPeTab(),         "PE 结构");
-    m_tabDetail->addTab(buildStringsTab(),    "字符串提取");
-    m_tabDetail->addTab(buildRulesTab(),      "规则命中");
-    m_tabDetail->addTab(buildCertTab(),       "数字证书");
-    m_tabDetail->addTab(buildConclusionTab(), "综合结论");
-    vSplitter->addWidget(m_tabDetail);
-    vSplitter->setStretchFactor(0, 2);
-    vSplitter->setStretchFactor(1, 3);
-
-    hSplitter->addWidget(vSplitter);
-    hSplitter->setStretchFactor(0, 1);
-    hSplitter->setStretchFactor(1, 3);
-    m_mainLayout->addWidget(hSplitter, 1);
-}
 
 void StaticScanPage::setupAttrPanel(QWidget *parent)
 {

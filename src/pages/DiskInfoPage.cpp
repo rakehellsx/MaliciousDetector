@@ -1,4 +1,6 @@
 #include "pages/DiskInfoPage.h"
+#include "ui_DiskInfoPage.h"
+
 #include "DatabaseManager.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -8,55 +10,13 @@
 DiskInfoPage::DiskInfoPage(QWidget *parent)
     : BasePage("硬盘信息", parent)
 {
-    setupUi();
+    ui = new Ui::DiskInfoPage();
+    ui->setupUi(this);
+    m_tbl = ui->m_tbl;
+    m_edtKeyword = ui->m_edtKeyword;
+    m_cmbType = ui->m_cmbType;
+    m_lblStatus = findChild<QLabel*>("m_lblStatus");
     refreshData();
-}
-
-void DiskInfoPage::setupUi()
-{
-    QHBoxLayout *toolRow = new QHBoxLayout;
-    toolRow->setSpacing(6);
-
-    m_edtKeyword = new QLineEdit;
-    m_edtKeyword->setPlaceholderText("盘符 / 文件系统 / 序列号");
-    m_edtKeyword->setClearButtonEnabled(true);
-    m_edtKeyword->setFixedWidth(200);
-    connect(m_edtKeyword, &QLineEdit::returnPressed, this, &DiskInfoPage::onQuery);
-
-    m_cmbType = new QComboBox;
-    m_cmbType->addItems({"全部类型", "本地磁盘", "可移动磁盘", "网络磁盘", "光驱"});
-    connect(m_cmbType, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &DiskInfoPage::onQuery);
-
-    QPushButton *btnQuery   = new QPushButton("查询");
-    btnQuery->setObjectName("btnPrimary");
-    btnQuery->setFixedWidth(70);
-    connect(btnQuery, &QPushButton::clicked, this, &DiskInfoPage::onQuery);
-
-    QPushButton *btnRefresh = new QPushButton("刷新");
-    btnRefresh->setObjectName("btnSecondary");
-    btnRefresh->setFixedWidth(70);
-    connect(btnRefresh, &QPushButton::clicked, this, &DiskInfoPage::refreshData);
-
-    toolRow->addWidget(new QLabel("关键字："));
-    toolRow->addWidget(m_edtKeyword);
-    toolRow->addSpacing(8);
-    toolRow->addWidget(new QLabel("类型："));
-    toolRow->addWidget(m_cmbType);
-    toolRow->addWidget(btnQuery);
-    toolRow->addWidget(btnRefresh);
-    toolRow->addStretch();
-    m_mainLayout->addLayout(toolRow);
-
-    m_lblStatus = new QLabel;
-    m_lblStatus->setObjectName("statusLabel");
-    m_mainLayout->addWidget(m_lblStatus);
-
-    m_tbl = new QTableWidget(0, 7);
-    m_tbl->setHorizontalHeaderLabels({"盘符", "类型", "文件系统", "总大小(GB)", "可用(GB)", "使用率", "序列号"});
-    styleTable(m_tbl);
-    m_tbl->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    m_mainLayout->addWidget(m_tbl, 1);
 }
 
 void DiskInfoPage::refreshData()

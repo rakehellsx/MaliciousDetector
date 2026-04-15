@@ -1,4 +1,6 @@
 #include "pages/BrowserPluginPage.h"
+#include "ui_BrowserPluginPage.h"
+
 #include "DatabaseManager.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -8,68 +10,15 @@
 BrowserPluginPage::BrowserPluginPage(QWidget *parent)
     : BasePage("浏览器插件", parent)
 {
-    setupUi();
+    ui = new Ui::BrowserPluginPage();
+    ui->setupUi(this);
+    m_tbl = ui->m_tbl;
+    m_edtKeyword = ui->m_edtKeyword;
+    m_cmbBrowser = ui->m_cmbBrowser;
+    m_cmbRisk = ui->m_cmbRisk;
+    m_lblSummary = findChild<QLabel*>("m_lblSummary");
+    m_lblStatus = ui->m_lblStatus;
     refreshData();
-}
-
-void BrowserPluginPage::setupUi()
-{
-    QHBoxLayout *toolRow = new QHBoxLayout;
-    toolRow->setSpacing(6);
-
-    m_edtKeyword = new QLineEdit;
-    m_edtKeyword->setPlaceholderText("插件名 / 发布商 / 版本");
-    m_edtKeyword->setClearButtonEnabled(true);
-    m_edtKeyword->setFixedWidth(200);
-    connect(m_edtKeyword, &QLineEdit::returnPressed, this, &BrowserPluginPage::onQuery);
-
-    m_cmbBrowser = new QComboBox;
-    m_cmbBrowser->addItems({"全部浏览器", "Chrome", "Firefox", "Edge", "IE"});
-    connect(m_cmbBrowser, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &BrowserPluginPage::onQuery);
-
-    m_cmbRisk = new QComboBox;
-    m_cmbRisk->addItems({"全部风险", "高危", "中危", "低危"});
-    connect(m_cmbRisk, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &BrowserPluginPage::onQuery);
-
-    QPushButton *btnQuery   = new QPushButton("查询");
-    btnQuery->setObjectName("btnPrimary");
-    btnQuery->setFixedWidth(70);
-    connect(btnQuery, &QPushButton::clicked, this, &BrowserPluginPage::onQuery);
-
-    QPushButton *btnRefresh = new QPushButton("刷新");
-    btnRefresh->setObjectName("btnSecondary");
-    btnRefresh->setFixedWidth(70);
-    connect(btnRefresh, &QPushButton::clicked, this, &BrowserPluginPage::refreshData);
-
-    toolRow->addWidget(new QLabel("关键字："));
-    toolRow->addWidget(m_edtKeyword);
-    toolRow->addSpacing(8);
-    toolRow->addWidget(new QLabel("浏览器："));
-    toolRow->addWidget(m_cmbBrowser);
-    toolRow->addSpacing(8);
-    toolRow->addWidget(new QLabel("风险："));
-    toolRow->addWidget(m_cmbRisk);
-    toolRow->addWidget(btnQuery);
-    toolRow->addWidget(btnRefresh);
-    toolRow->addStretch();
-    m_mainLayout->addLayout(toolRow);
-
-    m_lblSummary = new QLabel;
-    m_lblSummary->setObjectName("summaryLabel");
-    m_mainLayout->addWidget(m_lblSummary);
-
-    m_lblStatus = new QLabel;
-    m_lblStatus->setObjectName("statusLabel");
-    m_mainLayout->addWidget(m_lblStatus);
-
-    // DB字段: browser, name, version, publisher, status, risk
-    m_tbl = new QTableWidget(0, 6);
-    m_tbl->setHorizontalHeaderLabels({"浏览器", "插件名称", "版本", "发布商", "状态", "风险"});
-    styleTable(m_tbl);
-    m_tbl->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    m_mainLayout->addWidget(m_tbl, 1);
 }
 
 void BrowserPluginPage::refreshData()

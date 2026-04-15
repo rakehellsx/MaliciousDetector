@@ -7,6 +7,8 @@
 #include <QLabel>
 #include <QGroupBox>
 
+namespace Ui { class DashboardPage; }
+
 class DashboardPage : public BasePage
 {
     Q_OBJECT
@@ -15,6 +17,7 @@ public:
     void refreshData() override;
 
 private:
+    Ui::DashboardPage *ui{nullptr};
     void setupUi();
     void updateStatCards();
     void updateRecentAlerts();

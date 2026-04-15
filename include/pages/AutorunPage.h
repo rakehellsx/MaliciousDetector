@@ -7,6 +7,8 @@
 #include <QLineEdit>
 #include <QComboBox>
 #include <QLabel>
+namespace Ui { class AutorunPage; }
+
 class AutorunPage : public BasePage {
     Q_OBJECT
 public:
@@ -15,6 +17,7 @@ public:
 private slots:
     void onQuery();
 private:
+    Ui::AutorunPage *ui{nullptr};
     void setupUi();
     void fillTab(QTableWidget *tbl, const QString &type, const QString &kw, const QString &risk);
     QTabWidget   *m_tabs{nullptr};

@@ -1,4 +1,6 @@
 #include "pages/DriverInfoPage.h"
+#include "ui_DriverInfoPage.h"
+
 #include "DatabaseManager.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -8,76 +10,16 @@
 DriverInfoPage::DriverInfoPage(QWidget *parent)
     : BasePage("驱动信息", parent)
 {
-    setupUi();
+    ui = new Ui::DriverInfoPage();
+    ui->setupUi(this);
+    m_tbl = ui->m_tbl;
+    m_edtKeyword = ui->m_edtKeyword;
+    m_cmbType = findChild<QComboBox*>("m_cmbType");
+    m_cmbSigned = ui->m_cmbSigned;
+    m_cmbRisk = findChild<QComboBox*>("m_cmbRisk");
+    m_lblSummary = ui->m_lblSummary;
+    m_lblStatus = ui->m_lblStatus;
     refreshData();
-}
-
-void DriverInfoPage::setupUi()
-{
-    QHBoxLayout *toolRow = new QHBoxLayout;
-    toolRow->setSpacing(6);
-
-    m_edtKeyword = new QLineEdit;
-    m_edtKeyword->setPlaceholderText("驱动名 / 发布商 / 路径");
-    m_edtKeyword->setClearButtonEnabled(true);
-    m_edtKeyword->setFixedWidth(200);
-    connect(m_edtKeyword, &QLineEdit::returnPressed, this, &DriverInfoPage::onQuery);
-
-    m_cmbType = new QComboBox;
-    m_cmbType->addItems({"全部类型", "内核驱动", "设备驱动", "第三方"});
-    connect(m_cmbType, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &DriverInfoPage::onQuery);
-
-    m_cmbSigned = new QComboBox;
-    m_cmbSigned->addItems({"全部签名", "已签名", "未签名"});
-    connect(m_cmbSigned, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &DriverInfoPage::onQuery);
-
-    m_cmbRisk = new QComboBox;
-    m_cmbRisk->addItems({"全部风险", "高危", "中危", "低危"});
-    connect(m_cmbRisk, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &DriverInfoPage::onQuery);
-
-    QPushButton *btnQuery   = new QPushButton("查询");
-    btnQuery->setObjectName("btnPrimary");
-    btnQuery->setFixedWidth(70);
-    connect(btnQuery, &QPushButton::clicked, this, &DriverInfoPage::onQuery);
-
-    QPushButton *btnRefresh = new QPushButton("刷新");
-    btnRefresh->setObjectName("btnSecondary");
-    btnRefresh->setFixedWidth(70);
-    connect(btnRefresh, &QPushButton::clicked, this, &DriverInfoPage::refreshData);
-
-    toolRow->addWidget(new QLabel("关键字："));
-    toolRow->addWidget(m_edtKeyword);
-    toolRow->addSpacing(8);
-    toolRow->addWidget(new QLabel("类型："));
-    toolRow->addWidget(m_cmbType);
-    toolRow->addSpacing(8);
-    toolRow->addWidget(new QLabel("签名："));
-    toolRow->addWidget(m_cmbSigned);
-    toolRow->addSpacing(8);
-    toolRow->addWidget(new QLabel("风险："));
-    toolRow->addWidget(m_cmbRisk);
-    toolRow->addWidget(btnQuery);
-    toolRow->addWidget(btnRefresh);
-    toolRow->addStretch();
-    m_mainLayout->addLayout(toolRow);
-
-    m_lblSummary = new QLabel;
-    m_lblSummary->setObjectName("summaryLabel");
-    m_mainLayout->addWidget(m_lblSummary);
-
-    m_lblStatus = new QLabel;
-    m_lblStatus->setObjectName("statusLabel");
-    m_mainLayout->addWidget(m_lblStatus);
-
-    // DB字段: name, type, publisher, modified_time, path, is_signed, risk
-    m_tbl = new QTableWidget(0, 7);
-    m_tbl->setHorizontalHeaderLabels({"驱动名称", "类型", "发布商", "修改时间", "文件路径", "数字签名", "风险"});
-    styleTable(m_tbl);
-    m_tbl->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    m_mainLayout->addWidget(m_tbl, 1);
 }
 
 void DriverInfoPage::refreshData()
