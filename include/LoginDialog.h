@@ -3,17 +3,16 @@
 #define LOGINDIALOG_H
 
 #include <QDialog>
-#include <QLabel>
-#include <QLineEdit>
-#include <QPushButton>
 #include <QButtonGroup>
-#include <QTimer>
+
+namespace Ui { class LoginDialog; }
 
 class LoginDialog : public QDialog
 {
     Q_OBJECT
 public:
     explicit LoginDialog(QWidget *parent = nullptr);
+    ~LoginDialog();
 
     QString selectedRole()    const;
     QString enteredUsername() const;
@@ -23,21 +22,9 @@ private slots:
     void onRoleChanged(int id);
 
 private:
-    void setupUi();
-    void applyStyle();
-
-    QButtonGroup *m_roleGroup;
-    QPushButton  *m_btnSysAdmin;
-    QPushButton  *m_btnSecAdmin;
-    QPushButton  *m_btnAuditor;
-    QLineEdit    *m_editUser;
-    QLineEdit    *m_editPass;
-    QPushButton  *m_btnLogin;
-    QLabel       *m_lblUsbStatus;
-    QLabel       *m_lblVersion;
-    QLabel       *m_lblError;
-
-    QString m_currentRole;
+    Ui::LoginDialog *ui;
+    QButtonGroup    *m_roleGroup;
+    QString          m_currentRole;
 };
 
 #endif // LOGINDIALOG_H

@@ -4,6 +4,7 @@
 #include "MainWindow.h"
 #include "DatabaseManager.h"
 #include "BasicLibLoader.h"
+#include "StyleManager.h"
 
 int main(int argc, char *argv[])
 {
@@ -16,6 +17,9 @@ int main(int argc, char *argv[])
     QFont font("Microsoft YaHei", 9);
     app.setFont(font);
 
+    // 加载全局主题样式（从 styles/main.qss）
+    StyleManager::applyGlobal(app);
+
     // 初始化数据库
     if (!DatabaseManager::instance()->init()) {
         return -1;
@@ -26,8 +30,9 @@ int main(int argc, char *argv[])
     QString dllPath = DatabaseManager::instance()->getSetting("dll_path", "basic.dll");
     loader->load(dllPath);
 
-    // 显示登录对话框
+    // 显示登录对话框（应用登录界面专属样式）
     LoginDialog login;
+    StyleManager::applyTo(&login, "login");
     if (login.exec() != QDialog::Accepted) {
         return 0;
     }

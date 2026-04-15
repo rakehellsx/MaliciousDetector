@@ -1,0 +1,115 @@
+/* ============================================================
+ * login.qss — 登录界面专属样式
+ * ============================================================ */
+
+LoginDialog {
+    background: #0d1b2e;
+}
+
+/* ── 顶部标题区 ───────────────────────────────────────────── */
+#loginHeader {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #1a3a5c, stop:1 #0d1b2e);
+}
+#loginIcon {
+    font-size: 36px;
+    color: #4fc3f7;
+}
+#loginTitle {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+    font-family: "Microsoft YaHei", "SimHei", sans-serif;
+}
+#loginSub {
+    font-size: 10px;
+    color: #90caf9;
+}
+#loginCert {
+    font-size: 10px;
+    color: #4fc3f7;
+}
+
+/* ── 表单区 ───────────────────────────────────────────────── */
+#loginForm {
+    background: #0d1b2e;
+}
+
+/* ── 角色切换按钮 ─────────────────────────────────────────── */
+#m_btnSysAdmin, #m_btnSecAdmin, #m_btnAuditor {
+    background: #1a2a3e;
+    color: #90caf9;
+    border: 1px solid #2a4a6e;
+    padding: 6px 0;
+    font-size: 12px;
+    font-family: "Microsoft YaHei", sans-serif;
+}
+#m_btnSysAdmin:checked, #m_btnSecAdmin:checked, #m_btnAuditor:checked {
+    background: #1565c0;
+    color: #ffffff;
+    border: 1px solid #1976d2;
+}
+#m_btnSysAdmin:hover:!checked,
+#m_btnSecAdmin:hover:!checked,
+#m_btnAuditor:hover:!checked {
+    background: #1e3a5a;
+}
+
+/* ── 字段标签 ─────────────────────────────────────────────── */
+#lblUser, #lblPass, #lblUsb {
+    color: #90caf9;
+    font-size: 12px;
+    font-family: "Microsoft YaHei", sans-serif;
+    margin-bottom: 0px;
+}
+
+/* ── 输入框 ───────────────────────────────────────────────── */
+#m_editUser, #m_editPass {
+    background: #1a2a3e;
+    border: 1px solid #2a4a6e;
+    border-radius: 3px;
+    color: #e0e0e0;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-family: "Microsoft YaHei", sans-serif;
+}
+#m_editUser:focus, #m_editPass:focus {
+    border: 1px solid #1976d2;
+}
+
+/* ── USB Key 状态 ─────────────────────────────────────────── */
+#m_lblUsbStatus {
+    color: #4caf50;
+    font-size: 11px;
+    padding: 6px 10px;
+    background: #0a2a0a;
+    border: 1px solid #2e7d32;
+    border-radius: 3px;
+}
+
+/* ── 错误提示 ─────────────────────────────────────────────── */
+#m_lblError {
+    color: #ef5350;
+    font-size: 11px;
+    min-height: 16px;
+}
+
+/* ── 登录按钮 ─────────────────────────────────────────────── */
+#m_btnLogin {
+    background: #1565c0;
+    color: #ffffff;
+    border: none;
+    border-radius: 3px;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 4px;
+    font-family: "Microsoft YaHei", sans-serif;
+}
+#m_btnLogin:hover   { background: #1976d2; }
+#m_btnLogin:pressed { background: #0d47a1; }
+
+/* ── 版本信息 ─────────────────────────────────────────────── */
+#m_lblVersion {
+    color: #546e7a;
+    font-size: 10px;
+}

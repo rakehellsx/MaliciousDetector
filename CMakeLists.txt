@@ -66,6 +66,7 @@ set(HEADERS
     include/DatabaseManager.h
     include/BasicLibLoader.h
     include/IconHelper.h
+    include/StyleManager.h
     include/pages/DashboardPage.h
     include/pages/SystemInfoPage.h
     include/pages/NetworkInfoPage.h
@@ -112,6 +113,7 @@ set(UI_FILES
     ui/LogAuditPage.ui
     ui/SystemSettingsPage.ui
     ui/CertScanPage.ui
+    ui/LoginDialog.ui
 )
 
 # ─────────────────────────────────────────────
@@ -188,6 +190,16 @@ if(WIN32)
         )
     endif()
 endif()
+
+# ─────────────────────────────────────────────
+# 样式文件复制到构建目录
+# ─────────────────────────────────────────────
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/resources/styles
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>/styles
+    COMMENT "Copying QSS style files to build directory"
+)
 
 # ─────────────────────────────────────────────
 # 安装规则
