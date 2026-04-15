@@ -3,30 +3,30 @@
     "source_path": "C:\\Windows\\Temp\\svchost32.exe",
     "extract_type": "可执行文件",
     "sample_path": "D:\\Samples\\svchost32_20251101.exe",
-    "md5": "ba7a9286419cffb0f30ad20eb69fad27",
-    "sha256": "18d9ed383833f91043b839ec34334cf5282645ba4c6b3556fcefd523aa9e2806",
-    "original_mtime": "2026-04-09 08:28:40",
-    "original_ctime": "2026-04-05 23:11:40",
+    "md5": "e9c74c6771cfa331397ba52fa933ebf2",
+    "sha256": "d25156f2a43fc0b5004189d90b37d2774631b86f106031ffd7155c9f640d74c0",
+    "original_mtime": "2026-04-13 17:50:26",
+    "original_ctime": "2026-04-11 17:38:26",
     "note": "高危样本，疑似远控木马"
   },
   {
     "source_path": "C:\\Users\\Admin\\Desktop\\readme.pdf.exe",
     "extract_type": "可执行文件",
     "sample_path": "D:\\Samples\\readme.pdf.exe_20251101.exe",
-    "md5": "eb880665d617da5e3e7aa442648493cf",
-    "sha256": "efe61e0b27ffbd008d34296d87d203c501b789d92550213f1cde3ee32d12cc08",
-    "original_mtime": "2026-04-13 01:05:40",
-    "original_ctime": "2026-04-11 03:48:40",
+    "md5": "182d417b4a33c55f3b1e76bf4a89722b",
+    "sha256": "012fc9267b191c9d8487e009daf1c12d29bd107416b5eebff222c0edf474fa6a",
+    "original_mtime": "2026-04-13 01:17:26",
+    "original_ctime": "2026-04-11 08:55:26",
     "note": "双扩展名欺骗，疑似勒索软件"
   },
   {
     "source_path": "C:\\Users\\Admin\\AppData\\Roaming\\update.exe",
     "extract_type": "可执行文件",
     "sample_path": "D:\\Samples\\update_20251101.exe",
-    "md5": "d48e76e1f90ab4e9a084ea1a359b893a",
-    "sha256": "5122c62e9d38a063119f6d373fb9506126ba540ddf6544d117d90d2a820fdf0d",
-    "original_mtime": "2026-04-08 13:52:40",
-    "original_ctime": "2026-04-05 18:57:40",
+    "md5": "aa5ab5435f99997756ef89b865ff6e78",
+    "sha256": "7f2877dfc64f5e2c1b040bec9e504451a3c9fb7c8a72038ad9a0495687dface2",
+    "original_mtime": "2026-04-07 18:36:26",
+    "original_ctime": "2026-03-19 04:17:26",
     "note": "广告软件"
   }
 ]

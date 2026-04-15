@@ -4,7 +4,7 @@
 #include "pages/BasePage.h"
 #include <QLineEdit>
 #include <QTableWidget>
-#include <QTextEdit>
+#include <QComboBox>
 #include <QPushButton>
 namespace Ui { class CertScanPage; }
 
@@ -14,16 +14,13 @@ public:
     explicit CertScanPage(QWidget *p=nullptr);
     void refreshData() override;
 private slots:
-    void onBrowseFile();
-    void onStartScan();
+    void onQuery();
     void onRowSelected(int row, int col);
 private:
     Ui::CertScanPage *ui{nullptr};
-    void setupUi();
-    QLineEdit    *m_editPath;
-    QPushButton  *m_btnBrowse;
-    QPushButton  *m_btnScan;
-    QTableWidget *m_tblResults;
-    QTextEdit    *m_txtDetail;
+    QLineEdit    *m_edtKeyword{nullptr};
+    QComboBox    *m_cmbCertStatus{nullptr};
+    QTableWidget *m_tbl{nullptr};
+    void fillTable(const QVariantList &rows);
 };
 #endif

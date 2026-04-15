@@ -12,7 +12,7 @@ AutorunPage::AutorunPage(QWidget *parent)
 {
     ui = new Ui::AutorunPage();
     ui->setupUi(this);
-    m_tabs = findChild<QTabWidget*>("m_tabs");
+    m_tabs = findChild<QTabWidget*>("m_tabAutorun");
     m_tblReg = ui->m_tblReg;
     m_tblFolder = ui->m_tblFolder;
     m_tblMenu = ui->m_tblMenu;

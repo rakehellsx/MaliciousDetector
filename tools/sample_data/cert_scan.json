@@ -11,8 +11,8 @@
     "not_after": "2025-04-11 09:00:00",
     "not_expired": 1,
     "hash_algorithm": "SHA256",
-    "thumbprint_sha1": "95ff83b1030daa50a00a53871fa9d431fc5af625",
-    "thumbprint_sha256": "fb51dd016d089bbfad1191fa20b95a02014e32dfb8d7ceebc1ec6ae430b3c837",
+    "thumbprint_sha1": "30e2cb6c6d6d536ff5de34f1d3a9acf843f55fe2",
+    "thumbprint_sha256": "b37031cde24159f5722c69b6d522b3ab8841415f2a06ff526400b1c13fea8666",
     "verify_result": "有效"
   },
   {
@@ -59,8 +59,8 @@
     "not_after": "2023-01-01 00:00:00",
     "not_expired": 0,
     "hash_algorithm": "SHA1",
-    "thumbprint_sha1": "a0b04b7f998103fe48ca93a8cc6eee7d186697f8",
-    "thumbprint_sha256": "ce059235bfaab972b590398827ffb0509479c422f2ec2b40804b1491e0168c48",
+    "thumbprint_sha1": "447dc3bdbed860063eef67e5d3b70c11778538f7",
+    "thumbprint_sha256": "d4f168e6c8fefdc499ca15621e900becbd10d00ca6b621ddce40017b3f40062a",
     "verify_result": "证书过期"
   },
   {
@@ -75,8 +75,8 @@
     "not_after": "2026-06-01 00:00:00",
     "not_expired": 1,
     "hash_algorithm": "SHA256",
-    "thumbprint_sha1": "332d4e458140dd3ad8c434118899b7a25de805c0",
-    "thumbprint_sha256": "137acd9d32c30a9a41655cbf77a69907741d99fa14963e59d469db05322cd4ec",
+    "thumbprint_sha1": "d7576ca252c78c9285dd273bdad50b2665e46a89",
+    "thumbprint_sha256": "d6b79b8a2fb463adca52ce22bda6b6174fe28a5327b20d57b0f38f5af1ae7993",
     "verify_result": "有效"
   }
 ]

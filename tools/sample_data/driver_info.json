@@ -3,7 +3,7 @@
     "name": "ntfs.sys",
     "type": "内核驱动",
     "publisher": "Microsoft Corporation",
-    "modified_time": "2026-04-14",
+    "modified_time": "2026-03-28",
     "path": "C:\\Windows\\System32\\drivers\\ntfs.sys",
     "is_signed": 1,
     "risk": "正常"
@@ -12,7 +12,7 @@
     "name": "tcpip.sys",
     "type": "内核驱动",
     "publisher": "Microsoft Corporation",
-    "modified_time": "2026-04-01",
+    "modified_time": "2026-04-14",
     "path": "C:\\Windows\\System32\\drivers\\tcpip.sys",
     "is_signed": 1,
     "risk": "正常"
@@ -21,7 +21,7 @@
     "name": "ndis.sys",
     "type": "内核驱动",
     "publisher": "Microsoft Corporation",
-    "modified_time": "2025-11-19",
+    "modified_time": "2025-11-21",
     "path": "C:\\Windows\\System32\\drivers\\ndis.sys",
     "is_signed": 1,
     "risk": "正常"
@@ -30,7 +30,7 @@
     "name": "nvlddmkm.sys",
     "type": "设备驱动",
     "publisher": "NVIDIA Corporation",
-    "modified_time": "2026-03-08",
+    "modified_time": "2026-02-12",
     "path": "C:\\Windows\\System32\\drivers\\nvlddmkm.sys",
     "is_signed": 1,
     "risk": "正常"
@@ -39,7 +39,7 @@
     "name": "360AntiHacker64.sys",
     "type": "第三方",
     "publisher": "360 Software",
-    "modified_time": "2026-03-26",
+    "modified_time": "2026-04-03",
     "path": "C:\\Program Files\\360\\360Safe\\deepscan\\360AntiHacker64.sys",
     "is_signed": 1,
     "risk": "正常"
@@ -48,7 +48,7 @@
     "name": "rootkit.sys",
     "type": "内核驱动",
     "publisher": "",
-    "modified_time": "2026-04-09",
+    "modified_time": "2026-04-10",
     "path": "C:\\Windows\\Temp\\rootkit.sys",
     "is_signed": 0,
     "risk": "高危"
@@ -57,7 +57,7 @@
     "name": "hookdrv.sys",
     "type": "第三方",
     "publisher": "Unknown",
-    "modified_time": "2026-04-10",
+    "modified_time": "2026-04-11",
     "path": "C:\\Windows\\System32\\drivers\\hookdrv.sys",
     "is_signed": 0,
     "risk": "中危"
@@ -66,7 +66,7 @@
     "name": "WdFilter.sys",
     "type": "内核驱动",
     "publisher": "Microsoft Corporation",
-    "modified_time": "2026-03-07",
+    "modified_time": "2026-03-12",
     "path": "C:\\Windows\\System32\\drivers\\wd\\WdFilter.sys",
     "is_signed": 1,
     "risk": "正常"

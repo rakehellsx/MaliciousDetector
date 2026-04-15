@@ -6,7 +6,7 @@
     "total_gb": 512.0,
     "free_gb": 187.3,
     "used_pct": 63.4,
-    "serial": "SSD24946"
+    "serial": "SSD51859"
   },
   {
     "drive": "D:\\",
@@ -15,7 +15,7 @@
     "total_gb": 2048.0,
     "free_gb": 1204.7,
     "used_pct": 41.2,
-    "serial": "HDD42177"
+    "serial": "HDD37193"
   },
   {
     "drive": "E:\\",
@@ -24,6 +24,6 @@
     "total_gb": 64.0,
     "free_gb": 32.1,
     "used_pct": 49.8,
-    "serial": "USB97641"
+    "serial": "USB89440"
   }
 ]

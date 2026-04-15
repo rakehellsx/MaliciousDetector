@@ -5,7 +5,7 @@
     "trigger": "每天 09:00",
     "action": "C:\\Program Files (x86)\\Microsoft\\EdgeUpdate\\MicrosoftEdgeUpdate.exe /c",
     "status": "就绪",
-    "last_run": "2026-04-13 08:43:40",
+    "last_run": "2026-04-12 01:54:26",
     "risk": "正常"
   },
   {
@@ -14,7 +14,7 @@
     "trigger": "每周日 02:00",
     "action": "C:\\Program Files\\Windows Defender\\MpCmdRun.exe -Scan -ScanType 2",
     "status": "就绪",
-    "last_run": "2026-04-09 10:18:40",
+    "last_run": "2026-04-08 21:23:26",
     "risk": "正常"
   },
   {
@@ -23,7 +23,7 @@
     "trigger": "每天 08:00",
     "action": "C:\\Program Files (x86)\\Google\\Update\\GoogleUpdate.exe /c",
     "status": "就绪",
-    "last_run": "2026-04-13 04:01:40",
+    "last_run": "2026-04-13 13:20:26",
     "risk": "正常"
   },
   {
@@ -32,7 +32,7 @@
     "trigger": "系统启动时",
     "action": "C:\\Windows\\Temp\\svchost32.exe --monitor",
     "status": "运行中",
-    "last_run": "2026-04-14 11:43:40",
+    "last_run": "2026-04-14 09:14:26",
     "risk": "高危"
   },
   {
@@ -41,7 +41,7 @@
     "trigger": "每天 23:00",
     "action": "C:\\Users\\Admin\\AppData\\Roaming\\backup.bat",
     "status": "就绪",
-    "last_run": "2026-04-12 16:14:40",
+    "last_run": "2026-04-13 12:13:26",
     "risk": "中危"
   },
   {
@@ -50,7 +50,7 @@
     "trigger": "每天 03:00",
     "action": "C:\\Windows\\System32\\UsoClient.exe StartScan",
     "status": "就绪",
-    "last_run": "2026-04-11 18:03:40",
+    "last_run": "2026-04-14 01:59:26",
     "risk": "正常"
   }
 ]

@@ -4,9 +4,9 @@
     "file_name": "svchost32.exe",
     "file_size": 245760,
     "file_type": "PE32",
-    "md5": "44c0bc9de72dc0c8e6507f5fcb3b282c",
-    "sha1": "ed75d9724a7d4dfee28a915e568ef7b38c592ec1",
-    "sha256": "2636d92dfc5d87150ced51b085d253c0d7060732eed413c5f7138a4f9b349eb2",
+    "md5": "60f6447a6b3f935781e5a3db979284a4",
+    "sha1": "fce811b1e38afbdee78eb867f6eaa6e426b5da37",
+    "sha256": "6d433c9a5092d0ae15aa8cb4bd7e2c177257abf769357099867d72a579d135a6",
     "compile_time": "2025-03-15 08:22:11",
     "publisher": "Unknown",
     "pe_info": "[{\"section\":\".text\",\"vsize\":163840,\"rsize\":163840},{\"section\":\".data\",\"vsize\":8192,\"rsize\":8192}]",
@@ -15,16 +15,16 @@
     "risk_level": "high",
     "virus_name": "Trojan.Generic.12345",
     "conclusion": "PE结构异常，存在加壳特征，导入表包含可疑API",
-    "scan_time": "2026-04-09 17:08:40"
+    "scan_time": "2026-04-13 16:37:26"
   },
   {
     "file_path": "C:\\Users\\Admin\\AppData\\Roaming\\update.exe",
     "file_name": "update.exe",
     "file_size": 102400,
     "file_type": "PE32",
-    "md5": "ccf2b58cf0b13b5192824079cb0ffc9f",
-    "sha1": "aa59f5f06f037271a7472c5dd9275f1f99a86b3f",
-    "sha256": "c49959191cf9cd457b6ce91171ac886ae282da09f3c54b15f657430e63df3cba",
+    "md5": "4de2f3b18f61c839d0e486d202cd7658",
+    "sha1": "15f344abaf29ca48dbd0ccab8700211f36fa7059",
+    "sha256": "d29bd9ddf8509d2934086f85d86ad16e46414dd3c7ce32a55bf351b5c476e10b",
     "compile_time": "2025-09-01 14:33:00",
     "publisher": "Unknown",
     "pe_info": "[{\"section\":\".text\",\"vsize\":65536,\"rsize\":65536}]",
@@ -33,16 +33,16 @@
     "risk_level": "medium",
     "virus_name": "Adware.Generic",
     "conclusion": "无数字签名，存在可疑网络连接行为",
-    "scan_time": "2026-04-12 10:41:40"
+    "scan_time": "2026-04-08 15:57:26"
   },
   {
     "file_path": "C:\\Windows\\System32\\notepad.exe",
     "file_name": "notepad.exe",
     "file_size": 204800,
     "file_type": "PE32+",
-    "md5": "5a7d9bf7dc33597d7e08069c530fc1e3",
-    "sha1": "361a4220fc9cea13afff760fd4a4ef59e47a7a25",
-    "sha256": "cfaf68aa4be554cc59d1989c2a7e2500a75399a319b06e2d42eb8396a75334dc",
+    "md5": "c1d35ab51a62d542a9f5fe721c862167",
+    "sha1": "f48d4711ad2d8813679e2fcf2f703ba842b023f5",
+    "sha256": "318fc1da36294c69b73d333f591090ae4e6d88c6656727b8ce07cd4a74c1bb6c",
     "compile_time": "2023-04-11 09:00:00",
     "publisher": "Microsoft Corporation",
     "pe_info": "[{\"section\":\".text\",\"vsize\":131072,\"rsize\":131072}]",
@@ -51,16 +51,16 @@
     "risk_level": "clean",
     "virus_name": "",
     "conclusion": "系统文件，数字签名有效，未发现威胁",
-    "scan_time": "2026-04-13 01:03:40"
+    "scan_time": "2026-04-13 20:51:26"
   },
   {
     "file_path": "C:\\Users\\Admin\\Desktop\\readme.pdf.exe",
     "file_name": "readme.pdf.exe",
     "file_size": 51200,
     "file_type": "PE32",
-    "md5": "f4b4b45c6c8718d34c474b2d38e1707f",
-    "sha1": "9c94bba3a917291d364abce7a9efc99e3c00bfef",
-    "sha256": "a7aa4329a851338f899bd94ba12dbf2e750b28b57b81c0cf1a35b1e71e835511",
+    "md5": "828e02b2999fd5eb33183aa217638976",
+    "sha1": "b6e162752910a0181f6096a2fe577076983e33fa",
+    "sha256": "fb70e1974aff5fb60a85a55c4dceb222e6efa0cccf2f94300f3b49a748b06a44",
     "compile_time": "2025-10-20 20:11:55",
     "publisher": "",
     "pe_info": "[{\"section\":\".text\",\"vsize\":32768,\"rsize\":32768},{\"section\":\".rsrc\",\"vsize\":4096,\"rsize\":4096}]",
@@ -69,16 +69,16 @@
     "risk_level": "high",
     "virus_name": "Ransomware.WannaCry.Variant",
     "conclusion": "双扩展名欺骗，无签名，包含加密勒索特征",
-    "scan_time": "2026-04-13 20:04:40"
+    "scan_time": "2026-04-12 10:32:26"
   },
   {
     "file_path": "C:\\Program Files\\7-Zip\\7z.exe",
     "file_name": "7z.exe",
     "file_size": 1048576,
     "file_type": "PE32+",
-    "md5": "2a28599066654a44e502ea66ede1d87f",
-    "sha1": "e1cc719543865b91200ea6abbfe8a53e15447098",
-    "sha256": "8ca03fcc2104cebc9a853d6eac50c8ac5a10d8e2cdd40faf86a3f670f8042c34",
+    "md5": "2d6825c2b623d9a5e5589aeac2ff669e",
+    "sha1": "547e2693e296a27617d63c16b10ac1cdb37f56e7",
+    "sha256": "58acdbd3f8597607b23964a475e9db67af0c8e6f4a7d5bba82d89a2fa4990d69",
     "compile_time": "2024-06-01 00:00:00",
     "publisher": "Igor Pavlov",
     "pe_info": "[{\"section\":\".text\",\"vsize\":524288,\"rsize\":524288}]",
@@ -87,6 +87,6 @@
     "risk_level": "clean",
     "virus_name": "",
     "conclusion": "已知安全软件，数字签名有效",
-    "scan_time": "2026-04-09 14:53:40"
+    "scan_time": "2026-04-12 10:11:26"
   }
 ]

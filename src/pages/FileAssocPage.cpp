@@ -36,12 +36,12 @@ void FileAssocPage::onQuery()
     QStringList riskMap = {"", "high", "medium", "low"};
     QString riskFilter = (riskIdx > 0 && riskIdx < riskMap.size()) ? riskMap[riskIdx] : "";
 
-    QString sql = "SELECT ext,assoc_program,normal_value,current_value,risk_level "
+    QString sql = "SELECT ext,assoc_type,original_cmd,current_cmd,risk_level "
                   "FROM file_assoc_scan WHERE 1=1";
     QVariantList binds;
 
     if (!kw.isEmpty()) {
-        sql += " AND (ext LIKE ? OR assoc_program LIKE ? OR current_value LIKE ?)";
+        sql += " AND (ext LIKE ? OR assoc_type LIKE ? OR current_cmd LIKE ?)";
         QString like = "%" + kw + "%";
         binds << like << like << like;
     }
@@ -65,11 +65,11 @@ void FileAssocPage::fillTable(const QVariantList &rows)
         QVariantMap m = v.toMap();
         int row = m_tbl->rowCount(); m_tbl->insertRow(row);
         m_tbl->setItem(row, 0, new QTableWidgetItem(m["ext"].toString()));
-        m_tbl->setItem(row, 1, new QTableWidgetItem(m["assoc_program"].toString()));
-        QTableWidgetItem *ni = new QTableWidgetItem(m["normal_value"].toString());
+        m_tbl->setItem(row, 1, new QTableWidgetItem(m["assoc_type"].toString()));
+        QTableWidgetItem *ni = new QTableWidgetItem(m["original_cmd"].toString());
         ni->setFont(QFont("Consolas", 11));
         m_tbl->setItem(row, 2, ni);
-        QTableWidgetItem *ci = new QTableWidgetItem(m["current_value"].toString());
+        QTableWidgetItem *ci = new QTableWidgetItem(m["current_cmd"].toString());
         ci->setFont(QFont("Consolas", 11));
         m_tbl->setItem(row, 3, ci);
 
@@ -83,7 +83,7 @@ void FileAssocPage::fillTable(const QVariantList &rows)
             ri->setForeground(QColor("#f5222d"));
             for (int c = 0; c < 5; c++)
                 if (m_tbl->item(row, c)) m_tbl->item(row, c)->setBackground(QColor("#fff1f0"));
-            if (m["normal_value"].toString() != m["current_value"].toString())
+            if (m["original_cmd"].toString() != m["current_cmd"].toString())
                 ci->setForeground(QColor("#f5222d"));
         } else if (risk == "medium") {
             ri->setForeground(QColor("#fa8c16"));

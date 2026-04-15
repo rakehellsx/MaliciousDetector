@@ -76,7 +76,7 @@ void SystemSettingsPage::loadSettings() {
     // 白名单
     m_tblWhitelist->setRowCount(0);
     QSqlQuery wq;
-    wq.exec("SELECT COALESCE(type,'路径'), COALESCE(value, path_or_md5), COALESCE(note,remark,''), created_at FROM whitelist ORDER BY id");
+    wq.exec("SELECT CASE WHEN md5 != '' THEN 'MD5' ELSE '路径' END, COALESCE(NULLIF(path,''), md5, ''), COALESCE(note,''), added_at FROM whitelist ORDER BY id");
     while (wq.next()) {
         int row = m_tblWhitelist->rowCount(); m_tblWhitelist->insertRow(row);
         m_tblWhitelist->setItem(row, 0, new QTableWidgetItem(wq.value(0).toString()));
@@ -90,17 +90,15 @@ void SystemSettingsPage::loadSettings() {
     // 自定义规则
     m_tblRules->setRowCount(0);
     QSqlQuery rq;
-    rq.exec("SELECT id, name, type, COALESCE(content,'') as content, risk_level, enabled FROM custom_rules ORDER BY id");
+    rq.exec("SELECT id, name, rule_type, COALESCE(description,'') as description, pattern, enabled FROM custom_rules ORDER BY id");
     while (rq.next()) {
         int row = m_tblRules->rowCount(); m_tblRules->insertRow(row);
         m_tblRules->setItem(row, 0, new QTableWidgetItem(QString("RULE-%1").arg(rq.value(0).toInt(), 4, 10, QChar('0'))));
         m_tblRules->setItem(row, 1, new QTableWidgetItem(rq.value(1).toString()));
         m_tblRules->setItem(row, 2, new QTableWidgetItem(rq.value(2).toString()));
         m_tblRules->setItem(row, 3, new QTableWidgetItem(rq.value(3).toString()));
-        QString risk = rq.value(4).toString();
-        QTableWidgetItem *ri = new QTableWidgetItem(risk);
-        ri->setForeground(risk=="高危"?QColor("#cf1322"):risk=="中危"?QColor("#d46b08"):QColor("#096dd9"));
-        m_tblRules->setItem(row, 4, ri);
+        // pattern 列（第5列）
+        m_tblRules->setItem(row, 4, new QTableWidgetItem(rq.value(4).toString()));
         bool enabled = rq.value(5).toInt() == 1;
         QTableWidgetItem *ei = new QTableWidgetItem(enabled ? "启用" : "禁用");
         ei->setForeground(enabled ? QColor("#389e0d") : QColor("#888"));

@@ -42,18 +42,18 @@ void SampleExtractPage::onQuery()
     QStringList typeMap = {"", "静态", "动态"};
     QString typeFilter = (typeIdx > 0 && typeIdx < typeMap.size()) ? typeMap[typeIdx] : "";
 
-    QString sql = "SELECT file_name,source_type,file_type,file_size,md5,sha256,"
-                  "original_create_time,original_modify_time,extract_time "
+    QString sql = "SELECT source_path,extract_type,sample_path,md5,sha256,"
+                  "original_mtime,original_ctime,note,extract_time "
                   "FROM sample_extract WHERE 1=1";
     QVariantList binds;
 
     if (!kw.isEmpty()) {
-        sql += " AND (file_name LIKE ? OR md5 LIKE ? OR sha256 LIKE ? OR source_type LIKE ?)";
+        sql += " AND (source_path LIKE ? OR md5 LIKE ? OR sha256 LIKE ? OR extract_type LIKE ?)";
         QString like = "%" + kw + "%";
         binds << like << like << like << like;
     }
     if (!typeFilter.isEmpty()) {
-        sql += " AND source_type = ?";
+        sql += " AND extract_type = ?";
         binds << typeFilter;
     }
     sql += " ORDER BY id DESC LIMIT 200";
@@ -69,29 +69,30 @@ void SampleExtractPage::fillTable(const QVariantList &rows)
     for (const QVariant &v : rows) {
         QVariantMap m = v.toMap();
         int row = m_tbl->rowCount(); m_tbl->insertRow(row);
-        m_tbl->setItem(row, 0, new QTableWidgetItem(m["file_name"].toString()));
-
-        QString src = m["source_type"].toString();
-        QTableWidgetItem *srcItem = new QTableWidgetItem(src);
-        srcItem->setForeground(src=="动态" ? QColor("#1890ff") : QColor("#52c41a"));
-        QFont sf = srcItem->font(); sf.setBold(true); srcItem->setFont(sf);
-        m_tbl->setItem(row, 1, srcItem);
-
-        m_tbl->setItem(row, 2, new QTableWidgetItem(m["file_type"].toString()));
-        m_tbl->setItem(row, 3, new QTableWidgetItem(
-            QString::number(m["file_size"].toLongLong()/1024) + " KB"));
+        // 从 source_path 提取文件名显示
+        QString srcPath = m["source_path"].toString();
+        int slashIdx = qMax(srcPath.lastIndexOf('/'), srcPath.lastIndexOf('\\'));
+        QString fileName = (slashIdx >= 0) ? srcPath.mid(slashIdx + 1) : srcPath;
+        m_tbl->setItem(row, 0, new QTableWidgetItem(fileName));
 
         QTableWidgetItem *md5i = new QTableWidgetItem(m["md5"].toString());
         md5i->setFont(QFont("Consolas", 11));
-        m_tbl->setItem(row, 4, md5i);
+        m_tbl->setItem(row, 1, md5i);
 
         QTableWidgetItem *sha256i = new QTableWidgetItem(m["sha256"].toString());
         sha256i->setFont(QFont("Consolas", 11));
-        m_tbl->setItem(row, 5, sha256i);
+        m_tbl->setItem(row, 2, sha256i);
 
-        m_tbl->setItem(row, 6, new QTableWidgetItem(m["original_create_time"].toString()));
-        m_tbl->setItem(row, 7, new QTableWidgetItem(m["original_modify_time"].toString()));
-        m_tbl->setItem(row, 8, new QTableWidgetItem(m["extract_time"].toString()));
+        // sample_path 作为样本路径列
+        m_tbl->setItem(row, 3, new QTableWidgetItem(m["sample_path"].toString()));
+
+        QString src = m["extract_type"].toString();
+        QTableWidgetItem *srcItem = new QTableWidgetItem(src);
+        srcItem->setForeground(src=="动态" ? QColor("#1890ff") : QColor("#52c41a"));
+        QFont sf = srcItem->font(); sf.setBold(true); srcItem->setFont(sf);
+        m_tbl->setItem(row, 4, srcItem);
+
+        m_tbl->setItem(row, 5, new QTableWidgetItem(m["extract_time"].toString()));
     }
     m_lblSummary->setText(QString("共 %1 个样本").arg(rows.size()));
 }
@@ -102,14 +103,15 @@ void SampleExtractPage::onExtract()
     if (path.isEmpty()) { m_lblStatus->setText("请先选择文件"); return; }
 
     QFileInfo fi(path);
-    QString sql = "INSERT INTO sample_extract(file_path,file_name,source_type,file_type,file_size,"
-                  "md5,sha256,original_create_time,original_modify_time,extract_time) "
-                  "VALUES(?,?,?,?,?,?,?,?,?,?)";
+    QString sql = "INSERT INTO sample_extract(source_path,extract_type,sample_path,md5,sha256,"
+                  "original_mtime,original_ctime,note,extract_time) "
+                  "VALUES(?,?,?,?,?,?,?,?,?)";
     QVariantList binds;
-    binds << path << fi.fileName() << "静态" << "PE32" << fi.size()
+    binds << path << "静态" << path
           << "（待计算）" << "（待计算）"
-          << fi.birthTime().toString("yyyy-MM-dd HH:mm:ss")
           << fi.lastModified().toString("yyyy-MM-dd HH:mm:ss")
+          << fi.birthTime().toString("yyyy-MM-dd HH:mm:ss")
+          << fi.fileName()
           << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");
     {
         QSqlDatabase db = QSqlDatabase::database("main_conn");

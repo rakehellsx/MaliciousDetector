@@ -1,8 +1,8 @@
 [
   {
     "total_mb": 16384,
-    "used_mb": 6585,
-    "avail_mb": 9799,
+    "used_mb": 7424,
+    "avail_mb": 8960,
     "virtual_mb": 32768,
     "page_file": "C:\\pagefile.sys (4096MB)"
   }

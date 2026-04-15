@@ -72,7 +72,7 @@ DynamicScanPage::DynamicScanPage(QWidget *parent)
 {
     ui = new Ui::DynamicScanPage();
     ui->setupUi(this);
-    m_tabOuter = findChild<QTabWidget*>("m_tabOuter");
+    m_tabOuter = findChild<QTabWidget*>("m_tabMain");
     m_editPath = ui->m_editPath;
     m_btnBrowse = ui->m_btnBrowse;
     m_btnStart = ui->m_btnStart;
