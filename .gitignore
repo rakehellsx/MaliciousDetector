@@ -1,39 +1,14 @@
-# Qt 编译产物
-build/
-build_cmake/
-build-cmake/
-build-*/
-CMakeCache.txt
-CMakeFiles/
-cmake_install.cmake
+build_linux/
+build_web/
 *.o
 *.obj
-*.moc
-*.cpp_parameters
+moc_*
+ui_*
+qrc_*
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
 Makefile
-.qmake.stash
-.qmake.cache
-moc_*.cpp
-ui_*.h
-qrc_*.cpp
-
-# 可执行文件
-MalwareDetector
-MalwareDetector.exe
-
-# IDE 文件
-.vs/
-.vscode/
-*.user
 *.pro.user
-*.pro.user.*
-CMakeLists.txt.user
-
-# 系统文件
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# 数据库文件（运行时生成）
-*.db
-*.sqlite
+*.user
+.qmake.stash
