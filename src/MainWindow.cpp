@@ -169,18 +169,31 @@ void MainWindow::setupUi()
 
 void MainWindow::setupNav()
 {
+    // ── 分组标题公共样式 ──
+    QFont grpFont;
+    grpFont.setBold(true);
+    grpFont.setPointSize(10);
+    QColor grpColor(0xe0, 0xec, 0xff);   // #e0ecff 亮白
+    QFont subFont;
+    subFont.setPointSize(9);
+    QColor subColor(0x8a, 0xaf, 0xd4);   // #8aafd4 蓝灰
+
     // ── 系统概览（顶级，一级菜单）──
     QTreeWidgetItem *dash = new QTreeWidgetItem(m_navTree);
-    dash->setText(0, "  系统概览");
-    dash->setIcon(0, IconHelper::navDashboard());
+    dash->setText(0, "  🖥 系统概览");
+    dash->setIcon(0, QIcon());
     dash->setData(0, Qt::UserRole, 0);
+    dash->setFont(0, grpFont);
+    dash->setForeground(0, QBrush(grpColor));
 
     // ── 基础信息 ──
     QTreeWidgetItem *grpInfo = new QTreeWidgetItem(m_navTree);
-    grpInfo->setText(0, "  基础信息");
-    grpInfo->setIcon(0, IconHelper::groupCollect());
+    grpInfo->setText(0, "  🖥 基础信息");
+    grpInfo->setIcon(0, QIcon());
     grpInfo->setData(0, Qt::UserRole, -1);
     grpInfo->setExpanded(true);
+    grpInfo->setFont(0, grpFont);
+    grpInfo->setForeground(0, QBrush(grpColor));
     addNavItem(grpInfo, IconHelper::navSysInfo(),   "系统信息",   1);
     addNavItem(grpInfo, IconHelper::navNetwork(),   "网络连接",   2);
     addNavItem(grpInfo, IconHelper::navDisk(),      "硬盘信息",   3);
@@ -195,19 +208,23 @@ void MainWindow::setupNav()
 
     // ── 检测分析 ──
     QTreeWidgetItem *grpScan = new QTreeWidgetItem(m_navTree);
-    grpScan->setText(0, "  检测分析");
-    grpScan->setIcon(0, IconHelper::groupScan());
+    grpScan->setText(0, "  🔎 检测分析");
+    grpScan->setIcon(0, QIcon());
     grpScan->setData(0, Qt::UserRole, -1);
     grpScan->setExpanded(true);
+    grpScan->setFont(0, grpFont);
+    grpScan->setForeground(0, QBrush(grpColor));
     addNavItem(grpScan, IconHelper::navStatic(),  "静态检测", 12);
     addNavItem(grpScan, IconHelper::navDynamic(), "动态监测", 13);
 
     // ── 综合分析 ──
     QTreeWidgetItem *grpAnalysis = new QTreeWidgetItem(m_navTree);
-    grpAnalysis->setText(0, "  综合分析");
-    grpAnalysis->setIcon(0, IconHelper::icon("group_analysis"));
+    grpAnalysis->setText(0, "  📊 综合分析");
+    grpAnalysis->setIcon(0, QIcon());
     grpAnalysis->setData(0, Qt::UserRole, -1);
     grpAnalysis->setExpanded(true);
+    grpAnalysis->setFont(0, grpFont);
+    grpAnalysis->setForeground(0, QBrush(grpColor));
     addNavItem(grpAnalysis, IconHelper::icon("nav_search"),    "全局搜索", 14);
     addNavItem(grpAnalysis, IconHelper::navSample(),           "样本提取", 15);
     addNavItem(grpAnalysis, IconHelper::icon("nav_vuln"),      "漏洞监测", 16);
@@ -215,10 +232,12 @@ void MainWindow::setupNav()
 
     // ── 系统管理 ──
     QTreeWidgetItem *grpMgmt = new QTreeWidgetItem(m_navTree);
-    grpMgmt->setText(0, "  系统管理");
-    grpMgmt->setIcon(0, IconHelper::groupResult());
+    grpMgmt->setText(0, "  ⚙ 系统管理");
+    grpMgmt->setIcon(0, QIcon());
     grpMgmt->setData(0, Qt::UserRole, -1);
     grpMgmt->setExpanded(true);
+    grpMgmt->setFont(0, grpFont);
+    grpMgmt->setForeground(0, QBrush(grpColor));
     addNavItem(grpMgmt, IconHelper::navLog(),                  "日志审计", 18);
     addNavItem(grpMgmt, IconHelper::icon("nav_usermgr"),       "用户管理", 19);
     addNavItem(grpMgmt, IconHelper::navSettings(),             "系统设置", 20);
@@ -231,10 +250,16 @@ QTreeWidgetItem* MainWindow::addNavItem(QTreeWidgetItem *parent,
                                          const QString &text,
                                          int pageIndex)
 {
+    QFont subFont;
+    subFont.setPointSize(9);
+    QColor subColor(0x8a, 0xaf, 0xd4);   // #8aafd4 蓝灰
+
     QTreeWidgetItem *item = new QTreeWidgetItem(parent);
-    item->setText(0, "  " + text);
+    item->setText(0, "    " + text);   // 4空格缩进体现层级
     item->setIcon(0, icon);
     item->setData(0, Qt::UserRole, pageIndex);
+    item->setFont(0, subFont);
+    item->setForeground(0, QBrush(subColor));
     return item;
 }
 

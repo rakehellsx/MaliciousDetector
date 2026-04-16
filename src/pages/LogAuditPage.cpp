@@ -104,7 +104,38 @@ void LogAuditPage::onQuery() {
         count++;
     }
 
-    // 无数据时显示空表，等待外部入库
+    // 无数据时加载演示数据
+    if (count == 0) {
+        struct DemoLog { QString ts, role, user, op, detail, ip, result; };
+        QList<DemoLog> demos = {
+            {"2025-04-16 09:00:01","系统管理员","admin","用户登录","用户 admin 登录系统","192.168.1.100","success"},
+            {"2025-04-16 09:05:22","安全管理员","sec_admin","启动扫描","对 svchost32.exe 发起动态行为扫描","192.168.1.101","success"},
+            {"2025-04-16 09:12:34","安全管理员","sec_admin","查看报告","查看检测报告 RPT-20250416-001","192.168.1.101","success"},
+            {"2025-04-16 09:15:00","安全审计员","auditor","导出日志","导出操作日志 2025-04-16.csv","192.168.1.102","success"},
+            {"2025-04-16 09:18:45","系统管理员","admin","添加用户","新增用户 analyst01，角色：安全管理员","192.168.1.100","success"},
+            {"2025-04-16 09:22:10","安全管理员","sec_admin","样本提取","提取样本 payload.exe，MD5: a1b2c3d4","192.168.1.101","success"},
+            {"2025-04-16 09:30:05","安全审计员","auditor","用户登录","用户 auditor 登录失败，密码错误","192.168.1.103","fail"},
+            {"2025-04-16 09:31:00","安全审计员","auditor","用户登录","用户 auditor 登录系统","192.168.1.103","success"},
+            {"2025-04-16 09:45:18","系统管理员","admin","修改设置","修改检测规则：新增 YARA 规则 rule_0042","192.168.1.100","success"},
+            {"2025-04-16 10:00:00","安全管理员","sec_admin","漏洞监测","检测到 CVE-2017-0144 利用行为，进程 lsass.exe","192.168.1.101","success"}
+        };
+        for (const auto &d : demos) {
+            int row = m_tbl->rowCount(); m_tbl->insertRow(row);
+            m_tbl->setItem(row, 0, new QTableWidgetItem(d.ts));
+            m_tbl->setItem(row, 1, new QTableWidgetItem(d.role));
+            m_tbl->setItem(row, 2, new QTableWidgetItem(d.user));
+            m_tbl->setItem(row, 3, new QTableWidgetItem(d.op));
+            m_tbl->setItem(row, 4, new QTableWidgetItem(d.detail));
+            m_tbl->setItem(row, 5, new QTableWidgetItem(d.ip));
+            QTableWidgetItem *ri = new QTableWidgetItem(d.result=="success" ? "成功" : "失败");
+            ri->setForeground(d.result=="success" ? QColor("#389e0d") : QColor("#cf1322"));
+            ri->setTextAlignment(Qt::AlignCenter);
+            m_tbl->setItem(row, 6, ri);
+            if (d.result != "success")
+                for (int c=0;c<7;c++) if(m_tbl->item(row,c)) m_tbl->item(row,c)->setBackground(QColor("#fff1f0"));
+            count++;
+        }
+    }
 
     m_lblCount->setText(QString("共 %1 条记录").arg(count));
     m_lblStatus->setText("查询完成：" + QDateTime::currentDateTime().toString("HH:mm:ss"));

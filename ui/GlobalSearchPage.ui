@@ -19,7 +19,7 @@
      <property name="frameShadow"><enum>QFrame::Sunken</enum></property>
     </widget>
    </item>
-   <!-- 搜索栏 -->
+   
    <item>
     <layout class="QHBoxLayout" name="searchRow">
      <item>
@@ -39,7 +39,7 @@
      </item>
     </layout>
    </item>
-   <!-- 模块勾选区 -->
+   
    <item>
     <widget class="QGroupBox" name="m_gbModules">
      <property name="title"><string>搜索范围（可多选）</string></property>
@@ -143,22 +143,22 @@
      </layout>
     </widget>
    </item>
-   <!-- 结果汇总标签 -->
+   
    <item>
     <widget class="QLabel" name="m_lblSummary">
      <property name="text"><string></string></property>
      <property name="styleSheet"><string>font-size:13px;color:#1a3a6a;font-weight:600;</string></property>
     </widget>
    </item>
-   <!-- 结果区：左侧模块命中卡片 + 右侧详情表格 -->
+   
    <item>
     <widget class="QSplitter" name="m_splitter">
      <property name="orientation"><enum>Qt::Horizontal</enum></property>
-     <!-- 左侧模块命中列表 -->
+     
      <widget class="QListWidget" name="m_lstModules">
       <property name="maximumWidth"><number>200</number></property>
      </widget>
-     <!-- 右侧详情区 -->
+     
      <widget class="QWidget" name="m_rightPanel">
       <layout class="QVBoxLayout" name="rightLayout">
        <item>

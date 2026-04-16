@@ -1,19 +1,32 @@
 /* ============================================================
  * login.qss — 登录界面专属样式
+ * 严格对齐 prototype_v5.html 登录页配色：
+ *   头部背景  linear-gradient(135deg, #1a3a6a, #0d2550)
+ *   表单背景  #ffffff
+ *   外层背景  #f0f2f5
  * ============================================================ */
 
 LoginDialog {
-    background: #0d1b2e;
+    background: #f0f2f5;
+}
+
+/* ── 登录卡片容器 ─────────────────────────────────────────── */
+#loginBox {
+    background: #ffffff;
+    border-radius: 6px;
+    border: none;
 }
 
 /* ── 顶部标题区 ───────────────────────────────────────────── */
 #loginHeader {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 #1a3a5c, stop:1 #0d1b2e);
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+        stop:0 #1a3a6a, stop:1 #0d2550);
+    border-radius: 6px 6px 0 0;
+    padding: 28px 32px 20px;
 }
 #loginIcon {
     font-size: 36px;
-    color: #4fc3f7;
+    color: #ffffff;
 }
 #loginTitle {
     font-size: 18px;
@@ -22,81 +35,86 @@ LoginDialog {
     font-family: "Microsoft YaHei", "SimHei", sans-serif;
 }
 #loginSub {
-    font-size: 10px;
-    color: #90caf9;
+    font-size: 11px;
+    color: #a8c4e8;
 }
 #loginCert {
-    font-size: 10px;
-    color: #4fc3f7;
+    font-size: 11px;
+    color: #7ab3e0;
 }
 
 /* ── 表单区 ───────────────────────────────────────────────── */
 #loginForm {
-    background: #0d1b2e;
+    background: #ffffff;
+    padding: 24px 32px;
 }
 
 /* ── 角色切换按钮 ─────────────────────────────────────────── */
 #m_btnSysAdmin, #m_btnSecAdmin, #m_btnAuditor {
-    background: #1a2a3e;
-    color: #90caf9;
-    border: 1px solid #2a4a6e;
+    background: #f5f7fa;
+    color: #555555;
+    border: 1px solid #d0d7e3;
     padding: 6px 0;
     font-size: 12px;
     font-family: "Microsoft YaHei", sans-serif;
+    border-radius: 0;
 }
 #m_btnSysAdmin:checked, #m_btnSecAdmin:checked, #m_btnAuditor:checked {
-    background: #1565c0;
+    background: #1a3a6a;
     color: #ffffff;
-    border: 1px solid #1976d2;
+    border-color: #1a3a6a;
+    font-weight: bold;
 }
 #m_btnSysAdmin:hover:!checked,
 #m_btnSecAdmin:hover:!checked,
 #m_btnAuditor:hover:!checked {
-    background: #1e3a5a;
+    background: #e8ecf4;
+    border-color: #1a3a6a;
+    color: #1a3a6a;
 }
 
 /* ── 字段标签 ─────────────────────────────────────────────── */
 #lblUser, #lblPass, #lblUsb {
-    color: #90caf9;
+    color: #555555;
     font-size: 12px;
     font-family: "Microsoft YaHei", sans-serif;
-    margin-bottom: 0px;
 }
 
 /* ── 输入框 ───────────────────────────────────────────────── */
 #m_editUser, #m_editPass {
-    background: #1a2a3e;
-    border: 1px solid #2a4a6e;
+    background: #ffffff;
+    border: 1px solid #d0d7e3;
     border-radius: 3px;
-    color: #e0e0e0;
-    padding: 6px 10px;
+    color: #333333;
+    padding: 8px 10px;
     font-size: 13px;
     font-family: "Microsoft YaHei", sans-serif;
 }
 #m_editUser:focus, #m_editPass:focus {
-    border: 1px solid #1976d2;
+    border-color: #1890ff;
+    outline: none;
 }
 
 /* ── USB Key 状态 ─────────────────────────────────────────── */
 #m_lblUsbStatus {
-    color: #4caf50;
+    color: #52c41a;
     font-size: 11px;
     padding: 6px 10px;
-    background: #0a2a0a;
-    border: 1px solid #2e7d32;
+    background: #f6ffed;
+    border: 1px solid #b7eb8f;
     border-radius: 3px;
 }
 
 /* ── 错误提示 ─────────────────────────────────────────────── */
 #m_lblError {
-    color: #ef5350;
+    color: #f5222d;
     font-size: 11px;
     min-height: 16px;
 }
 
 /* ── 登录按钮 ─────────────────────────────────────────────── */
 #m_btnLogin {
-    background: #1565c0;
+    background: #1a3a6a;
     color: #ffffff;
     border: none;
     border-radius: 3px;
@@ -104,12 +122,17 @@ LoginDialog {
     font-weight: bold;
     letter-spacing: 4px;
     font-family: "Microsoft YaHei", sans-serif;
+    padding: 10px 0;
 }
-#m_btnLogin:hover   { background: #1976d2; }
-#m_btnLogin:pressed { background: #0d47a1; }
+#m_btnLogin:hover   { background: #1e4a8a; }
+#m_btnLogin:pressed { background: #0d2550; }
 
 /* ── 版本信息 ─────────────────────────────────────────────── */
 #m_lblVersion {
-    color: #546e7a;
+    color: #999999;
     font-size: 10px;
+    padding: 8px;
+    border-top: 1px solid #f0f0f0;
+    background: #ffffff;
+    border-radius: 0 0 6px 6px;
 }

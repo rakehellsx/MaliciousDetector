@@ -16,12 +16,12 @@
    <item>
     <widget class="QTabWidget" name="m_tabMain">
 
-     <!-- ===== 外层Tab1：全局行为监测 ===== -->
+     
      <widget class="QWidget" name="tabGlobal">
       <attribute name="title"><string>全局行为监测</string></attribute>
       <layout class="QVBoxLayout" name="globalLayout">
 
-       <!-- 扫描控制栏 -->
+       
        <item>
         <layout class="QHBoxLayout" name="scanRow">
          <item>
@@ -52,11 +52,11 @@
         </layout>
        </item>
 
-       <!-- 内层行为 Tab -->
+       
        <item>
         <widget class="QTabWidget" name="m_tabBehavior">
 
-         <!-- 注册表操作 -->
+         
          <widget class="QWidget" name="tabRegistry">
           <attribute name="title"><string>注册表操作</string></attribute>
           <layout class="QVBoxLayout" name="regLayout">
@@ -108,7 +108,7 @@
           </layout>
          </widget>
 
-         <!-- 文件行为 -->
+         
          <widget class="QWidget" name="tabFile">
           <attribute name="title"><string>文件行为</string></attribute>
           <layout class="QVBoxLayout" name="fileLayout">
@@ -161,7 +161,7 @@
           </layout>
          </widget>
 
-         <!-- 进程行为 -->
+         
          <widget class="QWidget" name="tabProcess">
           <attribute name="title"><string>进程行为</string></attribute>
           <layout class="QVBoxLayout" name="procLayout">
@@ -213,7 +213,7 @@
           </layout>
          </widget>
 
-         <!-- 网络行为 -->
+         
          <widget class="QWidget" name="tabNetwork">
           <attribute name="title"><string>网络行为</string></attribute>
           <layout class="QVBoxLayout" name="netLayout">
@@ -266,7 +266,7 @@
           </layout>
          </widget>
 
-         <!-- SSDT操作 -->
+         
          <widget class="QWidget" name="tabSsdt">
           <attribute name="title"><string>SSDT操作</string></attribute>
           <layout class="QVBoxLayout" name="ssdtLayout">
@@ -315,7 +315,7 @@
           </layout>
          </widget>
 
-         <!-- 启动项操作 -->
+         
          <widget class="QWidget" name="tabAutorun">
           <attribute name="title"><string>启动项操作</string></attribute>
           <layout class="QVBoxLayout" name="autorunLayout">
@@ -367,7 +367,7 @@
           </layout>
          </widget>
 
-         <!-- 计划任务操作 -->
+         
          <widget class="QWidget" name="tabTask">
           <attribute name="title"><string>计划任务操作</string></attribute>
           <layout class="QVBoxLayout" name="taskLayout">
@@ -419,7 +419,7 @@
           </layout>
          </widget>
 
-         <!-- 浏览器插件操作 -->
+         
          <widget class="QWidget" name="tabBrowserPlugin">
           <attribute name="title"><string>浏览器插件操作</string></attribute>
           <layout class="QVBoxLayout" name="pluginLayout">
@@ -471,7 +471,7 @@
           </layout>
          </widget>
 
-         <!-- 文件关联检测（内嵌子Tab） -->
+         
          <widget class="QWidget" name="tabFileAssoc">
           <attribute name="title"><string>文件关联检测</string></attribute>
           <layout class="QVBoxLayout" name="fileAssocLayout">
@@ -522,7 +522,7 @@
           </layout>
          </widget>
 
-         <!-- 远控行为分析 -->
+         
          <widget class="QWidget" name="tabRctrl">
           <attribute name="title"><string>远控行为分析</string></attribute>
           <layout class="QVBoxLayout" name="rctrlLayout">
@@ -583,7 +583,7 @@
          </widget>
 
         </widget>
-        <!-- end m_tabBehavior -->
+        
        </item>
 
        <item>
@@ -594,9 +594,9 @@
 
       </layout>
      </widget>
-     <!-- end tabGlobal -->
+     
 
-     <!-- ===== 外层Tab2：进程链行为分析 ===== -->
+     
      <widget class="QWidget" name="tabChain">
       <attribute name="title"><string>进程链行为分析</string></attribute>
       <layout class="QVBoxLayout" name="chainLayout">
@@ -652,7 +652,7 @@
      </widget>
 
     </widget>
-    <!-- end m_tabMain -->
+    
    </item>
   </layout>
  </widget>

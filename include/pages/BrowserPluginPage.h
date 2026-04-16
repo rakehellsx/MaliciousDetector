@@ -17,7 +17,7 @@ private slots:
     void onQuery();
 private:
     Ui::BrowserPluginPage *ui{nullptr};
-    void setupUi();
+    void loadDemoData();
     void fillTable(const QVariantList &rows);
     QTableWidget *m_tbl{nullptr};
     QLineEdit    *m_edtKeyword{nullptr};

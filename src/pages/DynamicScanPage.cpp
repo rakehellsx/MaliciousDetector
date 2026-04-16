@@ -267,6 +267,7 @@ void DynamicScanPage::queryAndFillTable(QTableWidget *tbl,
     sql += " ORDER BY id DESC LIMIT 200";
 
     auto rows = DatabaseManager::instance()->execSelect(sql, binds);
+    if (rows.isEmpty()) { loadDemoForTable(tbl, type); return; }
     for (const QVariant &v : rows) {
         QVariantMap m = v.toMap();
         int row = tbl->rowCount(); tbl->insertRow(row);
@@ -401,6 +402,7 @@ void DynamicScanPage::onQueryFileAssoc() {
     sql += " ORDER BY id DESC LIMIT 200";
 
     auto rows = DatabaseManager::instance()->execSelect(sql, binds);
+    if (rows.isEmpty()) { loadDemoForTable(m_tblFileAssoc, "file_assoc"); return; }
     for (const QVariant &v : rows) {
         QVariantMap m = v.toMap();
         int row = m_tblFileAssoc->rowCount(); m_tblFileAssoc->insertRow(row);
@@ -445,6 +447,7 @@ void DynamicScanPage::onQueryRctrl() {
     sql += " ORDER BY id DESC LIMIT 200";
 
     auto rows = DatabaseManager::instance()->execSelect(sql, binds);
+    if (rows.isEmpty()) { loadDemoForTable(m_tblRctrl, "rctrl"); return; }
     for (const QVariant &v : rows) {
         QVariantMap m = v.toMap();
         int row = m_tblRctrl->rowCount(); m_tblRctrl->insertRow(row);
@@ -671,4 +674,57 @@ void DynamicScanPage::onStopScan() {
     }
     if (m_lblStatus) m_lblStatus->setText("监控已停止");
     DatabaseManager::instance()->writeLog(m_role, m_username, "动态监测", "停止监控", "success");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 演示数据（数据库为空时填充，与 prototype_v5.html 一致）
+// ─────────────────────────────────────────────────────────────────────────────
+void DynamicScanPage::loadDemoForTable(QTableWidget *tbl, const QString &type)
+{
+    if (!tbl) return;
+    tbl->setRowCount(0);
+
+    // 通用行填充 lambda
+    auto addRow = [&](QStringList cols, const QString &risk) {
+        int r = tbl->rowCount(); tbl->insertRow(r);
+        for (int c = 0; c < cols.size() && c < tbl->columnCount() - 1; c++)
+            tbl->setItem(r, c, new QTableWidgetItem(cols[c]));
+        tbl->setItem(r, tbl->columnCount()-1, riskItem(risk));
+        highlightRow(tbl, r, risk);
+    };
+
+    if (type == "registry") {
+        addRow({"08:12:33","写入","svchost32.exe","HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run","添加自启动项 svchost32.exe"}, "high");
+        addRow({"08:13:01","写入","svchost32.exe","HKLM\\SYSTEM\\CurrentControlSet\\Services\\malware_svc","创建恶意服务"}, "high");
+        addRow({"08:14:22","读取","explorer.exe","HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer","读取 Explorer 配置"}, "low");
+        addRow({"08:15:10","删除","svchost32.exe","HKLM\\SOFTWARE\\Microsoft\\Windows Defender\\Exclusions","删除 Defender 排除项"}, "medium");
+    } else if (type == "file") {
+        addRow({"08:12:45","创建","svchost32.exe","C:\\Windows\\Temp\\payload.exe","释放恶意载荷"}, "high");
+        addRow({"08:13:20","修改","svchost32.exe","C:\\Windows\\System32\\drivers\\etc\\hosts","篡改 hosts 文件"}, "high");
+        addRow({"08:14:05","读取","chrome.exe","C:\\Users\\user01\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Login Data","读取 Chrome 密码数据库"}, "medium");
+        addRow({"08:15:30","创建","svchost32.exe","C:\\Windows\\Temp\\inject.dll","释放注入模块"}, "high");
+        addRow({"08:16:00","读取","notepad.exe","C:\\Users\\user01\\Documents\\report.docx","正常文件读取"}, "low");
+    } else if (type == "process") {
+        addRow({"08:12:50","注入","svchost32.exe","explorer.exe","DLL 注入 explorer.exe"}, "high");
+        addRow({"08:13:35","创建","svchost32.exe","C:\\Windows\\Temp\\payload.exe","创建子进程执行载荷"}, "high");
+        addRow({"08:14:15","终止","svchost32.exe","MsMpEng.exe","终止 Windows Defender 进程"}, "high");
+    } else if (type == "network") {
+        addRow({"08:13:05","TCP 连接","svchost32.exe","185.220.101.45:4444","连接 C2 服务器"}, "high");
+        addRow({"08:13:40","DNS 查询","svchost32.exe","malware-c2.example.com","解析 C2 域名"}, "high");
+        addRow({"08:14:30","HTTP POST","svchost32.exe","http://185.220.101.45/upload","上传窃取数据"}, "high");
+        addRow({"08:15:00","TCP 连接","chrome.exe","142.250.80.46:443","Chrome 正常 HTTPS 连接"}, "low");
+    } else if (type == "ssdt") {
+        addRow({"08:12:40","Hook","svchost32.exe","NtQuerySystemInformation","SSDT Hook 系统查询函数"}, "high");
+        addRow({"08:12:41","Hook","svchost32.exe","NtOpenProcess","SSDT Hook 进程打开函数"}, "high");
+        addRow({"08:12:42","Hook","svchost32.exe","NtCreateFile","SSDT Hook 文件创建函数"}, "medium");
+    } else if (type == "autorun") {
+        addRow({"08:12:33","新增","svchost32.exe","HKCU\\Run\\svchost32","添加注册表自启动"}, "high");
+        addRow({"08:13:00","新增","svchost32.exe","C:\\Users\\user01\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\malware.lnk","添加启动文件夹快捷方式"}, "high");
+    } else if (type == "task") {
+        addRow({"08:13:10","创建","svchost32.exe","MalwareTask","创建计划任务每小时执行 payload.exe"}, "high");
+        addRow({"08:14:00","修改","svchost32.exe","WindowsUpdate","篡改系统更新计划任务"}, "medium");
+    } else if (type == "browser") {
+        addRow({"08:14:20","安装","svchost32.exe","C:\\Windows\\Temp\\chrome_ext\\keylogger","安装恶意 Chrome 扩展"}, "high");
+        addRow({"08:14:50","读取","chrome.exe","C:\\Users\\user01\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Cookies","读取 Cookie 数据"}, "medium");
+    }
 }

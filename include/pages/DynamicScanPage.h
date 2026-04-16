@@ -46,6 +46,7 @@ private:
     Ui::DynamicScanPage *ui{nullptr};
     bool eventFilter(QObject *obj, QEvent *event) override;
 
+    void loadDemoForTable(QTableWidget *tbl, const QString &type);
     void queryAndFillTable(QTableWidget *tbl,
                            const QString &type,
                            const QString &kw,

@@ -18,8 +18,10 @@ private slots:
     void onQuery();
 private:
     Ui::AutorunPage *ui{nullptr};
-    void setupUi();
-    void fillTab(QTableWidget *tbl, const QString &type, const QString &kw, const QString &risk);
+    void loadDemoData();
+    void fillTab(QTableWidget *tbl, const QString &type, const QVariantList &rows);
+    QTableWidgetItem* makeRiskItem(const QString &risk);
+    void highlightRow(QTableWidget *tbl, int r, int cols);
     QTabWidget   *m_tabs{nullptr};
     QTableWidget *m_tblReg{nullptr};
     QTableWidget *m_tblFolder{nullptr};
