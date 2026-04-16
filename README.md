@@ -1,213 +1,123 @@
-# 恶意代码辅助检测系统
+# 恶意代码辅助检测系统 V3.0 — Qt5 WebEngine 版
 
-> 基于 Qt5 + SQLite3 开发的桌面端恶意代码辅助检测工具，支持 GCC / MSVC / MinGW 三种编译器，兼容 Linux 与 Windows 平台。
+## 技术架构
 
----
-
-## 技术栈
-
-| 组件 | 版本 / 说明 |
-|---|---|
-| Qt | 5.x（qtbase5-dev） |
-| 数据库 | SQLite3（Qt QSQLITE 驱动） |
-| 编译器 | GCC 9+ / **MSVC 2019+** / MinGW 8.1+ |
-| C++ 标准 | C++17 |
-| 构建系统 | CMake 3.16+ / qmake |
-| 界面布局 | Qt Designer `.ui` 文件（全部 22 个页面） |
-| 样式管理 | 独立 QSS 文件（`resources/styles/`） |
-| 基础信息采集 | basic.dll 动态库（接口见 `third_party/basic/basic.h`） |
-
----
-
-## 目录结构
+本版本（msvc3 分支）采用 **Qt5 + QWebEngineView** 方式实现，将原型 `prototype_v5.html` 作为内嵌 Web 应用运行在 Chromium 内核中，通过 **QWebChannel** 实现 C++ 与 JavaScript 的双向通信。
 
 ```
-MalwareDetector/
-├── CMakeLists.txt            # CMake 构建文件（推荐）
-├── MalwareDetector.pro       # Qt qmake 构建文件
-├── README.md
-├── include/                  # 头文件
-│   ├── pages/                # 各功能页面头文件
-│   ├── BasePage.h            # 所有页面基类
-│   ├── StyleManager.h        # QSS 样式加载器
-│   └── IconHelper.h          # 图标统一加载工具
-├── src/                      # 源文件（业务逻辑）
-│   └── pages/                # 各功能页面实现
-├── ui/                       # Qt Designer 界面文件（22 个 .ui 文件）
-├── resources/
-│   ├── icons/                # 图标资源（PNG）
-│   └── styles/               # QSS 样式文件
-│       ├── main.qss          # 全局主题样式
-│       └── login.qss         # 登录界面样式
-├── tools/                    # 数据生成工具（Python / C）
-└── third_party/
-    └── basic/                # 基础信息采集动态库接口定义
+┌─────────────────────────────────────────────────────────┐
+│  Qt5 MainWindow (C++)                                   │
+│  ┌───────────────────────────────────────────────────┐  │
+│  │  QWebEngineView (Chromium 内核)                   │  │
+│  │  ┌─────────────────────────────────────────────┐  │  │
+│  │  │  index.html (prototype_v5 适配版)           │  │  │
+│  │  │  ├── 登录页 / 主界面 / 所有功能页面         │  │  │
+│  │  │  └── QWebChannel JS ↔ AppBridge (C++)       │  │  │
+│  │  └─────────────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────┘  │
+│  AppBridge (C++) — 数据层 + 窗口控制                    │
+└─────────────────────────────────────────────────────────┘
 ```
 
----
+## Win7 32位兼容性
 
-## 功能模块
+| 方案 | Qt 版本 | Chromium 版本 | Win7 32位支持 |
+|------|---------|---------------|---------------|
+| **推荐（发布）** | Qt 5.6.3 LTS | Chromium 49 | ✅ 完全支持 |
+| 开发验证 | Qt 5.15.x | Chromium 87+ | ❌ 不支持 Win7 |
 
-### 导航结构
+**Win7 32位编译步骤：**
+1. 下载 [Qt 5.6.3 for Windows 32-bit (VS 2015)](https://download.qt.io/archive/qt/5.6/5.6.3/)
+2. 安装 Visual Studio 2015（MSVC 140）
+3. 使用 `MalwareDetectorWeb.pro` 或 `CMakeLists.txt` 编译
+
+## 项目结构
 
 ```
-系统概览
-系统信息采集
-  ├── 系统基本信息
-  ├── 网络信息
-  ├── 硬盘信息
-  ├── 进程信息
-  ├── 端口信息
-  ├── 自启动项
-  ├── 计划任务
-  ├── 驱动信息
-  ├── 共享资源
-  ├── 浏览器插件
-  └── 内存映像
-检测分析
-  ├── 静态检测（含 PE结构 / 字符串提取 / 规则命中 / 数字证书 / 综合结论）
-  ├── 动态行为检测（含 全局行为监测 / 进程链行为分析）
-  ├── 文件关联检测
-  └── 样本提取
-结果管理
-  ├── 检测报告（支持 HTML/PDF/DOC 导出，支持定时生成策略）
-  ├── 日志审计
-  └── 系统设置
+MaliciousDetector_qt/
+├── CMakeLists.txt          # CMake 构建文件（Qt5 WebEngine）
+├── MalwareDetectorWeb.pro  # qmake 构建文件（兼容 Qt 5.6+）
+├── web/
+│   ├── index.html          # 主 Web 应用（prototype_v5 适配版）
+│   └── resources.qrc       # Qt 资源文件
+├── web_src/
+│   ├── include/
+│   │   ├── MainWindow.h    # 主窗口（QWebEngineView 嵌入）
+│   │   └── AppBridge.h     # C++/JS 通信桥接类
+│   └── src/
+│       ├── main.cpp        # 程序入口
+│       ├── MainWindow.cpp  # 主窗口实现
+│       └── AppBridge.cpp   # Bridge 实现（演示数据 + 窗口控制）
+└── prototype_v5.html       # 原始原型文件（参考）
 ```
 
----
+## C++ Bridge 接口
 
-## 编译方法
+`AppBridge` 类通过 `QWebChannel` 暴露给 JavaScript，JS 端通过 `window.bridge` 访问：
 
-本项目同时支持 **CMake**（推荐）和 **qmake** 两种构建方式，兼容 GCC、MSVC、MinGW 三种编译器。
+### 数据查询接口（返回 JSON 字符串）
 
-### 方式一：CMake 构建（推荐）
+| 方法 | 说明 |
+|------|------|
+| `getDashboardData()` | 系统概览统计数据 |
+| `getSysInfoData()` | 系统信息（OS/CPU/内存等） |
+| `getNetInfoData()` | 网络连接列表 |
+| `getDiskInfoData()` | 硬盘分区信息 |
+| `getProcInfoData()` | 进程列表 |
+| `getPortInfoData()` | 端口监听列表 |
+| `getAutorunData()` | 自启动项（注册表/启动文件夹/右键菜单/调试器） |
+| `getScheduleData()` | 计划任务列表 |
+| `getDriverData()` | 驱动信息列表 |
+| `getShareData()` | 共享资源列表 |
+| `getBrowserPluginData()` | 浏览器插件列表 |
+| `getMemoryData()` | 内存映像（内核模块+进程内存） |
+| `getLogData()` | 日志审计数据 |
+| `getUserData()` | 用户管理数据 |
+| `getVulnData()` | 漏洞监测数据（5条CVE） |
+| `getProcDetail(name)` | 进程详情（模块/线程/句柄） |
 
-#### Linux / GCC
+### 操作接口
+
+| 方法 | 说明 |
+|------|------|
+| `login(role, username, password)` | 用户登录 |
+| `logout()` | 用户登出 |
+| `minimizeWindow()` | 最小化窗口 |
+| `maximizeWindow()` | 最大化窗口 |
+| `toggleMaximize()` | 切换最大化/正常 |
+| `closeWindow()` | 关闭窗口 |
+
+### 信号（C++ → JS）
+
+| 信号 | 说明 |
+|------|------|
+| `loginResult(bool, QString)` | 登录结果回调 |
+| `dataUpdated(QString, QString)` | 数据更新推送 |
+| `notifyMessage(QString, QString)` | 通知消息推送 |
+
+## Linux 编译
 
 ```bash
 # 安装依赖
-sudo apt update
-sudo apt install -y cmake build-essential qtbase5-dev libqt5sql5-sqlite
+sudo apt-get install -y qtwebengine5-dev libqt5webchannel5-dev
 
 # 编译
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
+mkdir build_web && cd build_web
+cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j$(nproc)
+
+# 运行
+./MalwareDetectorWeb
 ```
 
-#### Windows / MSVC 2019+（推荐）
+## Windows 编译（Win7 32位）
 
 ```bat
-:: 在 Visual Studio Developer Command Prompt 中执行
+# 使用 Qt 5.6.3 + MSVC2015 x86
+set QTDIR=C:\Qt\5.6.3\msvc2015
+set PATH=%QTDIR%\bin;%PATH%
+
 mkdir build && cd build
-cmake .. -G "Visual Studio 17 2022" -A x64 ^
-         -DCMAKE_PREFIX_PATH=C:\Qt\5.15.x\msvc2019_64 ^
-         -DCMAKE_BUILD_TYPE=Release
-cmake --build . --config Release
+cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=Release ..
+msbuild MalwareDetectorWeb.sln /p:Configuration=Release /p:Platform=Win32
 ```
-
-> **说明**：CMakeLists.txt 已内置 MSVC 专用编译选项，无需手动配置：
-> - `/utf-8`：源文件和执行字符集均使用 UTF-8，解决中文注释 C4819 警告
-> - `/MP`：并行编译（多核加速）
-> - `/wd4251`：抑制 Qt DLL 接口导出警告
-> - `NOMINMAX` / `WIN32_LEAN_AND_MEAN`：避免 Windows 宏冲突
-
-#### Windows / MinGW
-
-```bat
-mkdir build && cd build
-cmake .. -G "MinGW Makefiles" ^
-         -DCMAKE_PREFIX_PATH=C:\Qt\5.15.x\mingw81_64 ^
-         -DCMAKE_BUILD_TYPE=Release
-mingw32-make -j4
-```
-
----
-
-### 方式二：qmake 构建
-
-#### Linux / GCC
-
-```bash
-sudo apt install qtbase5-dev qtchooser qt5-qmake build-essential
-mkdir build && cd build
-qmake ..
-make -j$(nproc)
-```
-
-#### Windows / MSVC
-
-```bat
-:: 在 Qt Creator 中打开 MalwareDetector.pro，选择 MSVC 工具链直接构建
-:: 或在 Qt 命令行环境中执行：
-qmake MalwareDetector.pro
-nmake release
-```
-
-> **说明**：`.pro` 文件已内置 `msvc{}` 编译选项块，自动添加 `/utf-8 /MP /W3 /wd4819 /wd4251` 及 Windows 宏定义。
-
-#### Windows / MinGW
-
-```bat
-qmake MalwareDetector.pro
-mingw32-make -j4
-```
-
-#### Linux 交叉编译 Windows 目标（MXE + MinGW）
-
-```bash
-git clone https://github.com/mxe/mxe.git && cd mxe
-make qtbase qttools MXE_TARGETS=x86_64-w64-mingw32.shared -j4
-export PATH=$(pwd)/usr/bin:$PATH
-
-cd /path/to/MalwareDetector
-mkdir build-mxe && cd build-mxe
-x86_64-w64-mingw32.shared-qmake-qt5 ../MalwareDetector.pro
-make -j4
-```
-
----
-
-## 部署说明
-
-1. 将 `resources/` 目录（含 `icons/` 和 `styles/`）放置在可执行文件同级目录。CMake 构建会自动完成此步骤（`POST_BUILD` 规则）。
-2. Windows 环境下，使用 `windeployqt MalwareDetector.exe` 自动部署 Qt 依赖的 DLL。
-3. 可选：将 `basic.dll` 放置在可执行文件同级目录。若不存在，系统将自动降级为从 SQLite 数据库读取数据。
-4. 首次运行会自动创建 `data/malware_detector.db` 数据库并初始化全部 27 张表。
-
----
-
-## 样式管理
-
-项目使用独立 QSS 文件统一管理界面样式，方便主题定制：
-
-| 文件 | 说明 |
-|---|---|
-| `resources/styles/main.qss` | 全局主题（背景色、字体、按钮、表格、滚动条、Tab 等） |
-| `resources/styles/login.qss` | 登录界面专属样式 |
-
-修改 QSS 文件后**无需重新编译**，重启程序即可生效。
-
----
-
-## 数据库设计
-
-项目完全由 SQLite3 驱动，无硬编码数据。关键表包括：
-
-- **基础信息表**：`sys_info`, `net_info`, `disk_info`, `process_info`, `port_info`, `autorun_info` 等
-- **检测分析表**：`static_scan`, `dynamic_scan`, `cert_scan`, `file_assoc_scan`, `sample_extract`
-- **报告与日志表**：`report_schedule`（定时报告策略）, `report_history`（历史报告）, `audit_log`
-- **配置表**：`settings`, `whitelist`, `custom_rules`
-
-> 提示：可使用 `tools/gen_data.py` 或 `tools/gen_data.c` 快速生成测试数据并导入 SQLite 数据库。
-
----
-
-## 默认账号（测试数据）
-
-| 角色 | 用户名 | 密码 |
-|---|---|---|
-| 系统管理员 | admin | Admin@123 |
-| 安全管理员 | secadmin | Sec@123456 |
-| 安全审计员 | auditor | Audit@123 |
