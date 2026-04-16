@@ -14,9 +14,11 @@
 #include "pages/MemoryImagePage.h"
 #include "pages/StaticScanPage.h"
 #include "pages/DynamicScanPage.h"
-#include "pages/FileAssocPage.h"
 #include "pages/SampleExtractPage.h"
+#include "pages/VulnDetectPage.h"
 #include "pages/ReportPage.h"
+#include "pages/GlobalSearchPage.h"
+#include "pages/UserManagePage.h"
 #include "pages/LogAuditPage.h"
 #include "pages/SystemSettingsPage.h"
 #include <QHBoxLayout>
@@ -49,13 +51,14 @@ void MainWindow::setLibLoader(BasicLibLoader *loader)
     auto setLoader = [&](BasePage *p) {
         if (p) { p->setLoader(loader); p->setRole(m_role); p->setUsername(m_username); }
     };
-    setLoader(m_pgDashboard);  setLoader(m_pgSysInfo);   setLoader(m_pgNetInfo);
-    setLoader(m_pgDiskInfo);   setLoader(m_pgProcess);   setLoader(m_pgPort);
-    setLoader(m_pgAutorun);    setLoader(m_pgScheduled); setLoader(m_pgDriver);
-    setLoader(m_pgShared);     setLoader(m_pgBrowser);   setLoader(m_pgMemory);
-    setLoader(m_pgStatic);     setLoader(m_pgDynamic);
-    setLoader(m_pgFileAssoc);  setLoader(m_pgSample);    setLoader(m_pgReport);
-    setLoader(m_pgLog);        setLoader(m_pgSettings);
+    setLoader(m_pgDashboard);    setLoader(m_pgSysInfo);      setLoader(m_pgNetInfo);
+    setLoader(m_pgDiskInfo);     setLoader(m_pgProcess);      setLoader(m_pgPort);
+    setLoader(m_pgAutorun);      setLoader(m_pgScheduled);    setLoader(m_pgDriver);
+    setLoader(m_pgShared);       setLoader(m_pgBrowser);      setLoader(m_pgMemory);
+    setLoader(m_pgStatic);       setLoader(m_pgDynamic);
+    setLoader(m_pgGlobalSearch); setLoader(m_pgSample);       setLoader(m_pgVulnDetect);
+    setLoader(m_pgReport);
+    setLoader(m_pgLog);          setLoader(m_pgUserManage);   setLoader(m_pgSettings);
 }
 
 void MainWindow::setupUi()
@@ -74,7 +77,7 @@ void MainWindow::setupUi()
     sidebarLay->setContentsMargins(0, 0, 0, 0);
     sidebarLay->setSpacing(0);
 
-    // Logo区 - 使用 app 图标图片
+    // Logo区
     QWidget *logoArea = new QWidget;
     logoArea->setObjectName("logoArea");
     logoArea->setFixedHeight(64);
@@ -96,7 +99,7 @@ void MainWindow::setupUi()
     logoLay->addLayout(logoTextLay);
     sidebarLay->addWidget(logoArea);
 
-    // 用户信息区 - 使用角色对应图标
+    // 用户信息区
     QWidget *userArea = new QWidget;
     userArea->setObjectName("userArea");
     userArea->setFixedHeight(52);
@@ -166,51 +169,78 @@ void MainWindow::setupUi()
 
 void MainWindow::setupNav()
 {
-    // ── 系统概览（顶级）──
-    QTreeWidgetItem *dash = new QTreeWidgetItem(m_navTree);
-    dash->setText(0, "  系统概览");
-    dash->setIcon(0, IconHelper::navDashboard());
-    dash->setData(0, Qt::UserRole, 0);
+    // ── 分组标题公共样式 ──
+    QFont grpFont;
+    grpFont.setBold(true);
+    grpFont.setPointSize(10);
+    QColor grpColor(0xe0, 0xec, 0xff);   // #e0ecff 亮白
+    QFont subFont;
+    subFont.setPointSize(9);
+    QColor subColor(0x8a, 0xaf, 0xd4);   // #8aafd4 蓝灰
 
-    // ── 系统信息采集 ──
+    // ── 系统概览（顶级，一级菜单）──
+    QTreeWidgetItem *dash = new QTreeWidgetItem(m_navTree);
+    dash->setText(0, "  🖥 系统概览");
+    dash->setIcon(0, QIcon());
+    dash->setData(0, Qt::UserRole, 0);
+    dash->setFont(0, grpFont);
+    dash->setForeground(0, QBrush(grpColor));
+
+    // ── 基础信息 ──
     QTreeWidgetItem *grpInfo = new QTreeWidgetItem(m_navTree);
-    grpInfo->setText(0, "  系统信息采集");
-    grpInfo->setIcon(0, IconHelper::groupCollect());
+    grpInfo->setText(0, "  🖥 基础信息");
+    grpInfo->setIcon(0, QIcon());
     grpInfo->setData(0, Qt::UserRole, -1);
     grpInfo->setExpanded(true);
-    addNavItem(grpInfo, IconHelper::navSysInfo(),   "系统基本信息", 1);
-    addNavItem(grpInfo, IconHelper::navNetwork(),   "网络信息",     2);
-    addNavItem(grpInfo, IconHelper::navDisk(),      "硬盘信息",     3);
-    addNavItem(grpInfo, IconHelper::navProcess(),   "进程信息",     4);
-    addNavItem(grpInfo, IconHelper::navPort(),      "端口信息",     5);
-    addNavItem(grpInfo, IconHelper::navAutorun(),   "自启动项",     6);
-    addNavItem(grpInfo, IconHelper::navScheduled(), "计划任务",     7);
-    addNavItem(grpInfo, IconHelper::navDriver(),    "驱动信息",     8);
-    addNavItem(grpInfo, IconHelper::navShared(),    "共享资源",     9);
-    addNavItem(grpInfo, IconHelper::navPlugin(),    "浏览器插件",  10);
-    addNavItem(grpInfo, IconHelper::navMemory(),    "内存映像",    11);
+    grpInfo->setFont(0, grpFont);
+    grpInfo->setForeground(0, QBrush(grpColor));
+    addNavItem(grpInfo, IconHelper::navSysInfo(),   "系统信息",   1);
+    addNavItem(grpInfo, IconHelper::navNetwork(),   "网络连接",   2);
+    addNavItem(grpInfo, IconHelper::navDisk(),      "硬盘信息",   3);
+    addNavItem(grpInfo, IconHelper::navProcess(),   "进程列表",   4);
+    addNavItem(grpInfo, IconHelper::navPort(),      "端口监听",   5);
+    addNavItem(grpInfo, IconHelper::navAutorun(),   "自启动项",   6);
+    addNavItem(grpInfo, IconHelper::navScheduled(), "计划任务",   7);
+    addNavItem(grpInfo, IconHelper::navDriver(),    "驱动信息",   8);
+    addNavItem(grpInfo, IconHelper::navShared(),    "共享资源",   9);
+    addNavItem(grpInfo, IconHelper::navPlugin(),    "插件分析",  10);
+    addNavItem(grpInfo, IconHelper::navMemory(),    "内存映像",  11);
 
     // ── 检测分析 ──
     QTreeWidgetItem *grpScan = new QTreeWidgetItem(m_navTree);
-    grpScan->setText(0, "  检测分析");
-    grpScan->setIcon(0, IconHelper::groupScan());
+    grpScan->setText(0, "  🔎 检测分析");
+    grpScan->setIcon(0, QIcon());
     grpScan->setData(0, Qt::UserRole, -1);
     grpScan->setExpanded(true);
-    addNavItem(grpScan, IconHelper::navStatic(),    "静态检测",     12);
-    addNavItem(grpScan, IconHelper::navDynamic(),   "动态行为检测", 13);
-    // 数字证书检测已合并至静态检测模块 Tab，不再独立显示
-    addNavItem(grpScan, IconHelper::navFileAssoc(), "文件关联检测", 14);
-    addNavItem(grpScan, IconHelper::navSample(),    "样本提取",     15);
+    grpScan->setFont(0, grpFont);
+    grpScan->setForeground(0, QBrush(grpColor));
+    addNavItem(grpScan, IconHelper::navStatic(),  "静态检测", 12);
+    addNavItem(grpScan, IconHelper::navDynamic(), "动态监测", 13);
 
-    // ── 结果管理 ──
-    QTreeWidgetItem *grpResult = new QTreeWidgetItem(m_navTree);
-    grpResult->setText(0, "  结果管理");
-    grpResult->setIcon(0, IconHelper::groupResult());
-    grpResult->setData(0, Qt::UserRole, -1);
-    grpResult->setExpanded(true);
-    addNavItem(grpResult, IconHelper::navReport(),   "检测报告", 16);
-    addNavItem(grpResult, IconHelper::navLog(),      "日志审计", 17);
-    addNavItem(grpResult, IconHelper::navSettings(), "系统设置", 18);
+    // ── 综合分析 ──
+    QTreeWidgetItem *grpAnalysis = new QTreeWidgetItem(m_navTree);
+    grpAnalysis->setText(0, "  📊 综合分析");
+    grpAnalysis->setIcon(0, QIcon());
+    grpAnalysis->setData(0, Qt::UserRole, -1);
+    grpAnalysis->setExpanded(true);
+    grpAnalysis->setFont(0, grpFont);
+    grpAnalysis->setForeground(0, QBrush(grpColor));
+    addNavItem(grpAnalysis, IconHelper::icon("nav_search"),    "全局搜索", 14);
+    addNavItem(grpAnalysis, IconHelper::navSample(),           "样本提取", 15);
+    addNavItem(grpAnalysis, IconHelper::icon("nav_vuln"),      "漏洞监测", 16);
+    addNavItem(grpAnalysis, IconHelper::navReport(),           "检测报告", 17);
+
+    // ── 系统管理 ──
+    QTreeWidgetItem *grpMgmt = new QTreeWidgetItem(m_navTree);
+    grpMgmt->setText(0, "  ⚙ 系统管理");
+    grpMgmt->setIcon(0, QIcon());
+    grpMgmt->setData(0, Qt::UserRole, -1);
+    grpMgmt->setExpanded(true);
+    grpMgmt->setFont(0, grpFont);
+    grpMgmt->setForeground(0, QBrush(grpColor));
+    addNavItem(grpMgmt, IconHelper::navLog(),                  "日志审计", 18);
+    addNavItem(grpMgmt, IconHelper::icon("nav_usermgr"),       "用户管理", 19);
+    addNavItem(grpMgmt, IconHelper::navSettings(),             "系统设置", 20);
 
     m_navTree->setCurrentItem(dash);
 }
@@ -220,56 +250,64 @@ QTreeWidgetItem* MainWindow::addNavItem(QTreeWidgetItem *parent,
                                          const QString &text,
                                          int pageIndex)
 {
+    QFont subFont;
+    subFont.setPointSize(9);
+    QColor subColor(0x8a, 0xaf, 0xd4);   // #8aafd4 蓝灰
+
     QTreeWidgetItem *item = new QTreeWidgetItem(parent);
-    item->setText(0, "  " + text);
+    item->setText(0, "    " + text);   // 4空格缩进体现层级
     item->setIcon(0, icon);
     item->setData(0, Qt::UserRole, pageIndex);
+    item->setFont(0, subFont);
+    item->setForeground(0, QBrush(subColor));
     return item;
 }
 
 void MainWindow::setupPages()
 {
-    m_pgDashboard = new DashboardPage;
-    m_pgSysInfo   = new SystemInfoPage;
-    m_pgNetInfo   = new NetworkInfoPage;
-    m_pgDiskInfo  = new DiskInfoPage;
-    m_pgProcess   = new ProcessInfoPage;
-    m_pgPort      = new PortInfoPage;
-    m_pgAutorun   = new AutorunPage;
-    m_pgScheduled = new ScheduledTaskPage;
-    m_pgDriver    = new DriverInfoPage;
-    m_pgShared    = new SharedResourcePage;
-    m_pgBrowser   = new BrowserPluginPage;
-    m_pgMemory    = new MemoryImagePage;
-    m_pgStatic    = new StaticScanPage;
-    m_pgDynamic   = new DynamicScanPage;
-    // m_pgCert 已删除：数字证书检测已合并至 StaticScanPage 的证书 Tab
-    m_pgFileAssoc = new FileAssocPage;
-    m_pgSample    = new SampleExtractPage;
-    m_pgReport    = new ReportPage;
-    m_pgLog       = new LogAuditPage;
-    m_pgSettings  = new SystemSettingsPage;
+    m_pgDashboard    = new DashboardPage;
+    m_pgSysInfo      = new SystemInfoPage;
+    m_pgNetInfo      = new NetworkInfoPage;
+    m_pgDiskInfo     = new DiskInfoPage;
+    m_pgProcess      = new ProcessInfoPage;
+    m_pgPort         = new PortInfoPage;
+    m_pgAutorun      = new AutorunPage;
+    m_pgScheduled    = new ScheduledTaskPage;
+    m_pgDriver       = new DriverInfoPage;
+    m_pgShared       = new SharedResourcePage;
+    m_pgBrowser      = new BrowserPluginPage;
+    m_pgMemory       = new MemoryImagePage;
+    m_pgStatic       = new StaticScanPage;
+    m_pgDynamic      = new DynamicScanPage;
+    m_pgGlobalSearch = new GlobalSearchPage;
+    m_pgSample       = new SampleExtractPage;
+    m_pgVulnDetect   = new VulnDetectPage;
+    m_pgReport       = new ReportPage;
+    m_pgLog          = new LogAuditPage;
+    m_pgUserManage   = new UserManagePage;
+    m_pgSettings     = new SystemSettingsPage;
 
-    m_stack->addWidget(m_pgDashboard); // 0
-    m_stack->addWidget(m_pgSysInfo);   // 1
-    m_stack->addWidget(m_pgNetInfo);   // 2
-    m_stack->addWidget(m_pgDiskInfo);  // 3
-    m_stack->addWidget(m_pgProcess);   // 4
-    m_stack->addWidget(m_pgPort);      // 5
-    m_stack->addWidget(m_pgAutorun);   // 6
-    m_stack->addWidget(m_pgScheduled); // 7
-    m_stack->addWidget(m_pgDriver);    // 8
-    m_stack->addWidget(m_pgShared);    // 9
-    m_stack->addWidget(m_pgBrowser);   // 10
-    m_stack->addWidget(m_pgMemory);    // 11
-    m_stack->addWidget(m_pgStatic);    // 12
-    m_stack->addWidget(m_pgDynamic);   // 13
-    // 14 原数字证书已合并至静态检测，跳过
-    m_stack->addWidget(m_pgFileAssoc); // 14
-    m_stack->addWidget(m_pgSample);    // 15
-    m_stack->addWidget(m_pgReport);    // 16
-    m_stack->addWidget(m_pgLog);       // 17
-    m_stack->addWidget(m_pgSettings);  // 18
+    m_stack->addWidget(m_pgDashboard);    // 0
+    m_stack->addWidget(m_pgSysInfo);      // 1
+    m_stack->addWidget(m_pgNetInfo);      // 2
+    m_stack->addWidget(m_pgDiskInfo);     // 3
+    m_stack->addWidget(m_pgProcess);      // 4
+    m_stack->addWidget(m_pgPort);         // 5
+    m_stack->addWidget(m_pgAutorun);      // 6
+    m_stack->addWidget(m_pgScheduled);    // 7
+    m_stack->addWidget(m_pgDriver);       // 8
+    m_stack->addWidget(m_pgShared);       // 9
+    m_stack->addWidget(m_pgBrowser);      // 10
+    m_stack->addWidget(m_pgMemory);       // 11
+    m_stack->addWidget(m_pgStatic);       // 12
+    m_stack->addWidget(m_pgDynamic);      // 13
+    m_stack->addWidget(m_pgGlobalSearch); // 14
+    m_stack->addWidget(m_pgSample);       // 15
+    m_stack->addWidget(m_pgVulnDetect);   // 16
+    m_stack->addWidget(m_pgReport);       // 17
+    m_stack->addWidget(m_pgLog);          // 18
+    m_stack->addWidget(m_pgUserManage);   // 19
+    m_stack->addWidget(m_pgSettings);     // 20
 }
 
 void MainWindow::switchPage(int index)
@@ -306,5 +344,4 @@ void MainWindow::onRefreshCurrentPage()
 void MainWindow::applyStyle()
 {
     // 全局主题已在 main.cpp 中通过 StyleManager::applyGlobal() 加载
-    // 此处无需重复设置，保留空函数体以兼容调用方
 }

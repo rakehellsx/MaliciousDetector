@@ -29,10 +29,11 @@ class BrowserPluginPage;
 class MemoryImagePage;
 class StaticScanPage;
 class DynamicScanPage;
-// CertScanPage 已合并至 StaticScanPage 的数字证书 Tab，不再独立使用
-class FileAssocPage;
 class SampleExtractPage;
+class VulnDetectPage;
 class ReportPage;
+class GlobalSearchPage;
+class UserManagePage;
 class LogAuditPage;
 class SystemSettingsPage;
 
@@ -74,26 +75,32 @@ private:
     QPushButton    *m_btnRefresh;
 
     // 页面实例
-    DashboardPage      *m_pgDashboard;
-    SystemInfoPage     *m_pgSysInfo;
-    NetworkInfoPage    *m_pgNetInfo;
-    DiskInfoPage       *m_pgDiskInfo;
-    ProcessInfoPage    *m_pgProcess;
-    PortInfoPage       *m_pgPort;
-    AutorunPage        *m_pgAutorun;
-    ScheduledTaskPage  *m_pgScheduled;
-    DriverInfoPage     *m_pgDriver;
-    SharedResourcePage *m_pgShared;
-    BrowserPluginPage  *m_pgBrowser;
-    MemoryImagePage    *m_pgMemory;
-    StaticScanPage     *m_pgStatic;
-    DynamicScanPage    *m_pgDynamic;
-    // m_pgCert 已删除：数字证书检测已合并至 StaticScanPage 的证书 Tab
-    FileAssocPage      *m_pgFileAssoc;
-    SampleExtractPage  *m_pgSample;
-    ReportPage         *m_pgReport;
-    LogAuditPage       *m_pgLog;
-    SystemSettingsPage *m_pgSettings;
+    // 索引 0: 系统概览
+    DashboardPage      *m_pgDashboard;   // 0
+    // 基础信息 (1-11)
+    SystemInfoPage     *m_pgSysInfo;     // 1
+    NetworkInfoPage    *m_pgNetInfo;     // 2
+    DiskInfoPage       *m_pgDiskInfo;    // 3
+    ProcessInfoPage    *m_pgProcess;     // 4
+    PortInfoPage       *m_pgPort;        // 5
+    AutorunPage        *m_pgAutorun;     // 6
+    ScheduledTaskPage  *m_pgScheduled;   // 7
+    DriverInfoPage     *m_pgDriver;      // 8
+    SharedResourcePage *m_pgShared;      // 9
+    BrowserPluginPage  *m_pgBrowser;     // 10
+    MemoryImagePage    *m_pgMemory;      // 11
+    // 检测分析 (12-13)
+    StaticScanPage     *m_pgStatic;      // 12
+    DynamicScanPage    *m_pgDynamic;     // 13
+    // 综合分析 (14-17)
+    GlobalSearchPage   *m_pgGlobalSearch;// 14
+    SampleExtractPage  *m_pgSample;      // 15
+    VulnDetectPage     *m_pgVulnDetect;  // 16
+    ReportPage         *m_pgReport;      // 17
+    // 系统管理 (18-20)
+    LogAuditPage       *m_pgLog;         // 18
+    UserManagePage     *m_pgUserManage;  // 19
+    SystemSettingsPage *m_pgSettings;    // 20
 
     BasicLibLoader *m_loader;
     QString         m_role;

@@ -17,7 +17,7 @@ private slots:
     void onQuery();
 private:
     Ui::PortInfoPage *ui{nullptr};
-    void setupUi();
+    void loadDemoData();
     void fillTable(const QVariantList &rows);
     QTableWidget *m_tbl{nullptr};
     QLineEdit    *m_edtKeyword{nullptr};  // 本地IP/端口/远程地址/进程名

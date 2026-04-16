@@ -46,9 +46,13 @@ void MemoryImagePage::refreshData()
         QVariantMap statusMap = DatabaseManager::instance()->queryMemoryStatus();
         QVariantList kernelList = DatabaseManager::instance()->queryKernelModules();
         QVariantList procList   = DatabaseManager::instance()->queryProcessMemory();
-        populateMemoryStatusFromDB(statusMap);
-        populateKernelModulesFromDB(kernelList);
-        populateProcessMemoryFromDB(procList);
+        if (kernelList.isEmpty() && procList.isEmpty()) {
+            loadDemoData();
+        } else {
+            populateMemoryStatusFromDB(statusMap);
+            populateKernelModulesFromDB(kernelList);
+            populateProcessMemoryFromDB(procList);
+        }
     }
 
     m_lblStatus->setText("已刷新：" + QDateTime::currentDateTime().toString("HH:mm:ss"));
@@ -360,4 +364,91 @@ void MemoryImagePage::onQueryProc()
 
     auto rows = DatabaseManager::instance()->execSelect(sql, binds);
     populateProcessMemoryFromDB(rows);
+}
+
+void MemoryImagePage::loadDemoData()
+{
+    // 内存状态演示数据
+    m_tblStatus->setRowCount(0);
+    auto addRow = [this](const QString &key, const QString &val) {
+        int r = m_tblStatus->rowCount(); m_tblStatus->insertRow(r);
+        QTableWidgetItem *k = new QTableWidgetItem(key);
+        k->setBackground(QColor("#f5f7fa")); k->setForeground(QColor("#555"));
+        QFont f = k->font(); f.setBold(true); k->setFont(f);
+        m_tblStatus->setItem(r, 0, k);
+        m_tblStatus->setItem(r, 1, new QTableWidgetItem(val));
+    };
+    addRow("物理内存总量", "8192 MB");
+    addRow("已用内存",     "5120 MB（62.5%）");
+    addRow("可用内存",     "3072 MB");
+    addRow("虚拟内存",     "16384 MB");
+    addRow("页面文件",     "C:\\pagefile.sys");
+
+    // 内核模块演示数据（列：模块名/基址/大小/标志/索引/路径/授信状态）
+    struct KRow { QString name, base, size, flags, idx, path; bool trusted; };
+    QList<KRow> kDemo = {
+        {"ntoskrnl.exe", "0xFFFFF80012000000", "8.5 MB", "0x00000004", "1",
+         "C:\\Windows\\System32\\ntoskrnl.exe", true},
+        {"hal.dll",      "0xFFFFF80012900000", "0.8 MB", "0x00000004", "2",
+         "C:\\Windows\\System32\\hal.dll", true},
+        {"kbdclass.sys", "0xFFFFF80013000000", "0.1 MB", "0x00000004", "3",
+         "C:\\Windows\\System32\\drivers\\kbdclass.sys", true},
+        {"rootkit.sys",  "0xFFFFF80014000000", "0.2 MB", "0x00000006", "4",
+         "C:\\Windows\\Temp\\rootkit.sys", false},
+        {"tcpip.sys",    "0xFFFFF80015000000", "1.2 MB", "0x00000004", "5",
+         "C:\\Windows\\System32\\drivers\\tcpip.sys", true},
+    };
+    m_tblKernel->setRowCount(0);
+    int untrusted = 0;
+    for (const auto &k : kDemo) {
+        int r = m_tblKernel->rowCount(); m_tblKernel->insertRow(r);
+        m_tblKernel->setItem(r, 0, new QTableWidgetItem(k.name));
+        auto *bi = new QTableWidgetItem(k.base); bi->setFont(QFont("Consolas", 10));
+        m_tblKernel->setItem(r, 1, bi);
+        m_tblKernel->setItem(r, 2, new QTableWidgetItem(k.size));
+        m_tblKernel->setItem(r, 3, new QTableWidgetItem(k.flags));
+        m_tblKernel->setItem(r, 4, new QTableWidgetItem(k.idx));
+        auto *pi = new QTableWidgetItem(k.path); pi->setFont(QFont("Consolas", 10));
+        m_tblKernel->setItem(r, 5, pi);
+        auto *ti = new QTableWidgetItem(k.trusted ? "已签名" : "未签名");
+        ti->setForeground(k.trusted ? QColor("#38a169") : QColor("#e53e3e"));
+        QFont tf = ti->font(); tf.setBold(true); ti->setFont(tf);
+        ti->setTextAlignment(Qt::AlignCenter);
+        m_tblKernel->setItem(r, 6, ti);
+        if (!k.trusted) {
+            untrusted++;
+            for (int c = 0; c < 7; c++)
+                if (m_tblKernel->item(r, c)) m_tblKernel->item(r, c)->setBackground(QColor("#fff5f5"));
+        }
+    }
+    m_lblKernelSummary->setText(QString("共 %1 条 ｜ 未签名 %2 条").arg(kDemo.size()).arg(untrusted));
+
+    // 进程内存演示数据（列：进程名/PID/私有内存/工作集/虚拟内存/可疑注入）
+    struct PRow { QString name, pid, priv, ws, virt, inject; bool high; };
+    QList<PRow> pDemo = {
+        {"explorer.exe",   "1234", "45 MB",  "120 MB", "280 MB",  "无",       false},
+        {"svchost.exe",    "2048", "12 MB",  "35 MB",  "180 MB",  "无",       false},
+        {"svchost32.exe",  "3721", "8 MB",   "25 MB",  "150 MB",  "检测到注入", true},
+        {"chrome.exe",     "4096", "350 MB", "480 MB", "1200 MB", "无",       false},
+        {"notepad.exe",    "5012", "5 MB",   "15 MB",  "80 MB",   "无",       false},
+    };
+    m_tblProc->setRowCount(0);
+    int suspicious = 0;
+    for (const auto &p : pDemo) {
+        int r = m_tblProc->rowCount(); m_tblProc->insertRow(r);
+        m_tblProc->setItem(r, 0, new QTableWidgetItem(p.name));
+        m_tblProc->setItem(r, 1, new QTableWidgetItem(p.pid));
+        m_tblProc->setItem(r, 2, new QTableWidgetItem(p.priv));
+        m_tblProc->setItem(r, 3, new QTableWidgetItem(p.ws));
+        m_tblProc->setItem(r, 4, new QTableWidgetItem(p.virt));
+        auto *ii = new QTableWidgetItem(p.inject);
+        ii->setTextAlignment(Qt::AlignCenter);
+        if (p.high) { ii->setForeground(QColor("#e53e3e")); QFont f=ii->font(); f.setBold(true); ii->setFont(f); suspicious++; }
+        else          ii->setForeground(QColor("#38a169"));
+        m_tblProc->setItem(r, 5, ii);
+        if (p.high)
+            for (int c = 0; c < 6; c++)
+                if (m_tblProc->item(r, c)) m_tblProc->item(r, c)->setBackground(QColor("#fff5f5"));
+    }
+    m_lblProcSummary->setText(QString("共 %1 条 ｜ 可疑注入 %2 条").arg(pDemo.size()).arg(suspicious));
 }
