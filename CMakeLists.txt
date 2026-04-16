@@ -15,6 +15,7 @@ find_package(Qt5 5.6 REQUIRED COMPONENTS
     Widgets
     WebEngineWidgets
     WebChannel
+    Sql
 )
 
 # 资源文件
@@ -51,6 +52,7 @@ target_link_libraries(MalwareDetectorWeb PRIVATE
     Qt5::Widgets
     Qt5::WebEngineWidgets
     Qt5::WebChannel
+    Qt5::Sql
 )
 
 # Windows 特定设置
