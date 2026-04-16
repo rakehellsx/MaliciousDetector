@@ -14,7 +14,7 @@
  </item>
  <item>
   <widget class="QStackedWidget" name="m_stack">
-   <!-- 页面0：基本设置 -->
+   
    <widget class="QWidget" name="pageBasic">
     <layout class="QFormLayout" name="basicForm">
      <item row="0" column="0"><widget class="QLabel" name="">
@@ -46,7 +46,7 @@
  </widget></item>
     </layout>
    </widget>
-   <!-- 页面1：更新设置 -->
+   
    <widget class="QWidget" name="pageUpdate">
     <layout class="QVBoxLayout" name="updateLayout">
      <item><widget class="QCheckBox" name="m_chkAutoUpdate"><property name="text"><string>自动更新</string></property></widget></item>
@@ -81,7 +81,7 @@
      <item><widget class="QProgressBar" name="m_progressUpdate"/></item>
     </layout>
    </widget>
-   <!-- 页面2：扫描设置 -->
+   
    <widget class="QWidget" name="pageScan">
     <layout class="QVBoxLayout" name="scanLayout">
      <item><widget class="QCheckBox" name="m_chkAutoScan"><property name="text"><string>自动扫描</string></property></widget></item>
@@ -91,7 +91,7 @@
      <item><widget class="QCheckBox" name="m_chkScanHidden"><property name="text"><string>扫描隐藏文件</string></property></widget></item>
     </layout>
    </widget>
-   <!-- 页面3：白名单 -->
+   
    <widget class="QWidget" name="pageWhitelist">
     <layout class="QVBoxLayout" name="whiteLayout">
      <item><widget class="QTableWidget" name="m_tblWhitelist">
@@ -116,7 +116,7 @@
 </layout></item>
     </layout>
    </widget>
-   <!-- 页面4：自定义规则 -->
+   
    <widget class="QWidget" name="pageRules">
     <layout class="QVBoxLayout" name="rulesLayout">
      <item><widget class="QTableWidget" name="m_tblRules">
@@ -141,7 +141,7 @@
 </layout></item>
     </layout>
    </widget>
-   <!-- 页面5：日志设置 -->
+   
    <widget class="QWidget" name="pageLog">
     <layout class="QFormLayout" name="logForm">
      <item row="0" column="0"><widget class="QLabel" name="">
@@ -150,7 +150,7 @@
      <item row="0" column="1"><widget class="QSpinBox" name="m_spinLogDays"><property name="minimum"><number>1</number></property><property name="maximum"><number>365</number></property></widget></item>
     </layout>
    </widget>
-   <!-- 页面6：用户管理 -->
+   
    <widget class="QWidget" name="pageUsers">
     <layout class="QVBoxLayout" name="usersLayout">
      <item><widget class="QTableWidget" name="m_tblUsers">

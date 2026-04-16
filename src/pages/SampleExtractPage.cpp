@@ -60,6 +60,7 @@ void SampleExtractPage::onQuery()
     sql += " ORDER BY id DESC LIMIT 200";
 
     auto rows = DatabaseManager::instance()->execSelect(sql, binds);
+    if (rows.isEmpty()) rows = loadDemoData();
     fillTable(rows);
     m_lblStatus->setText("已刷新：" + QDateTime::currentDateTime().toString("HH:mm:ss"));
 }
@@ -126,4 +127,65 @@ void SampleExtractPage::onExtract()
     DatabaseManager::instance()->writeLog(m_role, m_username, "样本提取", fi.fileName(), "success");
     refreshData();
     m_lblStatus->setText("已提取：" + path);
+}
+
+QVariantList SampleExtractPage::loadDemoData()
+{
+    return QVariantList{
+        QVariant(QVariantMap{
+            {"source_path","C:\\Windows\\Temp\\svchost32.exe"},
+            {"extract_type","动态"},
+            {"sample_path","C:\\Samples\\svchost32_20250416.exe"},
+            {"md5","a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"},
+            {"sha256","a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"},
+            {"original_mtime","2025-04-16 08:10:00"},
+            {"original_ctime","2025-04-16 08:09:55"},
+            {"note","高危进程，疑似 C2 木马"},
+            {"extract_time","2025-04-16 09:12:34"}
+        }),
+        QVariant(QVariantMap{
+            {"source_path","C:\\Windows\\Temp\\payload.exe"},
+            {"extract_type","动态"},
+            {"sample_path","C:\\Samples\\payload_20250416.exe"},
+            {"md5","b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5"},
+            {"sha256","b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3"},
+            {"original_mtime","2025-04-16 08:12:45"},
+            {"original_ctime","2025-04-16 08:12:40"},
+            {"note","释放的恶意载荷"},
+            {"extract_time","2025-04-16 09:13:01"}
+        }),
+        QVariant(QVariantMap{
+            {"source_path","C:\\Windows\\Temp\\inject.dll"},
+            {"extract_type","静态"},
+            {"sample_path","C:\\Samples\\inject_20250416.dll"},
+            {"md5","c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6"},
+            {"sha256","c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"},
+            {"original_mtime","2025-04-16 08:13:20"},
+            {"original_ctime","2025-04-16 08:13:15"},
+            {"note","DLL 注入模块"},
+            {"extract_time","2025-04-16 09:14:05"}
+        }),
+        QVariant(QVariantMap{
+            {"source_path","C:\\Windows\\Temp\\helper32.dll"},
+            {"extract_type","静态"},
+            {"sample_path","C:\\Samples\\helper32_20250416.dll"},
+            {"md5","d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1"},
+            {"sha256","d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5"},
+            {"original_mtime","2025-04-16 08:14:00"},
+            {"original_ctime","2025-04-16 08:13:58"},
+            {"note","辅助模块，未签名"},
+            {"extract_time","2025-04-16 09:15:22"}
+        }),
+        QVariant(QVariantMap{
+            {"source_path","C:\\Windows\\Temp\\rootkit.sys"},
+            {"extract_type","静态"},
+            {"sample_path","C:\\Samples\\rootkit_20250416.sys"},
+            {"md5","e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"},
+            {"sha256","e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6"},
+            {"original_mtime","2025-04-16 08:15:30"},
+            {"original_ctime","2025-04-16 08:15:25"},
+            {"note","内核级 Rootkit 驱动"},
+            {"extract_time","2025-04-16 09:16:45"}
+        })
+    };
 }

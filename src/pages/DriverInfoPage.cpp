@@ -16,7 +16,7 @@ DriverInfoPage::DriverInfoPage(QWidget *parent)
     m_tbl = ui->m_tbl;
     m_edtKeyword = ui->m_edtKeyword;
     m_cmbType = findChild<QComboBox*>("m_cmbType");
-    m_cmbSigned = ui->m_cmbSigned;
+    m_cmbSigned = ui->m_cmbSign;
     m_cmbRisk = findChild<QComboBox*>("m_cmbRisk");
     m_lblSummary = ui->m_lblSummary;
     m_lblStatus = ui->m_lblStatus;
@@ -67,6 +67,7 @@ void DriverInfoPage::onQuery()
     sql += " ORDER BY risk DESC, id";
 
     auto rows = DatabaseManager::instance()->execSelect(sql, binds);
+    if (rows.isEmpty()) { loadDemoData(); return; }
     fillTable(rows);
 
     int unsignedCount = 0;
@@ -108,4 +109,44 @@ void DriverInfoPage::fillTable(const QVariantList &rows)
             for (int c = 0; c < 7; c++)
                 if (m_tbl->item(r, c)) m_tbl->item(r, c)->setBackground(QColor("#fff1f0"));
     }
+}
+
+void DriverInfoPage::loadDemoData()
+{
+    struct DrvRow { QString name, type, pub, mtime, path, trust, risk; };
+    QList<DrvRow> demo = {
+        {"ntfs.sys",        "内核驱动", "Microsoft Corporation", "2025-10-01", "C:\\Windows\\System32\\drivers\\ntfs.sys",        "已签名", "正常"},
+        {"tcpip.sys",       "内核驱动", "Microsoft Corporation", "2025-10-01", "C:\\Windows\\System32\\drivers\\tcpip.sys",       "已签名", "正常"},
+        {"ndis.sys",        "内核驱动", "Microsoft Corporation", "2025-10-01", "C:\\Windows\\System32\\drivers\\ndis.sys",        "已签名", "正常"},
+        {"vmnetadapter.sys","设备驱动", "VMware Inc.",           "2025-09-15", "C:\\Windows\\System32\\drivers\\vmnetadapter.sys","已签名", "正常"},
+        {"rootkit.sys",     "内核驱动", "未知",                   "2025-11-19", "C:\\Windows\\Temp\\rootkit.sys",                 "未签名", "高危"},
+        {"monitor.sys",     "第三方",   "未知",                   "2025-11-18", "C:\\Windows\\Temp\\monitor.sys",                 "未签名", "中危"},
+    };
+    m_tbl->setRowCount(0);
+    int unsignedCnt = 0;
+    for (const auto &d : demo) {
+        int r = m_tbl->rowCount(); m_tbl->insertRow(r);
+        m_tbl->setItem(r, 0, new QTableWidgetItem(d.name));
+        m_tbl->setItem(r, 1, new QTableWidgetItem(d.type));
+        m_tbl->setItem(r, 2, new QTableWidgetItem(d.pub));
+        m_tbl->setItem(r, 3, new QTableWidgetItem(d.mtime));
+        m_tbl->setItem(r, 4, new QTableWidgetItem(d.path));
+        auto *ti = new QTableWidgetItem(d.trust);
+        ti->setForeground(d.trust == "已签名" ? QColor("#38a169") : QColor("#e53e3e"));
+        ti->setTextAlignment(Qt::AlignCenter);
+        m_tbl->setItem(r, 5, ti);
+        auto *ri = new QTableWidgetItem(d.risk);
+        if      (d.risk == "高危") ri->setForeground(QColor("#e53e3e"));
+        else if (d.risk == "中危") ri->setForeground(QColor("#dd6b20"));
+        else                       ri->setForeground(QColor("#38a169"));
+        ri->setTextAlignment(Qt::AlignCenter);
+        m_tbl->setItem(r, 6, ri);
+        if (d.trust == "未签名") {
+            unsignedCnt++;
+            for (int c = 0; c < 7; c++)
+                if (m_tbl->item(r, c)) m_tbl->item(r, c)->setBackground(QColor("#fff5f5"));
+        }
+    }
+    m_lblSummary->setText(QString("共 %1 个驱动，其中未签名 %2 个").arg(demo.size()).arg(unsignedCnt));
+    m_lblStatus->setText(QString("共 %1 条记录").arg(demo.size()));
 }

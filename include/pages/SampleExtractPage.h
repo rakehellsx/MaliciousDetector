@@ -24,6 +24,7 @@ private:
     Ui::SampleExtractPage *ui{nullptr};
     void setupUi();
     void fillTable(const QVariantList &rows);
+    QVariantList loadDemoData();
     QLineEdit    *m_editPath{nullptr};
     QPushButton  *m_btnBrowse{nullptr};
     QPushButton  *m_btnExtract{nullptr};

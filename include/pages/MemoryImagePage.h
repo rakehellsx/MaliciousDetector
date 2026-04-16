@@ -26,7 +26,7 @@ private slots:
 
 private:
     Ui::MemoryImagePage *ui{nullptr};
-    void setupUi();
+    void loadDemoData();
     void populateMemoryStatus(const QJsonObject &data);
     void populateKernelModules(const QJsonObject &data);
     void populateProcessMemory(const QJsonObject &data);

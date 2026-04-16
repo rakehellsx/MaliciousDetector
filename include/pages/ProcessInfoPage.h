@@ -15,14 +15,15 @@ public:
     void refreshData() override;
 private slots:
     void onQuery();
+    void onDetailClicked();
 private:
     Ui::ProcessInfoPage *ui{nullptr};
-    void setupUi();
+    void loadDemoData();
     void fillTable(const QVariantList &rows);
     QTableWidget *m_tbl{nullptr};
-    QLineEdit    *m_edtKeyword{nullptr};  // 进程名/路径/用户
-    QComboBox    *m_cmbRisk{nullptr};     // 风险等级
-    QComboBox    *m_cmbStatus{nullptr};   // 进程状态
+    QLineEdit    *m_edtKeyword{nullptr};
+    QComboBox    *m_cmbRisk{nullptr};
+    QComboBox    *m_cmbStatus{nullptr};
     QLabel       *m_lblStatus{nullptr};
 };
 #endif
