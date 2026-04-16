@@ -92,6 +92,9 @@ set(SOURCES
     src/pages/LogAuditPage.cpp
     src/pages/SystemSettingsPage.cpp
     src/pages/CertScanPage.cpp
+    src/pages/UserManagePage.cpp
+    src/pages/VulnDetectPage.cpp
+    src/pages/GlobalSearchPage.cpp
 )
 
 set(HEADERS
@@ -122,6 +125,9 @@ set(HEADERS
     include/pages/LogAuditPage.h
     include/pages/SystemSettingsPage.h
     include/pages/CertScanPage.h
+    include/pages/UserManagePage.h
+    include/pages/VulnDetectPage.h
+    include/pages/GlobalSearchPage.h
     third_party/basic/basic.h
 )
 
@@ -148,6 +154,9 @@ set(UI_FILES
     ui/LogAuditPage.ui
     ui/SystemSettingsPage.ui
     ui/CertScanPage.ui
+    ui/UserManagePage.ui
+    ui/VulnDetectPage.ui
+    ui/GlobalSearchPage.ui
     ui/LoginDialog.ui
 )
 
@@ -282,6 +291,9 @@ if(BUILD_TEST)
         src/pages/LogAuditPage.cpp
         src/pages/SystemSettingsPage.cpp
         src/pages/CertScanPage.cpp
+        src/pages/UserManagePage.cpp
+        src/pages/VulnDetectPage.cpp
+        src/pages/GlobalSearchPage.cpp
     )
     add_executable(test_pages ${TEST_SOURCES} ${HEADERS} ${UI_FILES})
     target_include_directories(test_pages PRIVATE

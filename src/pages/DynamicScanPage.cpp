@@ -7,17 +7,13 @@
 #include <QSplitter>
 #include <QScrollArea>
 #include <QFrame>
-#include <QGroupBox>
 #include <QFileDialog>
-#include <QSqlQuery>
-#include <QSqlDatabase>
 #include <QHeaderView>
 #include <QLabel>
 #include <QTreeWidgetItem>
 #include <QDateTime>
 #include <QFont>
 #include <QMouseEvent>
-#include <QStyle>
 #include <QSet>
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -30,9 +26,8 @@ static QString tableStyle() {
            "QTableWidget::item:alternate{background:#fafbfd;}";
 }
 
-static QTableWidget* makeTab(const QStringList &headers) {
-    auto *t = new QTableWidget(0, headers.size());
-    t->setHorizontalHeaderLabels(headers);
+static void applyTableStyle(QTableWidget *t) {
+    if (!t) return;
     t->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     t->horizontalHeader()->setStretchLastSection(true);
     t->verticalHeader()->setVisible(false);
@@ -40,7 +35,6 @@ static QTableWidget* makeTab(const QStringList &headers) {
     t->setSelectionBehavior(QAbstractItemView::SelectRows);
     t->setAlternatingRowColors(true);
     t->setStyleSheet(tableStyle());
-    return t;
 }
 
 static void highlightRow(QTableWidget *t, int row, const QString &risk) {
@@ -64,532 +58,197 @@ static QTableWidgetItem* riskItem(const QString &risk) {
     return item;
 }
 
+static QString btnStyle(const QString &bg) {
+    return QString("QPushButton{background:%1;color:#fff;border:none;"
+                   "border-radius:3px;padding:5px 14px;font-size:12px;}"
+                   "QPushButton:hover{opacity:0.9;}").arg(bg);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 构造
 // ─────────────────────────────────────────────────────────────────────────────
 DynamicScanPage::DynamicScanPage(QWidget *parent)
-    : BasePage("动态行为检测", parent)
+    : BasePage("动态监测", parent)
 {
     ui = new Ui::DynamicScanPage();
     ui->setupUi(this);
     postSetupUi();
-    m_tabOuter = findChild<QTabWidget*>("m_tabMain");
-    m_editPath = ui->m_editPath;
-    m_btnBrowse = ui->m_btnBrowse;
-    m_btnStart = ui->m_btnStart;
-    m_btnStop = ui->m_btnStop;
+
+    // 绑定外层 Tab
+    m_tabMain = ui->m_tabMain;
+
+    // 扫描控制
+    m_editPath         = ui->m_editPath;
+    m_btnBrowse        = ui->m_btnBrowse;
+    m_btnStart         = ui->m_btnStart;
+    m_btnStop          = ui->m_btnStop;
     m_lblMonitorStatus = ui->m_lblMonitorStatus;
-    m_lblStatus = ui->m_lblStatus;
-    m_edtBehaviorKw = ui->m_edtBehaviorKw;
-    m_cmbBehaviorRisk = ui->m_cmbBehaviorRisk;
+    m_lblStatus        = ui->m_lblStatus;
+
+    // 内层行为 Tab
     m_tabBehavior = ui->m_tabBehavior;
+
+    // 注册表操作
+    m_cmbRegOp    = ui->m_cmbRegOp;
+    m_cmbRegRisk  = ui->m_cmbRegRisk;
+    m_edtRegKw    = ui->m_edtRegKw;
+    m_btnRegQuery = ui->m_btnRegQuery;
     m_tblRegistry = ui->m_tblRegistry;
-    m_tblFile = ui->m_tblFile;
-    m_tblNetwork = ui->m_tblNetwork;
-    m_tblSsdt = ui->m_tblSsdt;
-    m_tblAutorun = ui->m_tblAutorun;
-    m_tblTask = ui->m_tblTask;
+    applyTableStyle(m_tblRegistry);
+
+    // 文件行为
+    m_cmbFileOp    = ui->m_cmbFileOp;
+    m_cmbFileRisk  = ui->m_cmbFileRisk;
+    m_edtFileKw    = ui->m_edtFileKw;
+    m_btnFileQuery = ui->m_btnFileQuery;
+    m_tblFile      = ui->m_tblFile;
+    applyTableStyle(m_tblFile);
+
+    // 进程行为
+    m_cmbProcOp    = ui->m_cmbProcOp;
+    m_cmbProcRisk  = ui->m_cmbProcRisk;
+    m_edtProcKw    = ui->m_edtProcKw;
+    m_btnProcQuery = ui->m_btnProcQuery;
+    m_tblProcess   = ui->m_tblProcess;
+    applyTableStyle(m_tblProcess);
+
+    // 网络行为
+    m_cmbNetProto  = ui->m_cmbNetProto;
+    m_cmbNetRisk   = ui->m_cmbNetRisk;
+    m_edtNetKw     = ui->m_edtNetKw;
+    m_btnNetQuery  = ui->m_btnNetQuery;
+    m_tblNetwork   = ui->m_tblNetwork;
+    applyTableStyle(m_tblNetwork);
+
+    // SSDT操作
+    m_cmbSsdtRisk  = ui->m_cmbSsdtRisk;
+    m_edtSsdtKw    = ui->m_edtSsdtKw;
+    m_btnSsdtQuery = ui->m_btnSsdtQuery;
+    m_tblSsdt      = ui->m_tblSsdt;
+    applyTableStyle(m_tblSsdt);
+
+    // 启动项操作
+    m_cmbAutorunOp    = ui->m_cmbAutorunOp;
+    m_cmbAutorunRisk  = ui->m_cmbAutorunRisk;
+    m_edtAutorunKw    = ui->m_edtAutorunKw;
+    m_btnAutorunQuery = ui->m_btnAutorunQuery;
+    m_tblAutorun      = ui->m_tblAutorun;
+    applyTableStyle(m_tblAutorun);
+
+    // 计划任务操作
+    m_cmbTaskOp    = ui->m_cmbTaskOp;
+    m_cmbTaskRisk  = ui->m_cmbTaskRisk;
+    m_edtTaskKw    = ui->m_edtTaskKw;
+    m_btnTaskQuery = ui->m_btnTaskQuery;
+    m_tblTask      = ui->m_tblTask;
+    applyTableStyle(m_tblTask);
+
+    // 浏览器插件操作
+    m_cmbPluginOp    = ui->m_cmbPluginOp;
+    m_cmbPluginRisk  = ui->m_cmbPluginRisk;
+    m_edtPluginKw    = ui->m_edtPluginKw;
+    m_btnPluginQuery = ui->m_btnPluginQuery;
     m_tblBrowserPlugin = ui->m_tblBrowserPlugin;
-    m_tblProcessDetail = ui->m_tblProcessDetail;
-    m_scrollCards = ui->m_scrollCards;
-    m_cardContainer = ui->m_cardContainer;
-    m_chainTree = ui->m_chainTree;
+    applyTableStyle(m_tblBrowserPlugin);
+
+    // 文件关联检测
+    m_cmbFileAssocStatus = ui->m_cmbFileAssocStatus;
+    m_cmbFileAssocRisk   = ui->m_cmbFileAssocRisk;
+    m_edtFileAssocKw     = ui->m_edtFileAssocKw;
+    m_btnFileAssocQuery  = ui->m_btnFileAssocQuery;
+    m_tblFileAssoc       = ui->m_tblFileAssoc;
+    applyTableStyle(m_tblFileAssoc);
+
+    // 远控行为分析
+    m_cmbRctrlType  = ui->m_cmbRctrlType;
+    m_cmbRctrlRisk  = ui->m_cmbRctrlRisk;
+    m_edtRctrlKw    = ui->m_edtRctrlKw;
+    m_btnRctrlQuery = ui->m_btnRctrlQuery;
+    m_tblRctrl      = ui->m_tblRctrl;
+    applyTableStyle(m_tblRctrl);
+
+    // 进程链行为分析
+    m_scrollCards          = ui->m_scrollCards;
+    m_cardContainer        = ui->m_cardContainer;
+    m_chainTree            = ui->m_chainTree;
+    m_tblProcessDetail     = ui->m_tblProcessDetail;
+    applyTableStyle(m_tblProcessDetail);
     m_lblChainBehaviorTitle = ui->m_lblChainBehaviorTitle;
-    m_btnRefreshChain = ui->m_btnRefreshChain;
+    m_btnRefreshChain       = ui->m_btnRefreshChain;
+
+    // 按钮样式
+    m_btnBrowse->setStyleSheet(btnStyle("#595959"));
+    m_btnStart->setStyleSheet(btnStyle("#1a3a6a"));
+    m_btnStop->setStyleSheet(btnStyle("#8c8c8c"));
+    m_btnRefreshChain->setStyleSheet(btnStyle("#1a3a6a"));
+    for (auto *b : {m_btnRegQuery, m_btnFileQuery, m_btnProcQuery, m_btnNetQuery,
+                    m_btnSsdtQuery, m_btnAutorunQuery, m_btnTaskQuery,
+                    m_btnPluginQuery, m_btnFileAssocQuery, m_btnRctrlQuery})
+        b->setStyleSheet(btnStyle("#1a3a6a"));
+
+    // 信号连接
+    connect(m_btnBrowse,        &QPushButton::clicked, this, &DynamicScanPage::onBrowseFile);
+    connect(m_btnStart,         &QPushButton::clicked, this, &DynamicScanPage::onStartScan);
+    connect(m_btnStop,          &QPushButton::clicked, this, &DynamicScanPage::onStopScan);
+    connect(m_btnRegQuery,      &QPushButton::clicked, this, &DynamicScanPage::onQueryRegistry);
+    connect(m_btnFileQuery,     &QPushButton::clicked, this, &DynamicScanPage::onQueryFile);
+    connect(m_btnProcQuery,     &QPushButton::clicked, this, &DynamicScanPage::onQueryProcess);
+    connect(m_btnNetQuery,      &QPushButton::clicked, this, &DynamicScanPage::onQueryNetwork);
+    connect(m_btnSsdtQuery,     &QPushButton::clicked, this, &DynamicScanPage::onQuerySsdt);
+    connect(m_btnAutorunQuery,  &QPushButton::clicked, this, &DynamicScanPage::onQueryAutorun);
+    connect(m_btnTaskQuery,     &QPushButton::clicked, this, &DynamicScanPage::onQueryTask);
+    connect(m_btnPluginQuery,   &QPushButton::clicked, this, &DynamicScanPage::onQueryPlugin);
+    connect(m_btnFileAssocQuery,&QPushButton::clicked, this, &DynamicScanPage::onQueryFileAssoc);
+    connect(m_btnRctrlQuery,    &QPushButton::clicked, this, &DynamicScanPage::onQueryRctrl);
+    connect(m_btnRefreshChain,  &QPushButton::clicked, this, &DynamicScanPage::onRefreshProcessChain);
+    connect(m_chainTree, &QTreeWidget::itemClicked,
+            this, &DynamicScanPage::onProcessTreeItemClicked);
+
+    // Enter 键触发查询
+    connect(m_edtRegKw,      &QLineEdit::returnPressed, this, &DynamicScanPage::onQueryRegistry);
+    connect(m_edtFileKw,     &QLineEdit::returnPressed, this, &DynamicScanPage::onQueryFile);
+    connect(m_edtProcKw,     &QLineEdit::returnPressed, this, &DynamicScanPage::onQueryProcess);
+    connect(m_edtNetKw,      &QLineEdit::returnPressed, this, &DynamicScanPage::onQueryNetwork);
+    connect(m_edtSsdtKw,     &QLineEdit::returnPressed, this, &DynamicScanPage::onQuerySsdt);
+    connect(m_edtAutorunKw,  &QLineEdit::returnPressed, this, &DynamicScanPage::onQueryAutorun);
+    connect(m_edtTaskKw,     &QLineEdit::returnPressed, this, &DynamicScanPage::onQueryTask);
+    connect(m_edtPluginKw,   &QLineEdit::returnPressed, this, &DynamicScanPage::onQueryPlugin);
+    connect(m_edtFileAssocKw,&QLineEdit::returnPressed, this, &DynamicScanPage::onQueryFileAssoc);
+    connect(m_edtRctrlKw,    &QLineEdit::returnPressed, this, &DynamicScanPage::onQueryRctrl);
+
     refreshData();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Tab 1：全局行为监测
-// ─────────────────────────────────────────────────────────────────────────────
-QWidget* DynamicScanPage::buildGlobalTab() {
-    auto *page   = new QWidget;
-    auto *vbox   = new QVBoxLayout(page);
-    vbox->setContentsMargins(8, 8, 8, 8);
-    vbox->setSpacing(6);
-
-    // 控制栏
-    auto *ctrlRow = new QHBoxLayout;
-    ctrlRow->setSpacing(6);
-    m_editPath = new QLineEdit;
-    m_editPath->setPlaceholderText("输入目标文件路径或拖拽文件...");
-    m_editPath->setStyleSheet("QLineEdit{font-size:12px;padding:5px 8px;"
-                               "border:1px solid #d0d7e3;border-radius:3px;}");
-
-    auto makeBtn = [](const QString &text, const QString &bg) -> QPushButton* {
-        auto *b = new QPushButton(text);
-        b->setFixedWidth(90);
-        b->setStyleSheet(QString("QPushButton{background:%1;color:#fff;border:none;"
-                                 "border-radius:3px;padding:5px 10px;font-size:12px;}"
-                                 "QPushButton:hover{opacity:0.9;}").arg(bg));
-        return b;
-    };
-    m_btnBrowse = makeBtn("浏览", "#595959");
-    m_btnBrowse->setFixedWidth(70);
-    m_btnStart  = makeBtn("开始监控", "#1a3a6a");
-    m_btnStop   = makeBtn("停止",     "#8c8c8c");
-
-    m_lblMonitorStatus = new QLabel("● 就绪");
-    m_lblMonitorStatus->setStyleSheet("font-size:12px;color:#52c41a;font-weight:600;padding:0 8px;");
-
-    ctrlRow->addWidget(m_editPath, 1);
-    ctrlRow->addWidget(m_btnBrowse);
-    ctrlRow->addWidget(m_btnStart);
-    ctrlRow->addWidget(m_btnStop);
-    ctrlRow->addWidget(m_lblMonitorStatus);
-    vbox->addLayout(ctrlRow);
-
-    // 查询栏
-    auto *qRow = new QHBoxLayout;
-    qRow->setSpacing(6);
-    m_edtBehaviorKw = new QLineEdit;
-    m_edtBehaviorKw->setPlaceholderText("操作类型 / 路径 / 进程名");
-    m_edtBehaviorKw->setClearButtonEnabled(true);
-    m_edtBehaviorKw->setFixedWidth(220);
-    m_cmbBehaviorRisk = new QComboBox;
-    m_cmbBehaviorRisk->addItems({"全部风险", "高危(high)", "中危(medium)", "低危(low)"});
-    auto *btnQ = new QPushButton("查询");
-    btnQ->setObjectName("btnPrimary");
-    btnQ->setFixedWidth(70);
-    auto *btnR = new QPushButton("刷新");
-    btnR->setObjectName("btnSecondary");
-    btnR->setFixedWidth(70);
-    m_lblStatus = new QLabel;
-    m_lblStatus->setStyleSheet("color:#8c8c8c;font-size:11px;");
-
-    qRow->addWidget(new QLabel("行为关键字："));
-    qRow->addWidget(m_edtBehaviorKw);
-    qRow->addSpacing(8);
-    qRow->addWidget(new QLabel("风险："));
-    qRow->addWidget(m_cmbBehaviorRisk);
-    qRow->addWidget(btnQ);
-    qRow->addWidget(btnR);
-    qRow->addWidget(m_lblStatus, 1);
-    vbox->addLayout(qRow);
-
-    // 行为 Tab
-    m_tabBehavior = new QTabWidget;
-    m_tabBehavior->setStyleSheet(
-        "QTabWidget::pane{border:1px solid #d0d7e3;}"
-        "QTabBar::tab{padding:6px 14px;font-size:12px;background:#f0f3fa;"
-        "  border:1px solid #d0d7e3;}"
-        "QTabBar::tab:selected{background:#fff;color:#1a3a6a;"
-        "  font-weight:600;border-bottom:2px solid #1a3a6a;}");
-
-    m_tblRegistry     = makeTab({"时间","操作","进程","注册表路径","详情","风险"});
-    m_tblFile         = makeTab({"时间","操作","进程","文件路径","详情","风险"});
-    m_tblNetwork      = makeTab({"时间","协议","进程","本地地址","远程地址","详情","风险"});
-    m_tblSsdt         = makeTab({"时间","SSDT序号","进程","原始函数","钩子地址","风险"});
-    m_tblAutorun      = makeTab({"时间","操作","进程","启动项名称","路径/值","风险"});
-    m_tblTask         = makeTab({"时间","操作","进程","任务名称","执行程序","风险"});
-    m_tblBrowserPlugin= makeTab({"时间","操作","浏览器","插件名称","路径","风险"});
-    m_tblProcessDetail= makeTab({"时间","操作","源进程","目标进程","详情","风险"});
-
-    m_tabBehavior->addTab(m_tblRegistry,      "注册表操作");
-    m_tabBehavior->addTab(m_tblFile,          "文件行为");
-    m_tabBehavior->addTab(m_tblNetwork,       "网络行为");
-    m_tabBehavior->addTab(m_tblSsdt,          "SSDT操作");
-    m_tabBehavior->addTab(m_tblAutorun,       "启动项操作");
-    m_tabBehavior->addTab(m_tblTask,          "计划任务操作");
-    m_tabBehavior->addTab(m_tblBrowserPlugin, "浏览器插件操作");
-    m_tabBehavior->addTab(m_tblProcessDetail, "进程行为");
-
-    vbox->addWidget(m_tabBehavior, 1);
-
-    // 信号
-    connect(m_btnBrowse, &QPushButton::clicked, this, &DynamicScanPage::onBrowseFile);
-    connect(m_btnStart,  &QPushButton::clicked, this, &DynamicScanPage::onStartScan);
-    connect(m_btnStop,   &QPushButton::clicked, this, &DynamicScanPage::onStopScan);
-    connect(btnQ,        &QPushButton::clicked, this, &DynamicScanPage::onQueryBehavior);
-    connect(btnR,        &QPushButton::clicked, this, &DynamicScanPage::refreshData);
-    connect(m_edtBehaviorKw, &QLineEdit::returnPressed, this, &DynamicScanPage::onQueryBehavior);
-    connect(m_cmbBehaviorRisk, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &DynamicScanPage::onQueryBehavior);
-
-    return page;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Tab 2：进程链行为分析（左 | 中 | 右）
-// ─────────────────────────────────────────────────────────────────────────────
-QWidget* DynamicScanPage::buildChainTab() {
-    auto *page = new QWidget;
-    auto *vbox = new QVBoxLayout(page);
-    vbox->setContentsMargins(8, 8, 8, 8);
-    vbox->setSpacing(6);
-
-    // 顶部工具栏
-    auto *toolbar = new QHBoxLayout;
-    auto *lblTitle = new QLabel("进程链行为分析");
-    lblTitle->setStyleSheet("font-size:14px;font-weight:700;color:#1a3a6a;");
-    toolbar->addWidget(lblTitle);
-    toolbar->addStretch();
-    m_btnRefreshChain = new QPushButton("刷新进程列表");
-    m_btnRefreshChain->setStyleSheet(
-        "QPushButton{background:#1a3a6a;color:#fff;border-radius:3px;padding:5px 16px;}"
-        "QPushButton:hover{background:#2a5a9a;}");
-    toolbar->addWidget(m_btnRefreshChain);
-    vbox->addLayout(toolbar);
-
-    // 三栏分割器
-    auto *splitter = new QSplitter(Qt::Horizontal);
-    splitter->setHandleWidth(4);
-    splitter->setStyleSheet("QSplitter::handle{background:#e0e6f0;}");
-
-    // ── 左栏：进程卡片 ────────────────────────────────────────────────────────
-    auto *leftPanel = new QWidget;
-    leftPanel->setMinimumWidth(190);
-    leftPanel->setMaximumWidth(270);
-    auto *leftVbox = new QVBoxLayout(leftPanel);
-    leftVbox->setContentsMargins(0, 0, 4, 0);
-    leftVbox->setSpacing(0);
-
-    auto *leftHeader = new QLabel("  进程列表");
-    leftHeader->setStyleSheet(
-        "font-size:13px;font-weight:700;color:#fff;"
-        "background:#1a3a6a;padding:7px 6px;");
-    leftVbox->addWidget(leftHeader);
-
-    m_scrollCards = new QScrollArea;
-    m_scrollCards->setWidgetResizable(true);
-    m_scrollCards->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_scrollCards->setStyleSheet(
-        "QScrollArea{border:1px solid #d0d7e3;background:#f5f7fa;}");
-
-    m_cardContainer = new QWidget;
-    auto *cardLayout = new QVBoxLayout(m_cardContainer);
-    cardLayout->setSpacing(6);
-    cardLayout->setContentsMargins(6, 6, 6, 6);
-    cardLayout->addStretch();
-
-    m_scrollCards->setWidget(m_cardContainer);
-    leftVbox->addWidget(m_scrollCards, 1);
-    splitter->addWidget(leftPanel);
-
-    // ── 中栏：进程树 ──────────────────────────────────────────────────────────
-    auto *midPanel = new QWidget;
-    midPanel->setMinimumWidth(240);
-    auto *midVbox = new QVBoxLayout(midPanel);
-    midVbox->setContentsMargins(4, 0, 4, 0);
-    midVbox->setSpacing(0);
-
-    auto *midHeader = new QLabel("  子进程树");
-    midHeader->setStyleSheet(
-        "font-size:13px;font-weight:700;color:#fff;"
-        "background:#722ed1;padding:7px 6px;");
-    midVbox->addWidget(midHeader);
-
-    m_chainTree = new QTreeWidget;
-    m_chainTree->setHeaderLabels({"进程名称", "PID", "风险"});
-    m_chainTree->header()->setSectionResizeMode(0, QHeaderView::Stretch);
-    m_chainTree->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-    m_chainTree->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
-    m_chainTree->setStyleSheet(
-        "QTreeWidget{font-size:12px;border:1px solid #d0d7e3;background:#fff;}"
-        "QTreeWidget::item{padding:4px 2px;}"
-        "QTreeWidget::item:selected{background:#e6f7ff;color:#1890ff;}"
-        "QHeaderView::section{background:#e8ecf4;font-weight:600;padding:4px;}");
-    m_chainTree->setAlternatingRowColors(true);
-    midVbox->addWidget(m_chainTree, 1);
-    splitter->addWidget(midPanel);
-
-    // ── 右栏：行为信息 ────────────────────────────────────────────────────────
-    auto *rightPanel = new QWidget;
-    rightPanel->setMinimumWidth(280);
-    auto *rightVbox = new QVBoxLayout(rightPanel);
-    rightVbox->setContentsMargins(4, 0, 0, 0);
-    rightVbox->setSpacing(0);
-
-    m_lblChainBehaviorTitle = new QLabel("  行为信息（请点击左侧进程树中的进程）");
-    m_lblChainBehaviorTitle->setStyleSheet(
-        "font-size:13px;font-weight:700;color:#fff;"
-        "background:#fa8c16;padding:7px 6px;");
-    rightVbox->addWidget(m_lblChainBehaviorTitle);
-
-    m_chainBehavior = makeTab({"时间","行为类型","操作","目标路径/地址","详情","风险"});
-    rightVbox->addWidget(m_chainBehavior, 1);
-    splitter->addWidget(rightPanel);
-
-    // 初始宽度比 2:3:5
-    splitter->setSizes({220, 280, 500});
-
-    vbox->addWidget(splitter, 1);
-
-    // 信号
-    connect(m_btnRefreshChain, &QPushButton::clicked,
-            this, &DynamicScanPage::onRefreshProcessChain);
-    connect(m_chainTree, &QTreeWidget::itemClicked,
-            this, &DynamicScanPage::onProcessTreeItemClicked);
-
-    return page;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 进程卡片
-// ─────────────────────────────────────────────────────────────────────────────
-QFrame* DynamicScanPage::makeProcessCard(int pid, const QString &name,
-                                          const QString &createTime, const QString &risk) {
-    auto *card = new QFrame;
-    card->setObjectName(QString("card_%1").arg(pid));
-    card->setCursor(Qt::PointingHandCursor);
-    card->setProperty("pid", pid);
-    card->setProperty("procName", name);
-
-    QString borderColor = "#d0d7e3", bgColor = "#fff", riskText = "正常", riskColor = "#52c41a";
-    if      (risk == "high")   { borderColor="#ff4d4f"; bgColor="#fff1f0"; riskText="高危"; riskColor="#f5222d"; }
-    else if (risk == "medium") { borderColor="#faad14"; bgColor="#fffbe6"; riskText="中危"; riskColor="#fa8c16"; }
-    else if (risk == "low")    { borderColor="#1890ff"; bgColor="#e6f7ff"; riskText="低危"; riskColor="#1890ff"; }
-
-    card->setStyleSheet(QString(
-        "QFrame#card_%1{border:1px solid %2;border-radius:6px;background:%3;padding:2px;}"
-        "QFrame#card_%1:hover{border:2px solid #1890ff;background:#e6f7ff;}")
-        .arg(pid).arg(borderColor).arg(bgColor));
-
-    auto *lay = new QVBoxLayout(card);
-    lay->setContentsMargins(10, 8, 10, 8);
-    lay->setSpacing(3);
-
-    auto *topRow = new QHBoxLayout;
-    auto *lblName = new QLabel(name);
-    lblName->setStyleSheet("font-size:13px;font-weight:700;color:#262626;");
-    topRow->addWidget(lblName, 1);
-
-    auto *lblRisk = new QLabel(riskText);
-    lblRisk->setStyleSheet(QString(
-        "font-size:11px;font-weight:600;color:#fff;"
-        "background:%1;border-radius:3px;padding:1px 6px;").arg(riskColor));
-    topRow->addWidget(lblRisk);
-    lay->addLayout(topRow);
-
-    auto *lblPid = new QLabel(QString("PID: %1").arg(pid));
-    lblPid->setStyleSheet("font-size:11px;color:#8c8c8c;");
-    lay->addWidget(lblPid);
-
-    if (!createTime.isEmpty()) {
-        auto *lblTime = new QLabel(createTime.left(19));
-        lblTime->setStyleSheet("font-size:11px;color:#8c8c8c;");
-        lay->addWidget(lblTime);
-    }
-
-    card->installEventFilter(this);
-    return card;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 事件过滤（卡片点击）
-// ─────────────────────────────────────────────────────────────────────────────
-bool DynamicScanPage::eventFilter(QObject *obj, QEvent *event) {
-    if (event->type() == QEvent::MouseButtonPress) {
-        auto *frame = qobject_cast<QFrame*>(obj);
-        if (frame && frame->property("pid").isValid()) {
-            int pid = frame->property("pid").toInt();
-            QString name = frame->property("procName").toString();
-            m_selectedRootPid = pid;
-            buildProcessTree(pid);
-            m_chainBehavior->setRowCount(0);
-            m_lblChainBehaviorTitle->setText(
-                QString("  行为信息 — %1 (PID:%2) 及其子进程（点击进程树查看）")
-                .arg(name).arg(pid));
-        }
-    }
-    return BasePage::eventFilter(obj, event);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 加载进程卡片
-// ─────────────────────────────────────────────────────────────────────────────
-void DynamicScanPage::loadProcessCards() {
-    // 清空旧卡片
-    auto *lay = static_cast<QVBoxLayout*>(m_cardContainer->layout());
-    QLayoutItem *child;
-    while ((child = lay->takeAt(0)) != nullptr) {
-        if (child->widget()) child->widget()->deleteLater();
-        delete child;
-    }
-
-    QString sql =
-        "SELECT pid, name, collected_at, risk FROM process_info "
-        "ORDER BY CASE risk WHEN 'high' THEN 0 WHEN 'medium' THEN 1 "
-        "WHEN 'low' THEN 2 ELSE 3 END, name LIMIT 60";
-    auto rows = DatabaseManager::instance()->execSelect(sql, {});
-
-    if (rows.isEmpty()) {
-        auto *hint = new QLabel("暂无进程数据\n请先采集进程信息");
-        hint->setAlignment(Qt::AlignCenter);
-        hint->setStyleSheet("color:#8c8c8c;font-size:12px;padding:20px;");
-        lay->insertWidget(0, hint);
-    } else {
-        int insertPos = 0;
-        for (const QVariant &v : rows) {
-            QVariantMap m = v.toMap();
-            QFrame *card = makeProcessCard(
-                m["pid"].toInt(),
-                m["name"].toString(),
-                m["collected_at"].toString(),
-                m["risk"].toString());
-            lay->insertWidget(insertPos++, card);
-        }
-    }
-    lay->addStretch();
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 构建进程树
-// ─────────────────────────────────────────────────────────────────────────────
-void DynamicScanPage::buildProcessTree(int rootPid) {
-    m_chainTree->clear();
-
-    // 查询根进程信息
-    auto rootRows = DatabaseManager::instance()->execSelect(
-        "SELECT name, risk FROM process_info WHERE pid=? LIMIT 1", {rootPid});
-    QString rootName = rootRows.isEmpty() ? QString("PID:%1").arg(rootPid)
-                                          : rootRows.first().toMap()["name"].toString();
-    QString rootRisk = rootRows.isEmpty() ? "" : rootRows.first().toMap()["risk"].toString();
-
-    auto *rootItem = new QTreeWidgetItem(m_chainTree);
-    rootItem->setText(0, rootName);
-    rootItem->setText(1, QString::number(rootPid));
-    rootItem->setData(0, Qt::UserRole,     rootPid);
-    rootItem->setData(0, Qt::UserRole + 1, rootName);
-    rootItem->setIcon(0, style()->standardIcon(QStyle::SP_ComputerIcon));
-
-    auto setRiskStyle = [](QTreeWidgetItem *it, const QString &r) {
-        if      (r == "high")   { it->setText(2,"高危"); it->setForeground(2,QColor("#f5222d")); it->setForeground(0,QColor("#f5222d")); }
-        else if (r == "medium") { it->setText(2,"中危"); it->setForeground(2,QColor("#fa8c16")); }
-        else if (r == "low")    { it->setText(2,"低危"); it->setForeground(2,QColor("#1890ff")); }
-        else                    { it->setText(2,"正常"); it->setForeground(2,QColor("#52c41a")); }
-    };
-    setRiskStyle(rootItem, rootRisk);
-
-    // 查询子进程（从 dynamic_scan 的 parent_pid 字段）
-    auto rows = DatabaseManager::instance()->execSelect(
-        "SELECT DISTINCT pid, source_proc, parent_pid, risk_level "
-        "FROM dynamic_scan WHERE parent_pid=? OR pid=? ORDER BY pid",
-        {rootPid, rootPid});
-
-    QMap<int, QTreeWidgetItem*> itemMap;
-    itemMap[rootPid] = rootItem;
-    QSet<int> addedPids;
-    addedPids.insert(rootPid);
-
-    for (const QVariant &v : rows) {
-        QVariantMap m = v.toMap();
-        int pid = m["pid"].toInt();
-        int parentPid = m["parent_pid"].toInt();
-        if (pid == rootPid || addedPids.contains(pid)) continue;
-        addedPids.insert(pid);
-
-        QString procName = m["source_proc"].toString();
-        if (procName.isEmpty()) procName = QString("PID:%1").arg(pid);
-        QString risk = m["risk_level"].toString();
-
-        QTreeWidgetItem *parentItem = itemMap.contains(parentPid) ? itemMap[parentPid] : rootItem;
-        auto *item = new QTreeWidgetItem(parentItem);
-        item->setText(0, procName);
-        item->setText(1, QString::number(pid));
-        item->setData(0, Qt::UserRole,     pid);
-        item->setData(0, Qt::UserRole + 1, procName);
-        item->setIcon(0, style()->standardIcon(QStyle::SP_FileIcon));
-        setRiskStyle(item, risk);
-        itemMap[pid] = item;
-    }
-
-    m_chainTree->expandAll();
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 加载指定 PID 的行为信息
-// ─────────────────────────────────────────────────────────────────────────────
-void DynamicScanPage::loadBehaviorForPid(int pid, const QString &procName) {
-    m_chainBehavior->setRowCount(0);
-    m_lblChainBehaviorTitle->setText(
-        QString("  行为信息 — %1 (PID:%2)").arg(procName).arg(pid));
-
-    auto rows = DatabaseManager::instance()->execSelect(
-        "SELECT scan_time,behavior_type,action_type,target_path,detail,risk_level "
-        "FROM dynamic_scan WHERE pid=? OR source_proc=? ORDER BY id DESC LIMIT 500",
-        {pid, procName});
-
-    static const QMap<QString,QString> btypeMap = {
-        {"registry","注册表"},{"file","文件"},{"network","网络"},
-        {"ssdt","SSDT/Hook"},{"autorun","自启动"},{"task","计划任务"},
-        {"browser","浏览器"},{"process","进程"}
-    };
-
-    for (const QVariant &v : rows) {
-        QVariantMap m = v.toMap();
-        int row = m_chainBehavior->rowCount();
-        m_chainBehavior->insertRow(row);
-        m_chainBehavior->setItem(row, 0, new QTableWidgetItem(m["scan_time"].toString().mid(11,8)));
-        m_chainBehavior->setItem(row, 1, new QTableWidgetItem(
-            btypeMap.value(m["behavior_type"].toString(), m["behavior_type"].toString())));
-        m_chainBehavior->setItem(row, 2, new QTableWidgetItem(m["action_type"].toString()));
-        auto *pi = new QTableWidgetItem(m["target_path"].toString());
-        pi->setFont(QFont("Consolas", 11));
-        m_chainBehavior->setItem(row, 3, pi);
-        m_chainBehavior->setItem(row, 4, new QTableWidgetItem(m["detail"].toString()));
-        QString risk = m["risk_level"].toString();
-        m_chainBehavior->setItem(row, 5, riskItem(risk));
-        highlightRow(m_chainBehavior, row, risk);
-    }
-
-    if (rows.isEmpty()) {
-        m_chainBehavior->insertRow(0);
-        auto *hint = new QTableWidgetItem("暂无该进程的行为记录");
-        hint->setForeground(QColor("#8c8c8c"));
-        hint->setTextAlignment(Qt::AlignCenter);
-        m_chainBehavior->setItem(0, 0, hint);
-        m_chainBehavior->setSpan(0, 0, 1, 6);
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Slots
+// refreshData
 // ─────────────────────────────────────────────────────────────────────────────
 void DynamicScanPage::refreshData() {
-    onQueryBehavior();
-    if (m_tabOuter && m_tabOuter->currentIndex() == 1)
+    onQueryRegistry();
+    onQueryFile();
+    onQueryProcess();
+    onQueryNetwork();
+    onQuerySsdt();
+    onQueryAutorun();
+    onQueryTask();
+    onQueryPlugin();
+    onQueryFileAssoc();
+    onQueryRctrl();
+    if (m_tabMain && m_tabMain->currentIndex() == 1)
         loadProcessCards();
-}
-
-void DynamicScanPage::onRefreshProcessChain() {
-    loadProcessCards();
-    if (m_chainTree) m_chainTree->clear();
-    if (m_chainBehavior) m_chainBehavior->setRowCount(0);
-    if (m_lblChainBehaviorTitle)
-        m_lblChainBehaviorTitle->setText("  行为信息（请点击左侧进程树中的进程）");
-    m_selectedRootPid = -1;
-}
-
-void DynamicScanPage::onProcessTreeItemClicked(QTreeWidgetItem *item, int) {
-    if (!item) return;
-    int pid = item->data(0, Qt::UserRole).toInt();
-    QString name = item->data(0, Qt::UserRole + 1).toString();
-    if (name.isEmpty()) name = item->text(0);
-    loadBehaviorForPid(pid, name);
-}
-
-void DynamicScanPage::onQueryBehavior() {
-    QString kw = m_edtBehaviorKw->text().trimmed();
-    int riskIdx = m_cmbBehaviorRisk->currentIndex();
-    QStringList riskMap = {"","high","medium","low"};
-    QString riskFilter = (riskIdx > 0 && riskIdx < riskMap.size()) ? riskMap[riskIdx] : "";
-
-    queryAndFill(m_tblRegistry,      "registry", kw, riskFilter);
-    queryAndFill(m_tblFile,          "file",     kw, riskFilter);
-    queryAndFill(m_tblNetwork,       "network",  kw, riskFilter);
-    queryAndFill(m_tblSsdt,          "ssdt",     kw, riskFilter);
-    queryAndFill(m_tblAutorun,       "autorun",  kw, riskFilter);
-    queryAndFill(m_tblTask,          "task",     kw, riskFilter);
-    queryAndFill(m_tblBrowserPlugin, "browser",  kw, riskFilter);
-    queryAndFill(m_tblProcessDetail, "process",  kw, riskFilter);
-
     if (m_lblStatus)
         m_lblStatus->setText("已刷新：" + QDateTime::currentDateTime().toString("HH:mm:ss"));
 }
 
-void DynamicScanPage::queryAndFill(QTableWidget *tbl, const QString &type,
-                                    const QString &kw, const QString &risk) {
+// ─────────────────────────────────────────────────────────────────────────────
+// 通用查询填充
+// ─────────────────────────────────────────────────────────────────────────────
+void DynamicScanPage::queryAndFillTable(QTableWidget *tbl,
+                                         const QString &type,
+                                         const QString &kw,
+                                         const QString &risk,
+                                         const QString &extraFilter)
+{
+    if (!tbl) return;
     tbl->setRowCount(0);
     QString sql = "SELECT scan_time,action_type,source_proc,target_path,detail,risk_level "
                   "FROM dynamic_scan WHERE behavior_type=?";
@@ -604,6 +263,7 @@ void DynamicScanPage::queryAndFill(QTableWidget *tbl, const QString &type,
         sql += " AND risk_level=?";
         binds << risk;
     }
+    if (!extraFilter.isEmpty()) sql += " " + extraFilter;
     sql += " ORDER BY id DESC LIMIT 200";
 
     auto rows = DatabaseManager::instance()->execSelect(sql, binds);
@@ -630,24 +290,385 @@ void DynamicScanPage::queryAndFill(QTableWidget *tbl, const QString &type,
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 各子Tab独立查询 Slots
+// ─────────────────────────────────────────────────────────────────────────────
+void DynamicScanPage::onQueryRegistry() {
+    QString kw = m_edtRegKw ? m_edtRegKw->text().trimmed() : "";
+    QStringList riskMap = {"","high","medium","low"};
+    int ri = m_cmbRegRisk ? m_cmbRegRisk->currentIndex() : 0;
+    QString risk = (ri > 0 && ri < riskMap.size()) ? riskMap[ri] : "";
+    QString opFilter;
+    if (m_cmbRegOp && m_cmbRegOp->currentIndex() > 0)
+        opFilter = " AND action_type='" + m_cmbRegOp->currentText() + "'";
+    queryAndFillTable(m_tblRegistry, "registry", kw, risk, opFilter);
+}
+
+void DynamicScanPage::onQueryFile() {
+    QString kw = m_edtFileKw ? m_edtFileKw->text().trimmed() : "";
+    QStringList riskMap = {"","high","medium","low"};
+    int ri = m_cmbFileRisk ? m_cmbFileRisk->currentIndex() : 0;
+    QString risk = (ri > 0 && ri < riskMap.size()) ? riskMap[ri] : "";
+    QString opFilter;
+    if (m_cmbFileOp && m_cmbFileOp->currentIndex() > 0)
+        opFilter = " AND action_type='" + m_cmbFileOp->currentText() + "'";
+    queryAndFillTable(m_tblFile, "file", kw, risk, opFilter);
+}
+
+void DynamicScanPage::onQueryProcess() {
+    QString kw = m_edtProcKw ? m_edtProcKw->text().trimmed() : "";
+    QStringList riskMap = {"","high","medium","low"};
+    int ri = m_cmbProcRisk ? m_cmbProcRisk->currentIndex() : 0;
+    QString risk = (ri > 0 && ri < riskMap.size()) ? riskMap[ri] : "";
+    QString opFilter;
+    if (m_cmbProcOp && m_cmbProcOp->currentIndex() > 0)
+        opFilter = " AND action_type='" + m_cmbProcOp->currentText() + "'";
+    queryAndFillTable(m_tblProcess, "process", kw, risk, opFilter);
+}
+
+void DynamicScanPage::onQueryNetwork() {
+    QString kw = m_edtNetKw ? m_edtNetKw->text().trimmed() : "";
+    QStringList riskMap = {"","high","medium","low"};
+    int ri = m_cmbNetRisk ? m_cmbNetRisk->currentIndex() : 0;
+    QString risk = (ri > 0 && ri < riskMap.size()) ? riskMap[ri] : "";
+    QString protoFilter;
+    if (m_cmbNetProto && m_cmbNetProto->currentIndex() > 0)
+        protoFilter = " AND action_type='" + m_cmbNetProto->currentText() + "'";
+    queryAndFillTable(m_tblNetwork, "network", kw, risk, protoFilter);
+}
+
+void DynamicScanPage::onQuerySsdt() {
+    QString kw = m_edtSsdtKw ? m_edtSsdtKw->text().trimmed() : "";
+    QStringList riskMap = {"","high","medium","low"};
+    int ri = m_cmbSsdtRisk ? m_cmbSsdtRisk->currentIndex() : 0;
+    QString risk = (ri > 0 && ri < riskMap.size()) ? riskMap[ri] : "";
+    queryAndFillTable(m_tblSsdt, "ssdt", kw, risk);
+}
+
+void DynamicScanPage::onQueryAutorun() {
+    QString kw = m_edtAutorunKw ? m_edtAutorunKw->text().trimmed() : "";
+    QStringList riskMap = {"","high","medium","low"};
+    int ri = m_cmbAutorunRisk ? m_cmbAutorunRisk->currentIndex() : 0;
+    QString risk = (ri > 0 && ri < riskMap.size()) ? riskMap[ri] : "";
+    QString opFilter;
+    if (m_cmbAutorunOp && m_cmbAutorunOp->currentIndex() > 0)
+        opFilter = " AND action_type='" + m_cmbAutorunOp->currentText() + "'";
+    queryAndFillTable(m_tblAutorun, "autorun", kw, risk, opFilter);
+}
+
+void DynamicScanPage::onQueryTask() {
+    QString kw = m_edtTaskKw ? m_edtTaskKw->text().trimmed() : "";
+    QStringList riskMap = {"","high","medium","low"};
+    int ri = m_cmbTaskRisk ? m_cmbTaskRisk->currentIndex() : 0;
+    QString risk = (ri > 0 && ri < riskMap.size()) ? riskMap[ri] : "";
+    QString opFilter;
+    if (m_cmbTaskOp && m_cmbTaskOp->currentIndex() > 0)
+        opFilter = " AND action_type='" + m_cmbTaskOp->currentText() + "'";
+    queryAndFillTable(m_tblTask, "task", kw, risk, opFilter);
+}
+
+void DynamicScanPage::onQueryPlugin() {
+    QString kw = m_edtPluginKw ? m_edtPluginKw->text().trimmed() : "";
+    QStringList riskMap = {"","high","medium","low"};
+    int ri = m_cmbPluginRisk ? m_cmbPluginRisk->currentIndex() : 0;
+    QString risk = (ri > 0 && ri < riskMap.size()) ? riskMap[ri] : "";
+    QString opFilter;
+    if (m_cmbPluginOp && m_cmbPluginOp->currentIndex() > 0)
+        opFilter = " AND action_type='" + m_cmbPluginOp->currentText() + "'";
+    queryAndFillTable(m_tblBrowserPlugin, "browser", kw, risk, opFilter);
+}
+
+void DynamicScanPage::onQueryFileAssoc() {
+    if (!m_tblFileAssoc) return;
+    m_tblFileAssoc->setRowCount(0);
+    QString kw = m_edtFileAssocKw ? m_edtFileAssocKw->text().trimmed() : "";
+    QStringList riskMap = {"","high","medium","low"};
+    int ri = m_cmbFileAssocRisk ? m_cmbFileAssocRisk->currentIndex() : 0;
+    QString risk = (ri > 0 && ri < riskMap.size()) ? riskMap[ri] : "";
+    QString statusFilter;
+    if (m_cmbFileAssocStatus && m_cmbFileAssocStatus->currentIndex() > 0)
+        statusFilter = m_cmbFileAssocStatus->currentText();
+
+    QString sql = "SELECT extension,default_prog,current_prog,status,risk_level FROM file_assoc WHERE 1=1";
+    QVariantList binds;
+    if (!kw.isEmpty()) {
+        sql += " AND (extension LIKE ? OR default_prog LIKE ? OR current_prog LIKE ?)";
+        QString like = "%" + kw + "%";
+        binds << like << like << like;
+    }
+    if (!statusFilter.isEmpty()) { sql += " AND status=?"; binds << statusFilter; }
+    if (!risk.isEmpty())         { sql += " AND risk_level=?"; binds << risk; }
+    sql += " ORDER BY id DESC LIMIT 200";
+
+    auto rows = DatabaseManager::instance()->execSelect(sql, binds);
+    for (const QVariant &v : rows) {
+        QVariantMap m = v.toMap();
+        int row = m_tblFileAssoc->rowCount(); m_tblFileAssoc->insertRow(row);
+        m_tblFileAssoc->setItem(row, 0, new QTableWidgetItem(m["extension"].toString()));
+        m_tblFileAssoc->setItem(row, 1, new QTableWidgetItem(m["default_prog"].toString()));
+        m_tblFileAssoc->setItem(row, 2, new QTableWidgetItem(m["current_prog"].toString()));
+        QString st = m["status"].toString();
+        auto *si = new QTableWidgetItem(st);
+        QFont f = si->font(); f.setBold(true); si->setFont(f);
+        if (st == "已篡改")      si->setForeground(QColor("#f5222d"));
+        else if (st == "可疑")   si->setForeground(QColor("#fa8c16"));
+        else                     si->setForeground(QColor("#52c41a"));
+        m_tblFileAssoc->setItem(row, 3, si);
+        QString riskVal = m["risk_level"].toString();
+        m_tblFileAssoc->setItem(row, 4, riskItem(riskVal));
+        highlightRow(m_tblFileAssoc, row, riskVal);
+    }
+}
+
+void DynamicScanPage::onQueryRctrl() {
+    if (!m_tblRctrl) return;
+    m_tblRctrl->setRowCount(0);
+    QString kw = m_edtRctrlKw ? m_edtRctrlKw->text().trimmed() : "";
+    QStringList riskMap = {"","high","medium","low"};
+    int ri = m_cmbRctrlRisk ? m_cmbRctrlRisk->currentIndex() : 0;
+    QString risk = (ri > 0 && ri < riskMap.size()) ? riskMap[ri] : "";
+    QString typeFilter;
+    if (m_cmbRctrlType && m_cmbRctrlType->currentIndex() > 0)
+        typeFilter = m_cmbRctrlType->currentText();
+
+    QString sql = "SELECT alert_time,behavior_type,proc_name,pid,"
+                  "src_ip,src_port,dst_ip,dst_port,protocol,risk_level "
+                  "FROM rctrl_behaviors WHERE 1=1";
+    QVariantList binds;
+    if (!kw.isEmpty()) {
+        sql += " AND (proc_name LIKE ? OR src_ip LIKE ? OR dst_ip LIKE ? OR dst_ip LIKE ?)";
+        QString like = "%" + kw + "%";
+        binds << like << like << like << like;
+    }
+    if (!typeFilter.isEmpty()) { sql += " AND behavior_type=?"; binds << typeFilter; }
+    if (!risk.isEmpty())       { sql += " AND risk_level=?";    binds << risk; }
+    sql += " ORDER BY id DESC LIMIT 200";
+
+    auto rows = DatabaseManager::instance()->execSelect(sql, binds);
+    for (const QVariant &v : rows) {
+        QVariantMap m = v.toMap();
+        int row = m_tblRctrl->rowCount(); m_tblRctrl->insertRow(row);
+        m_tblRctrl->setItem(row, 0, new QTableWidgetItem(m["alert_time"].toString().mid(11,8)));
+        // 行为类型（彩色）
+        QString bt = m["behavior_type"].toString();
+        auto *bti = new QTableWidgetItem(bt);
+        QFont f = bti->font(); f.setBold(true); bti->setFont(f);
+        if      (bt == "远程下载" || bt == "远程命令执行") bti->setForeground(QColor("#f5222d"));
+        else if (bt == "远程监控" || bt == "远程网络配置") bti->setForeground(QColor("#fa8c16"));
+        else if (bt == "DNS篡改"  || bt == "路由表篡改")  bti->setForeground(QColor("#722ed1"));
+        else                                               bti->setForeground(QColor("#1890ff"));
+        m_tblRctrl->setItem(row, 1, bti);
+        m_tblRctrl->setItem(row, 2, new QTableWidgetItem(
+            m["proc_name"].toString() + "/" + m["pid"].toString()));
+        m_tblRctrl->setItem(row, 3, new QTableWidgetItem(m["src_ip"].toString()));
+        m_tblRctrl->setItem(row, 4, new QTableWidgetItem(m["src_port"].toString()));
+        m_tblRctrl->setItem(row, 5, new QTableWidgetItem(m["dst_ip"].toString()));
+        m_tblRctrl->setItem(row, 6, new QTableWidgetItem(m["dst_port"].toString()));
+        m_tblRctrl->setItem(row, 7, new QTableWidgetItem(m["protocol"].toString()));
+        QString riskVal = m["risk_level"].toString();
+        m_tblRctrl->setItem(row, 8, riskItem(riskVal));
+        highlightRow(m_tblRctrl, row, riskVal);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 进程链行为分析
+// ─────────────────────────────────────────────────────────────────────────────
+void DynamicScanPage::loadProcessCards() {
+    if (!m_cardContainer) return;
+    // 清空旧卡片
+    QLayoutItem *child;
+    while (m_cardContainer->layout() &&
+           (child = m_cardContainer->layout()->takeAt(0)) != nullptr) {
+        if (child->widget()) child->widget()->deleteLater();
+        delete child;
+    }
+    if (!m_cardContainer->layout()) {
+        auto *lay = new QVBoxLayout(m_cardContainer);
+        lay->setContentsMargins(4, 4, 4, 4);
+        lay->setSpacing(4);
+    }
+
+    auto rows = DatabaseManager::instance()->execSelect(
+        "SELECT DISTINCT pid, source_proc, MIN(scan_time) as create_time, "
+        "MAX(risk_level) as max_risk FROM dynamic_scan GROUP BY pid, source_proc ORDER BY pid",
+        {});
+
+    for (const QVariant &v : rows) {
+        QVariantMap m = v.toMap();
+        int pid = m["pid"].toInt();
+        QString name = m["source_proc"].toString();
+        QString ct   = m["create_time"].toString().mid(11, 8);
+        QString risk = m["max_risk"].toString();
+        auto *card = makeProcessCard(pid, name, ct, risk);
+        m_cardContainer->layout()->addWidget(card);
+    }
+    qobject_cast<QVBoxLayout*>(m_cardContainer->layout())->addStretch();
+}
+
+QFrame* DynamicScanPage::makeProcessCard(int pid, const QString &name,
+                                          const QString &createTime, const QString &risk)
+{
+    auto *card = new QFrame;
+    card->setFrameShape(QFrame::StyledPanel);
+    card->setCursor(Qt::PointingHandCursor);
+    QString borderColor = (risk == "high") ? "#f5222d" :
+                          (risk == "medium") ? "#fa8c16" : "#d0d7e3";
+    card->setStyleSheet(QString(
+        "QFrame{background:#fff;border:1px solid %1;border-radius:4px;"
+        "padding:6px 8px;margin:2px;}"
+        "QFrame:hover{background:#e6f7ff;border-color:#1890ff;}").arg(borderColor));
+
+    auto *lay = new QVBoxLayout(card);
+    lay->setContentsMargins(4, 4, 4, 4);
+    lay->setSpacing(2);
+
+    auto *lblName = new QLabel(name);
+    lblName->setStyleSheet("font-size:12px;font-weight:700;color:#1a3a6a;");
+    auto *lblPid  = new QLabel(QString("PID: %1  |  %2").arg(pid).arg(createTime));
+    lblPid->setStyleSheet("font-size:11px;color:#8c8c8c;");
+
+    lay->addWidget(lblName);
+    lay->addWidget(lblPid);
+
+    card->setProperty("pid",  pid);
+    card->setProperty("name", name);
+    card->installEventFilter(this);
+    return card;
+}
+
+bool DynamicScanPage::eventFilter(QObject *obj, QEvent *event) {
+    if (event->type() == QEvent::MouseButtonPress) {
+        auto *card = qobject_cast<QFrame*>(obj);
+        if (card) {
+            int pid = card->property("pid").toInt();
+            QString name = card->property("name").toString();
+            m_selectedRootPid = pid;
+            buildProcessTree(pid);
+            loadBehaviorForPid(pid, name);
+            return true;
+        }
+    }
+    return BasePage::eventFilter(obj, event);
+}
+
+void DynamicScanPage::buildProcessTree(int rootPid) {
+    if (!m_chainTree) return;
+    m_chainTree->clear();
+
+    auto rows = DatabaseManager::instance()->execSelect(
+        "SELECT DISTINCT pid, source_proc FROM dynamic_scan WHERE pid=? OR pid IN "
+        "(SELECT DISTINCT pid FROM dynamic_scan WHERE source_proc IN "
+        " (SELECT source_proc FROM dynamic_scan WHERE pid=?)) ORDER BY pid",
+        {rootPid, rootPid});
+
+    QMap<int, QTreeWidgetItem*> itemMap;
+    for (const QVariant &v : rows) {
+        QVariantMap m = v.toMap();
+        int pid = m["pid"].toInt();
+        QString name = m["source_proc"].toString();
+        if (itemMap.contains(pid)) continue;
+        auto *item = (pid == rootPid)
+            ? new QTreeWidgetItem(m_chainTree)
+            : new QTreeWidgetItem(itemMap.value(rootPid, nullptr));
+        item->setText(0, QString("%1 (%2)").arg(name).arg(pid));
+        item->setData(0, Qt::UserRole, pid);
+        item->setData(0, Qt::UserRole + 1, name);
+        if (pid == rootPid) {
+            QFont f = item->font(0); f.setBold(true); item->setFont(0, f);
+        }
+        itemMap[pid] = item;
+    }
+    m_chainTree->expandAll();
+}
+
+void DynamicScanPage::loadBehaviorForPid(int pid, const QString &procName) {
+    if (!m_tblProcessDetail) return;
+    m_tblProcessDetail->setRowCount(0);
+    if (m_lblChainBehaviorTitle)
+        m_lblChainBehaviorTitle->setText(
+            QString("行为信息 — %1 (PID:%2)").arg(procName).arg(pid));
+
+    auto rows = DatabaseManager::instance()->execSelect(
+        "SELECT scan_time,behavior_type,action_type,target_path,detail,risk_level "
+        "FROM dynamic_scan WHERE pid=? OR source_proc=? ORDER BY id DESC LIMIT 500",
+        {pid, procName});
+
+    static const QMap<QString,QString> btypeMap = {
+        {"registry","注册表"},{"file","文件"},{"network","网络"},
+        {"ssdt","SSDT/Hook"},{"autorun","自启动"},{"task","计划任务"},
+        {"browser","浏览器"},{"process","进程"}
+    };
+
+    for (const QVariant &v : rows) {
+        QVariantMap m = v.toMap();
+        int row = m_tblProcessDetail->rowCount();
+        m_tblProcessDetail->insertRow(row);
+        m_tblProcessDetail->setItem(row, 0, new QTableWidgetItem(m["scan_time"].toString().mid(11,8)));
+        m_tblProcessDetail->setItem(row, 1, new QTableWidgetItem(
+            btypeMap.value(m["behavior_type"].toString(), m["behavior_type"].toString())));
+        auto *pi = new QTableWidgetItem(m["target_path"].toString());
+        pi->setFont(QFont("Consolas", 11));
+        m_tblProcessDetail->setItem(row, 2, pi);
+        m_tblProcessDetail->setItem(row, 3, new QTableWidgetItem(m["detail"].toString()));
+        QString risk = m["risk_level"].toString();
+        m_tblProcessDetail->setItem(row, 4, riskItem(risk));
+        highlightRow(m_tblProcessDetail, row, risk);
+    }
+
+    if (rows.isEmpty()) {
+        m_tblProcessDetail->insertRow(0);
+        auto *hint = new QTableWidgetItem("暂无该进程的行为记录");
+        hint->setForeground(QColor("#8c8c8c"));
+        hint->setTextAlignment(Qt::AlignCenter);
+        m_tblProcessDetail->setItem(0, 0, hint);
+        m_tblProcessDetail->setSpan(0, 0, 1, 5);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 其他 Slots
+// ─────────────────────────────────────────────────────────────────────────────
+void DynamicScanPage::onRefreshProcessChain() {
+    loadProcessCards();
+    if (m_chainTree) m_chainTree->clear();
+    if (m_tblProcessDetail) m_tblProcessDetail->setRowCount(0);
+    if (m_lblChainBehaviorTitle)
+        m_lblChainBehaviorTitle->setText("行为信息（请点击左侧进程卡片）");
+    m_selectedRootPid = -1;
+}
+
+void DynamicScanPage::onProcessTreeItemClicked(QTreeWidgetItem *item, int) {
+    if (!item) return;
+    int pid = item->data(0, Qt::UserRole).toInt();
+    QString name = item->data(0, Qt::UserRole + 1).toString();
+    if (name.isEmpty()) name = item->text(0);
+    loadBehaviorForPid(pid, name);
+}
+
 void DynamicScanPage::onBrowseFile() {
     QString path = QFileDialog::getOpenFileName(this, "选择样本文件", "",
         "可执行文件 (*.exe *.dll *.sys);;所有文件 (*.*)");
-    if (!path.isEmpty()) m_editPath->setText(path);
+    if (!path.isEmpty() && m_editPath) m_editPath->setText(path);
 }
 
 void DynamicScanPage::onStartScan() {
+    if (!m_editPath) return;
     QString path = m_editPath->text().trimmed();
     if (path.isEmpty()) { if (m_lblStatus) m_lblStatus->setText("请先选择样本文件"); return; }
-    m_lblMonitorStatus->setText("● 监控中");
-    m_lblMonitorStatus->setStyleSheet("font-size:12px;color:#f5222d;font-weight:600;padding:0 8px;");
+    if (m_lblMonitorStatus) {
+        m_lblMonitorStatus->setText("● 监控中");
+        m_lblMonitorStatus->setStyleSheet("font-size:12px;color:#f5222d;font-weight:600;padding:0 8px;");
+    }
     if (m_lblStatus) m_lblStatus->setText("正在监控：" + path);
-    DatabaseManager::instance()->writeLog(m_role, m_username, "动态行为检测", "开始监控："+path, "success");
+    DatabaseManager::instance()->writeLog(m_role, m_username, "动态监测", "开始监控："+path, "success");
 }
 
 void DynamicScanPage::onStopScan() {
-    m_lblMonitorStatus->setText("● 已停止");
-    m_lblMonitorStatus->setStyleSheet("font-size:12px;color:#8c8c8c;font-weight:600;padding:0 8px;");
+    if (m_lblMonitorStatus) {
+        m_lblMonitorStatus->setText("● 已停止");
+        m_lblMonitorStatus->setStyleSheet("font-size:12px;color:#8c8c8c;font-weight:600;padding:0 8px;");
+    }
     if (m_lblStatus) m_lblStatus->setText("监控已停止");
-    DatabaseManager::instance()->writeLog(m_role, m_username, "动态行为检测", "停止监控", "success");
+    DatabaseManager::instance()->writeLog(m_role, m_username, "动态监测", "停止监控", "success");
 }

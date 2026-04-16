@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>GlobalSearchPage</class>
+ <widget class="QWidget" name="GlobalSearchPage">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>1200</width><height>800</height></rect>
+  </property>
+  <property name="windowTitle"><string>GlobalSearchPage</string></property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <item>
+    <widget class="QLabel" name="lblTitle">
+     <property name="text"><string>全局搜索</string></property>
+     <property name="styleSheet"><string>font-size:16px;font-weight:700;color:#1a3a6a;</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="divider">
+     <property name="frameShape"><enum>QFrame::HLine</enum></property>
+     <property name="frameShadow"><enum>QFrame::Sunken</enum></property>
+    </widget>
+   </item>
+   <!-- 搜索栏 -->
+   <item>
+    <layout class="QHBoxLayout" name="searchRow">
+     <item>
+      <widget class="QLineEdit" name="m_edtKeyword">
+       <property name="placeholderText"><string>输入关键字（多个关键字用空格分隔）</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="m_btnSearch">
+       <property name="text"><string>全局搜索</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="m_btnClear">
+       <property name="text"><string>清空</string></property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <!-- 模块勾选区 -->
+   <item>
+    <widget class="QGroupBox" name="m_gbModules">
+     <property name="title"><string>搜索范围（可多选）</string></property>
+     <layout class="QHBoxLayout" name="modulesLayout">
+      <item>
+       <widget class="QCheckBox" name="m_chkAll">
+        <property name="text"><string>全部模块</string></property>
+        <property name="checked"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QFrame" name="vline1">
+        <property name="frameShape"><enum>QFrame::VLine</enum></property>
+        <property name="frameShadow"><enum>QFrame::Sunken</enum></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="m_chkSysinfo">
+        <property name="text"><string>系统信息</string></property>
+        <property name="checked"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="m_chkNetwork">
+        <property name="text"><string>网络连接</string></property>
+        <property name="checked"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="m_chkDisk">
+        <property name="text"><string>硬盘信息</string></property>
+        <property name="checked"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="m_chkProcess">
+        <property name="text"><string>进程列表</string></property>
+        <property name="checked"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="m_chkPort">
+        <property name="text"><string>端口监听</string></property>
+        <property name="checked"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="m_chkAutorun">
+        <property name="text"><string>自启动项</string></property>
+        <property name="checked"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="m_chkTask">
+        <property name="text"><string>计划任务</string></property>
+        <property name="checked"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="m_chkDriver">
+        <property name="text"><string>驱动信息</string></property>
+        <property name="checked"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="m_chkShared">
+        <property name="text"><string>共享资源</string></property>
+        <property name="checked"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="m_chkPlugin">
+        <property name="text"><string>插件分析</string></property>
+        <property name="checked"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="m_chkMemory">
+        <property name="text"><string>内存映像</string></property>
+        <property name="checked"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="m_chkStatic">
+        <property name="text"><string>静态检测</string></property>
+        <property name="checked"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="m_chkDynamic">
+        <property name="text"><string>动态监测</string></property>
+        <property name="checked"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <spacer>
+        <property name="orientation"><enum>Qt::Horizontal</enum></property>
+        <property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <!-- 结果汇总标签 -->
+   <item>
+    <widget class="QLabel" name="m_lblSummary">
+     <property name="text"><string></string></property>
+     <property name="styleSheet"><string>font-size:13px;color:#1a3a6a;font-weight:600;</string></property>
+    </widget>
+   </item>
+   <!-- 结果区：左侧模块命中卡片 + 右侧详情表格 -->
+   <item>
+    <widget class="QSplitter" name="m_splitter">
+     <property name="orientation"><enum>Qt::Horizontal</enum></property>
+     <!-- 左侧模块命中列表 -->
+     <widget class="QListWidget" name="m_lstModules">
+      <property name="maximumWidth"><number>200</number></property>
+     </widget>
+     <!-- 右侧详情区 -->
+     <widget class="QWidget" name="m_rightPanel">
+      <layout class="QVBoxLayout" name="rightLayout">
+       <item>
+        <widget class="QLabel" name="m_lblModuleTitle">
+         <property name="text"><string>请在左侧选择模块查看详情</string></property>
+         <property name="styleSheet"><string>font-size:13px;font-weight:600;color:#555;</string></property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTableWidget" name="m_tblResult">
+         <property name="columnCount"><number>4</number></property>
+         <attribute name="horizontalHeaderDefaultSectionSize"><number>200</number></attribute>
+         <column><property name="text"><string>字段</string></property></column>
+         <column><property name="text"><string>值</string></property></column>
+         <column><property name="text"><string>来源模块</string></property></column>
+         <column><property name="text"><string>匹配关键字</string></property></column>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="m_lblStatus">
+     <property name="text"><string></string></property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+</ui>

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>VulnDetectPage</class>
+ <widget class="QWidget" name="VulnDetectPage">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>1200</width><height>800</height></rect>
+  </property>
+  <property name="windowTitle"><string>VulnDetectPage</string></property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <item>
+    <widget class="QLabel" name="lblTitle">
+     <property name="text"><string>漏洞监测</string></property>
+     <property name="styleSheet"><string>font-size:16px;font-weight:700;color:#1a3a6a;</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="divider">
+     <property name="frameShape"><enum>QFrame::HLine</enum></property>
+     <property name="frameShadow"><enum>QFrame::Sunken</enum></property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="toolbarLayout">
+     <item>
+      <widget class="QLabel" name="">
+       <property name="text"><string>关键字：</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="m_edtSearch">
+       <property name="placeholderText"><string>进程名 / CVE编号 / IP地址 / 工具名称</string></property>
+       <property name="maximumWidth"><number>280</number></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="">
+       <property name="text"><string>风险等级：</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="m_cmbRisk">
+       <item><property name="text"><string>全部等级</string></property></item>
+       <item><property name="text"><string>高危</string></property></item>
+       <item><property name="text"><string>中危</string></property></item>
+       <item><property name="text"><string>低危</string></property></item>
+       <property name="maximumWidth"><number>100</number></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="">
+       <property name="text"><string>协议：</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="m_cmbProto">
+       <item><property name="text"><string>全部协议</string></property></item>
+       <item><property name="text"><string>TCP</string></property></item>
+       <item><property name="text"><string>UDP</string></property></item>
+       <item><property name="text"><string>HTTP</string></property></item>
+       <item><property name="text"><string>HTTPS</string></property></item>
+       <item><property name="text"><string>SMB</string></property></item>
+       <item><property name="text"><string>RDP</string></property></item>
+       <property name="maximumWidth"><number>100</number></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="m_btnQuery">
+       <property name="text"><string>查询</string></property>
+      </widget>
+     </item>
+     <item>
+      <spacer>
+       <property name="orientation"><enum>Qt::Horizontal</enum></property>
+       <property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="m_btnExport">
+       <property name="text"><string>导出报告</string></property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="m_tblVuln">
+     <property name="columnCount"><number>11</number></property>
+     <attribute name="horizontalHeaderDefaultSectionSize"><number>110</number></attribute>
+     <column><property name="text"><string>进程路径</string></property></column>
+     <column><property name="text"><string>PID</string></property></column>
+     <column><property name="text"><string>工具名称</string></property></column>
+     <column><property name="text"><string>描述信息</string></property></column>
+     <column><property name="text"><string>源IP</string></property></column>
+     <column><property name="text"><string>源端口</string></property></column>
+     <column><property name="text"><string>目的IP</string></property></column>
+     <column><property name="text"><string>目的端口</string></property></column>
+     <column><property name="text"><string>协议</string></property></column>
+     <column><property name="text"><string>威胁等级</string></property></column>
+     <column><property name="text"><string>操作</string></property></column>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="m_lblStatus">
+     <property name="text"><string></string></property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+</ui>
